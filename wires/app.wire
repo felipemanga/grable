@@ -1,0 +1,12 @@
+
+json(null, "resources.states.boot")
+json(null, "resources.states.mainmenu")
+
+multi("Component", "cmp.Webcam")
+multi("Component", "cmp.Wait")
+multi("Component", "cmp.Sprite")
+
+implements("App", "Main")
+implements("GameState", "states.State")
+
+get("App")

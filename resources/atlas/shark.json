@@ -1,0 +1,148 @@
+{"frames": {
+
+"1.png":
+{
+	"frame": {"x":617,"y":550,"w":672,"h":329},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":16,"y":36,"w":672,"h":329},
+	"sourceSize": {"w":700,"h":400}
+},
+"2.png":
+{
+	"frame": {"x":319,"y":1589,"w":619,"h":344},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":62,"y":39,"w":619,"h":344},
+	"sourceSize": {"w":700,"h":400}
+},
+"3.png":
+{
+	"frame": {"x":940,"y":1624,"w":628,"h":315},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":54,"y":38,"w":628,"h":315},
+	"sourceSize": {"w":700,"h":400}
+},
+"4.png":
+{
+	"frame": {"x":319,"y":1589,"w":619,"h":344},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":62,"y":39,"w":619,"h":344},
+	"sourceSize": {"w":700,"h":400}
+},
+"5.png":
+{
+	"frame": {"x":617,"y":550,"w":672,"h":329},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":16,"y":36,"w":672,"h":329},
+	"sourceSize": {"w":700,"h":400}
+},
+"6.png":
+{
+	"frame": {"x":1291,"y":552,"w":579,"h":345},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":94,"y":44,"w":579,"h":345},
+	"sourceSize": {"w":700,"h":400}
+},
+"7.png":
+{
+	"frame": {"x":2,"y":887,"w":599,"h":312},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":80,"y":41,"w":599,"h":312},
+	"sourceSize": {"w":700,"h":400}
+},
+"8.png":
+{
+	"frame": {"x":1291,"y":552,"w":579,"h":345},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":94,"y":44,"w":579,"h":345},
+	"sourceSize": {"w":700,"h":400}
+},
+"Shark Bite 1.png":
+{
+	"frame": {"x":617,"y":881,"w":672,"h":329},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1149,"y":623,"w":672,"h":329},
+	"sourceSize": {"w":1889,"h":1016}
+},
+"Shark Bite 2.png":
+{
+	"frame": {"x":1291,"y":899,"w":486,"h":392},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1263,"y":560,"w":486,"h":392},
+	"sourceSize": {"w":1889,"h":1016}
+},
+"Shark Bite 3.png":
+{
+	"frame": {"x":2,"y":1201,"w":315,"h":542},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1478,"y":306,"w":315,"h":542},
+	"sourceSize": {"w":1889,"h":1016}
+},
+"Shark Bite 4.png":
+{
+	"frame": {"x":1329,"y":2,"w":471,"h":548},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1249,"y":220,"w":471,"h":548},
+	"sourceSize": {"w":1889,"h":1016}
+},
+"Shark Bite 5.png":
+{
+	"frame": {"x":2,"y":2,"w":778,"h":443},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":1016,"y":115,"w":778,"h":443},
+	"sourceSize": {"w":1889,"h":1016}
+},
+"Shark Bite 6.png":
+{
+	"frame": {"x":319,"y":1212,"w":789,"h":375},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":764,"y":58,"w":789,"h":375},
+	"sourceSize": {"w":1889,"h":1016}
+},
+"Shark Bite 7.png":
+{
+	"frame": {"x":2,"y":447,"w":613,"h":438},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":614,"y":166,"w":613,"h":438},
+	"sourceSize": {"w":1889,"h":1016}
+},
+"Shark Bite 8.png":
+{
+	"frame": {"x":782,"y":2,"w":545,"h":546},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":342,"y":285,"w":545,"h":546},
+	"sourceSize": {"w":1889,"h":1016}
+},
+"Shark Bite 9.png":
+{
+	"frame": {"x":1110,"y":1293,"w":672,"h":329},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":10,"y":623,"w":672,"h":329},
+	"sourceSize": {"w":1889,"h":1016}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "shark.png",
+	"format": "RGBA8888",
+	"size": {"w":1872,"h":1941},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:fe87d6e0ea04889a22f8051800bc480a:c1fa533dc58afe55472960b9686e9ac0:58f3aff14b3039557d3d690e6ef8fb0d$"
+}
+}

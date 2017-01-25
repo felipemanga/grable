@@ -1,0 +1,108 @@
+{"frames": {
+
+"Surfer Dying 1.png":
+{
+	"frame": {"x":1,"y":1,"w":224,"h":244},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":89,"y":26,"w":224,"h":244},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Dying 2.png":
+{
+	"frame": {"x":1,"y":247,"w":374,"h":231},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":8,"y":20,"w":374,"h":231},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Dying 3.png":
+{
+	"frame": {"x":227,"y":1,"w":175,"h":210},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":11,"y":58,"w":175,"h":210},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Dying 4.png":
+{
+	"frame": {"x":377,"y":424,"w":246,"h":33},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":74,"y":212,"w":246,"h":33},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Sitting 1.png":
+{
+	"frame": {"x":648,"y":1,"w":247,"h":196},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":78,"y":81,"w":247,"h":196},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Sitting 2.png":
+{
+	"frame": {"x":1113,"y":184,"w":248,"h":187},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":78,"y":86,"w":248,"h":187},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Sitting 3.png":
+{
+	"frame": {"x":1113,"y":1,"w":250,"h":181},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":78,"y":87,"w":250,"h":181},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Standing 1.png":
+{
+	"frame": {"x":1113,"y":373,"w":248,"h":124},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":78,"y":113,"w":248,"h":124},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Standing 2.png":
+{
+	"frame": {"x":865,"y":199,"w":246,"h":189},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":78,"y":52,"w":246,"h":189},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Surfing 1.png":
+{
+	"frame": {"x":377,"y":213,"w":241,"h":209},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":80,"y":27,"w":241,"h":209},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Surfing 2.png":
+{
+	"frame": {"x":404,"y":1,"w":242,"h":204},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":80,"y":31,"w":242,"h":204},
+	"sourceSize": {"w":400,"h":300}
+},
+"Surfer Surfing 3.png":
+{
+	"frame": {"x":620,"y":207,"w":243,"h":202},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":80,"y":33,"w":243,"h":202},
+	"sourceSize": {"w":400,"h":300}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "surfer.png",
+	"format": "RGBA8888",
+	"size": {"w":1364,"h":498},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:77dc9b654d02f5d2fa6f575e6b03eaa2:a3977193fc7d042e011e4ab7ce25dc98:08e9dde748f6097cbb58fca8bbe3cabe$"
+}
+}

@@ -1,0 +1,96 @@
+{
+    "script":[
+        ["webcam", "lib/Webcam.js"]
+    ],
+    "atlas":[
+        ["shark", "resources/atlas/shark.png", "resources/atlas/shark.json", 1],
+        ["surfer", "resources/atlas/surfer.png", "resources/atlas/surfer.json", 1]
+    ],
+
+    "audio":[
+        ["bgm",  ["resources/music/music.mp3"]]
+    ],
+
+    "image":[
+        ["bg1",   "resources/image/bg01.png"],
+        ["bg2",   "resources/image/bg02.png"],
+        ["bg3",   "resources/image/bg03.png"],
+        ["bg4",   "resources/image/bg04.png"]
+    ],
+    "class":{
+        "Background":{
+            "components":{
+                "cmp.Background":{"asset":[
+                    "bg1",
+                    "bg2",
+                    "bg3",
+                    "bg4"
+                ]}
+            },
+            "game.stage.backgroundColor":"#d5e8ed"
+        },
+        
+        "Ocean":{
+            "components":{
+                "cmp.Mouse":{"click":{"actionEvent":[]}},
+                "cmp.ActionAudio":{"asset":"bgm"},
+                "cmp.ImgDiff":{},
+                "surf.Ocean":{}
+            }
+        },
+
+        "Surfer":{
+            "components":{
+                "cmp.Sprite":{"asset":"surfer"},
+                "cmp.Collision":{"check":{
+                    "shark":{
+                        "surferDied":[]
+                    }
+                }},
+                "cmp.AutoFlip":{},
+                "surf.Surfer":{}
+            },
+            "scale.setTo":[0.5,0.5]
+        },
+
+        "Shark":{
+            "components":{
+                "cmp.Sprite":{"asset":"shark"},
+                "cmp.Collision":{"handle":"shark"},
+                "cmp.AutoFlip":{},
+                "cmp.Inertia":{},
+                "cmp.FlyAI":{},
+                "surf.Shark":{},
+                "cmp.Event":{
+                    "event":{
+                        "onSurferDied":{"destroy":[]}
+                    }
+                }
+            },
+            "anchor.setTo":[0.5,0.5],
+            "scale.setTo":[0.5,0.5]
+        },
+
+        "SharkGen":{
+            "components":{
+                "cmp.Wait":{},
+                "cmp.Event":{
+                    "event":{
+                        "addShark":{
+                            "gameState.addEntity":["Shark",{}],
+                            "gameState.entities.ocean.bringToTop":[]
+                        }
+                    }
+                }
+            },
+            "wait":[{"addShark":[]}, 5000]
+        }
+    },
+
+    "entity":[
+        ["Background",{}],
+        ["Ocean", {}],
+        ["Surfer", {}],
+        ["SharkGen", {}]
+    ]
+}

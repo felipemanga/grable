@@ -34,11 +34,12 @@ CLAZZ("cmp.TileMap", {
                 if (o) {
                     if( isometric ){
                         obj.x = (x-y) * tilewidth*0.5  + layer.x;
-                        obj.y = (x+y) * tileheight*0.5 + tileheight + layer.y;
+                        obj.y = (x+y) * tileheight*0.5 + layer.y;
                     }else{
                         obj.x = x * tilewidth  + layer.x;
                         obj.y = y * tileheight + layer.y;
                     }
+                    obj.y += tileheight;
                     instanceDO.call(this, o, obj, true);
                 }
                 x++;
@@ -61,24 +62,24 @@ CLAZZ("cmp.TileMap", {
                     });
                 }
                 var DO = instanceDO.call(this, obj.gid, obj, isometric);
-                if( "width" in obj ) DO.width = obj.width;
-                if( "height" in obj ) DO.height = obj.height;
+                if( "width" in obj ) DO.width = Math.sign(DO.scale.x) * obj.width;
+                if( "height" in obj ) DO.height = Math.sign(DO.scale.y) * obj.height;
             }
         }
 
         function instanceDO(gid, obj, adjust){
             var DO, rotation = obj.rotation||0;
-            resolveGID(gid);
+            resolveGID(gid & 0x0FFFFFFF);
 
             if( rotation ) 
                 rotation = rotation * (1 / 180) * Math.PI;
 
             if( obj.type in edef ){
-                var entity = this.gameState.addEntity( obj.name, {
+                var entity = this.gameState.addEntity( obj.type, DOC.mergeTo({
                     asset:image,
                     frame:imageframe
-                });
-                DO = DO.sprite;
+                }, obj.properties));
+                DO = entity.sprite;
             }else{
                 DO = this.game.add.image(0,0,image,imageframe);
             }
@@ -87,17 +88,25 @@ CLAZZ("cmp.TileMap", {
 
             if( isometric ){
                 x += json.data.height*tilewidth*0.5;
-                y += tileheight*2;
+                y += tileheight;
             }
 
             DO.position.x = x;
             DO.position.y = y;
 
-            if( isometric ) DO.anchor.x = 0.5;
-            else DO.anchor.x = 0;
-
-            DO.anchor.y = 1;
             DO.rotation = rotation;
+            if(gid & 0x80000000){
+                DO.scale.x = -1;
+                if( isometric ) DO.anchor.x = 0.5;
+                else DO.anchor.x = 1;
+            }else{
+                if( isometric ) DO.anchor.x = 0.5;
+                else DO.anchor.x = 0;
+            }
+            if(gid & 0x40000000){
+                DO.scale.y = -1;
+                DO.anchor.y = 0;
+            }else DO.anchor.y = 1;
             return DO;
         }
 

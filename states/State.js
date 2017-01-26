@@ -72,7 +72,7 @@ CLAZZ("states.State", {
             pool:this.pool,
             call:this.__call.bind(this),
             descriptor:DOC.mergeTo({}, this.entityDefinitions[name], inject)
-        }));
+        }, inject));
         return e;
     },
 

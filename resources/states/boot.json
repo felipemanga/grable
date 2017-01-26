@@ -23,6 +23,12 @@
             "components":{
                 "cmp.TileMap":{"asset":"map"}
             }
+        },
+        "Bob":{
+            "components":{
+                "cmp.Sprite":{},
+                "cmp.Bob":{}
+            }
         }
     },
 

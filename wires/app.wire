@@ -1,6 +1,5 @@
 
 json(null, "resources.states.boot")
-json(null, "resources.states.mainmenu")
 
 multi("Component", "cmp.Webcam")
 multi("Component", "cmp.Wait")

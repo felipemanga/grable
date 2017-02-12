@@ -9,7 +9,7 @@ CLAZZ("cmp.Inertia", {
         this.velocityX += vx || 0;
         this.velocityY += vy || 0;
     },
-    update:function(){
+    onTick:function(){
         if( this.enabled ){
             this.velocityY += this.gravity;
             this.velocityX *= this.friction;

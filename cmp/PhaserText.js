@@ -1,4 +1,5 @@
-CLAZZ("cmp.Text", {
+CLAZZ("cmp.PhaserText", {
+    PROVIDES:{"cmp.Text":"implements"},
     INJECT:["entity", "gameState"],
     EXTENDS:Phaser.Text,
     CONSTRUCTOR:function(){

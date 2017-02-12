@@ -1,0 +1,11 @@
+
+json(null, "resources.states.boot")
+
+multi("Component", "cmp.PhaserWebcam")
+multi("Component", "cmp.Wait")
+multi("Component", "cmp.PhaserSprite")
+
+implements("App", "Main")
+implements("GameState", "states.PhaserState")
+
+get("App")

@@ -1,4 +1,5 @@
-CLAZZ("cmp.Collision",{
+CLAZZ("cmp.PhaserCollision",{
+    PROVIDES:{"cmp.Collision":"implements"},
     INJECT:["gameState", "entity", "check", "handle"],
     handle:null,
     check:null,

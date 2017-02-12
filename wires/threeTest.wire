@@ -1,0 +1,10 @@
+
+json("resources.states.boot", "resources.states.app")
+
+multi("Component", "cmp.ThreeNode")
+multi("Component", "cmp.Wait")
+
+implements("App", "Main")
+implements("GameState", "states.ThreeState")
+
+get("App")

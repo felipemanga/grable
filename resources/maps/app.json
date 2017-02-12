@@ -1,0 +1,166 @@
+{
+	"metadata": {
+		"type": "App"
+	},
+	"project": {
+		"gammaInput": false,
+		"gammaOutput": false,
+		"shadows": true,
+		"vr": false
+	},
+	"camera": {
+		"metadata": {
+			"version": 4.4,
+			"type": "Object",
+			"generator": "Object3D.toJSON"
+		},
+		"object": {
+			"uuid": "03185E65-3666-4029-8642-3ABCE8C1EF7B",
+			"type": "PerspectiveCamera",
+			"name": "Camera",
+			"matrix": [0.944279,0,-0.329145,0,-0.183079,0.831031,-0.525232,0,0.27353,0.556225,0.784726,0,12.320524,25.053886,35.346153,1],
+			"fov": 50,
+			"zoom": 1,
+			"near": 0.1,
+			"far": 100000,
+			"focus": 10,
+			"aspect": 1.881533,
+			"filmGauge": 35,
+			"filmOffset": 0
+		}
+	},
+	"scene": {
+		"metadata": {
+			"version": 4.4,
+			"type": "Object",
+			"generator": "Object3D.toJSON"
+		},
+		"geometries": [
+			{
+				"uuid": "E80D9EC5-D722-4812-8226-5F355EAC9B96",
+				"type": "PlaneGeometry",
+				"width": 1000,
+				"height": 1000,
+				"widthSegments": 1,
+				"heightSegments": 1
+			}],
+		"materials": [
+			{
+				"uuid": "3A9449D2-62DB-4BB4-ABBD-6F3F9D46DE1A",
+				"type": "MeshStandardMaterial",
+				"color": 5465019,
+				"roughness": 1,
+				"metalness": 0,
+				"emissive": 0,
+				"depthFunc": 3,
+				"depthTest": true,
+				"depthWrite": true,
+				"skinning": false,
+				"morphTargets": false
+			},
+			{
+				"uuid": "F5361474-F5F1-412F-8D99-3699B868092D",
+				"type": "SpriteMaterial",
+				"color": 16777215,
+				"depthFunc": 3,
+				"depthTest": true,
+				"depthWrite": true
+			},
+			{
+				"uuid": "2EEF9FF2-A17E-48CA-A2E8-1F71396457A1",
+				"type": "SpriteMaterial",
+				"color": 16777215,
+				"map": "1234CF7E-C543-4099-9F07-B5DAF9F96465",
+				"depthFunc": 3,
+				"depthTest": true,
+				"depthWrite": true
+			}],
+		"textures": [
+			{
+				"uuid": "1234CF7E-C543-4099-9F07-B5DAF9F96465",
+				"name": "",
+				"mapping": 300,
+				"repeat": [1,1],
+				"offset": [0,0],
+				"wrap": [1001,1001],
+				"minFilter": 1008,
+				"magFilter": 1006,
+				"anisotropy": 1,
+				"flipY": true,
+				"image": "06DF081B-B2BC-4424-9958-6FD755DD66E8"
+			}],
+		"images": [
+			{
+				"uuid": "06DF081B-B2BC-4424-9958-6FD755DD66E8",
+				"url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADJ0lEQVRoQ92ayU4iQRjHqwoFdxYXVDQxHLzOwEWNGyq4orJIwtE3cB5leAI5epwH8DA3b+pcvYwJQQXUBgUXlGJSZPwqHGaqgxKruhISCFXd/19+X/OR6sYIIeT3+612u32XEBJin6vV6ldCiI29l2VQSvMY41OWh1L6Q9O05OHhYQGz8A6H4xRjPCZLWD05KKWnmqb5cDQa3TeZTLt6Fsk2p1KpJBmA9lYu9/f36PHxEZXLZVZGUuXFGCOz2Yw6Oztrr7+llMexWAySplIpqUL/K8zo6Ch8hXd2dmoAlFJ0cXGhBMDIyAgHiEajYCCdTisB4HK5DAQQiUTAgColNDw8zA2Ew2EAuLy8VKKEhoaGDAQQCoXAwNXVlRIGBgcHuYHt7W0AyGQySgA4nc7GAfb29tD4+Djyer0fCnt8fIzOzs5QIpEQHrcOYGtrCwxks1nh4qOjI+Gc90wIBAKoWCz+9xADAwPcwObmJgDkcjnhuZsNMDU1JczQ399vIIBgMAgGrq+vhfQyGOjr6+MGNjY2AODm5kYIwC7ieDwunNfIhIODA10XcW9vb+MAjQT76DV1AOvr62Dg9vb2o8/VlOM5HA5uYG1tDQA0TROeUIY+YLfbGwdo9kWspw/UAayuroKBfD4vNNBsAD19wGbjOz54ZWUFAAqFghIAVquVl5DyAMvLy2Dg7u5OaECGPtDT08MNBAIBAGD7QiqM7u5uAwH4/X4wIPoby7Bl6ANdXV3cwNLSEgCUSiVhBTX7Z1RPH3jbWmRhsWwAevpAHcDi4iIYeHh4+HQDegA6Ojp4CS0sLAAA25kWjWaXkB6A9vb2xgFk6AN1AD6fDww8PT2JBEjxfVtbGzcwPz8PAM/Pz1IEFIWwWCwGApibmwMD7NaSCoPdanobeHZ2FgBeXl5UyI9aW1sNBDAzMwMGXl9flTDQ0tLCDUxPTwNApVJRAsBkMhkIYHJy8jchpPaYAbvVqsIghNRiUkrP8cTExD4hRMlHDSilSex2u61Op/McISTV0yk6KiGfyWTGMJvo8Xi+mM3m7xhjn46Fnz6lWq3+LJfL305OTn79AX5fckwbFYnOAAAAAElFTkSuQmCC"
+			}],
+		"object": {
+			"uuid": "3741222A-BD8F-401C-A5D2-5A907E891896",
+			"type": "Scene",
+			"name": "Scene",
+			"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+			"children": [
+				{
+					"uuid": "05B57416-1BE5-4A96-BB05-9D9CD112D52B",
+					"type": "Mesh",
+					"name": "Ground",
+					"matrix": [1,0,0,0,0,0.000794,-1,0,0,1,0.000794,0,0,-0.5,0,1],
+					"geometry": "E80D9EC5-D722-4812-8226-5F355EAC9B96",
+					"material": "3A9449D2-62DB-4BB4-ABBD-6F3F9D46DE1A"
+				},
+				{
+					"uuid": "0A3CB873-07E6-4EEB-830B-68192504111B",
+					"type": "Sprite",
+					"name": "Particle",
+					"matrix": [0.4,0,0,0,0,0.4,0,0,0,0,0.4,0,0,0,0,1],
+					"material": "F5361474-F5F1-412F-8D99-3699B868092D"
+				},
+				{
+					"uuid": "40E5CDA4-0E39-4265-9293-3E9EC3207F61",
+					"type": "PointLight",
+					"name": "PointLight",
+					"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,11.828879,0,1],
+					"color": 16777215,
+					"intensity": 1,
+					"distance": 0,
+					"decay": 1,
+					"shadow": {
+						"camera": {
+							"uuid": "389BC84A-1265-4112-A4B0-7AABE5AC2EE4",
+							"type": "PerspectiveCamera",
+							"fov": 90,
+							"zoom": 1,
+							"near": 0.5,
+							"far": 500,
+							"focus": 10,
+							"aspect": 1,
+							"filmGauge": 35,
+							"filmOffset": 0
+						}
+					}
+				},
+				{
+					"uuid": "89AC01DE-86AC-4A6F-8451-DC6963EECB36",
+					"type": "Sprite",
+					"name": "Sprite 1",
+					"castShadow": true,
+					"matrix": [-1.708778,5.897173,4.758193,0,-5.947664,-3.203313,1.834154,0,0.529826,-0.511683,0.824439,0,0.749912,3.298884,-1.854817,1],
+					"material": "2EEF9FF2-A17E-48CA-A2E8-1F71396457A1"
+				}],
+			"background": 11184810
+		}
+	},
+	"scripts": {
+		"3741222A-BD8F-401C-A5D2-5A907E891896": [
+			{
+				"name": "Fountain",
+				"source": "var original = this.getObjectByName( 'Particle' );\n\nvar particles = [];\n\nfor ( var i = 0; i < 100; i ++ ) {\n\n\tvar particle = original.clone();\n\tparticle.userData.velocity = new THREE.Vector3();\n\tthis.add( particle );\n\n\tparticles.push( particle );\n\n}\n\nfunction update() {\n\t\n\tvar particle = particles.shift();\n\tparticles.push( particle );\n\t\t\n\tvar velocity = particle.userData.velocity;\n\tvelocity.x = Math.random() - 0.5;\n\tvelocity.y = Math.random() + 1;\n\tvelocity.z = Math.random() - 0.5;\n\n\tfor ( var i = 0; i < particles.length; i ++ ) {\n\n\t\tvar particle = particles[ i ];\n\n\t\tvar velocity = particle.userData.velocity;\n\n\t\tvelocity.y -= 0.098;\n\n\t\tparticle.position.add( velocity );\n\n\t\tif ( particle.position.y < 0 ) {\n\n\t\t\tparticle.position.y = 0;\n\n\t\t\tvelocity.y = - velocity.y;\n\t\t\tvelocity.multiplyScalar( 0.6 );\n\n\t\t}\n\n\t}\n\n}\n\npool.add({\n\tonTick:update,\n\tdestroy:function(){ pool.remove(this); }\n});"
+			}],
+		"89AC01DE-86AC-4A6F-8451-DC6963EECB36": [
+			{
+				"hidden": true,
+				"name": "cmp.Bob",
+				"source": "return addComponent({\"amplitudeX\":133,\"amplitudeY\":102,\"amplitude\":{\"x\":500,\"y\":0,\"z\":0}})"
+			}]
+	}
+}

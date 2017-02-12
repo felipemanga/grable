@@ -1,4 +1,5 @@
-CLAZZ("cmp.Mouse", {
+CLAZZ("cmp.PhaserMouse", {
+    PROVIDES:{"cmp.Mouse":"implements"},
     INJECT:["entity", "mouseover", "mouseout", "click", "DO"],
     mouseover:null,
     mouseout:null,

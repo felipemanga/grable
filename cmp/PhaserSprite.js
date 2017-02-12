@@ -1,5 +1,10 @@
-CLAZZ("cmp.Sprite", {
+need([
+    {URL:"lib/phaser.min.js", FQCN:"Phaser"}
+], function(){
+
+CLAZZ("cmp.PhaserSprite", {
     INJECT:["entity", "gameState", "asset", "frame"],
+    PROVIDES:{"cmp.Sprite":"implements"},
     EXTENDS:Phaser.Sprite,
     DYNAMIC:true,
     frame:null,
@@ -40,4 +45,6 @@ CLAZZ("cmp.Sprite", {
             this.entity.postUpdate(true);
     }
     
+});
+
 });

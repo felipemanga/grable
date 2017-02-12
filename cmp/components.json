@@ -1,0 +1,20 @@
+{
+    "cmp.ActionAudio":{"phaserjs":true, "threejs":false},
+    "cmp.AutoFlip":{"phaserjs":true, "threejs":true},
+    "cmp.Background":{"phaserjs":true},
+    "cmp.Bob":{"phaserjs":true, "threejs":true},
+    "cmp.Event":{"phaserjs":true, "threejs":true},
+    "cmp.FlyAI":{"phaserjs":true, "threejs":true},
+    "cmp.FollowCamera":{"phaserjs":true, "threejs":true},
+    "cmp.ImgDiff":{"phaserjs":true},
+    "cmp.Inertia":{"phaserjs":true, "threejs":true},
+    "cmp.PhaserCollision":{"phaserjs":true},
+    "cmp.PhaserMouse":{"phaserjs":true},
+    "cmp.PhaserSprite":{"phaserjs":true},
+    "cmp.PhaserWebcam":{"phaserjs":true},
+    "cmp.PhaserText":{"phaserjs":true},
+    "cmp.State":{"phaserjs":true, "threejs":true},
+    "cmp.ThreeSprite":{"phaserjs":false, "threejs":true},
+    "cmp.Tween":{"phaserjs":true, "threejs":true},
+    "cmp.Wait":{"phaserjs":true, "threejs":true}
+}

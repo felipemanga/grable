@@ -1,4 +1,5 @@
-CLAZZ("cmp.Webcam", {
+CLAZZ("cmp.PhaserWebcam", {
+    PROVIDES:{"cmp.Webcam":"implements"},
     INJECT:["game"],
     webcam:null,
     bitmap:null,

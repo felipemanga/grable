@@ -2,7 +2,6 @@
 
 CLAZZ("Main", {
     DOM:null,
-    game:null,
     pool:null,
 
     CONSTRUCTOR:function(){
@@ -19,12 +18,11 @@ CLAZZ("Main", {
             return;
         }
         
-        var inst = CLAZZ.get( state.clazz || "GameState", {
+        CLAZZ.get( state.clazz || "GameState", {
             resources:state,
-            pool:this.pool
+            pool:this.pool,
+            name:strstate,
+            DOM:this.DOM
         });
-
-        if( this.game ) this.game.state.add( strstate, inst, true );
-        else this.game = new Phaser.Game( 1920, 1080, Phaser.AUTO, this.DOM.container, inst );
     }
 });

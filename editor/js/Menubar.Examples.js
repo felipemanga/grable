@@ -19,10 +19,7 @@ Menubar.Examples = function ( editor ) {
 	// Examples
 
 	var items = [
-		{ title: 'Arkanoid', file: 'arkanoid.app.json' },
-		{ title: 'Camera', file: 'camera.app.json' },
-		{ title: 'Particles', file: 'particles.app.json' },
-		{ title: 'Pong', file: 'pong.app.json' }
+		{ title: 'EC Particles', file: 'particles.app.json' }
 	];
 
 	var loader = new THREE.FileLoader();

@@ -166,7 +166,7 @@ Sidebar.Entity = function ( editor ) {
 
 		editingObject = object;
 
-		var path = editor.config.getKey('editorComponentPath');
+		var path = editor.config.getKey('editorComponentPath') || "../cmp";
 		if( path != loadedCompPath ){
 			loadCompPath(path);
 		}

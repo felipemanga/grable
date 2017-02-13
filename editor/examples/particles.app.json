@@ -1,8 +1,8 @@
 {
-	"metadata": {
-		"type": "App"
-	},
+	"metadata": {},
 	"project": {
+		"gammaInput": false,
+		"gammaOutput": false,
 		"shadows": true,
 		"vr": false
 	},
@@ -13,16 +13,16 @@
 			"generator": "Object3D.toJSON"
 		},
 		"object": {
-			"uuid": "763F3000-7D7C-4BE6-80B6-914DEEBD9AA2",
+			"uuid": "9F5F41D2-3C69-4A4A-B13F-D57BC1B4BC76",
 			"type": "PerspectiveCamera",
 			"name": "Camera",
-			"matrix": [0.7071067690849304,-3.398992198810902e-11,-0.7071068286895752,0,-0.2357022613286972,0.9428090453147888,-0.235702246427536,0,0.6666666865348816,0.3333333134651184,0.6666666269302368,0,41.824005126953125,20.912002563476562,41.824005126953125,1],
+			"matrix": [0.921881,0,-0.387472,0,-0.267478,0.723507,-0.63639,0,0.280339,0.690317,0.666988,0,27.969032,68.871986,66.544502,1],
 			"fov": 50,
 			"zoom": 1,
 			"near": 0.1,
 			"far": 100000,
 			"focus": 10,
-			"aspect": 0.46657381615598886,
+			"aspect": 1.78022,
 			"filmGauge": 35,
 			"filmOffset": 0
 		}
@@ -41,6 +41,24 @@
 				"height": 1000,
 				"widthSegments": 1,
 				"heightSegments": 1
+			},
+			{
+				"uuid": "C6389168-8826-47DB-9CEE-00E06D73BEB1",
+				"type": "BoxBufferGeometry",
+				"width": 1,
+				"height": 1,
+				"depth": 1
+			},
+			{
+				"uuid": "B9014385-CDE2-4717-A98E-53C69F35D1C1",
+				"type": "SphereBufferGeometry",
+				"radius": 1,
+				"widthSegments": 32,
+				"heightSegments": 16,
+				"phiStart": 0,
+				"phiLength": 6.283185,
+				"thetaStart": 0,
+				"thetaLength": 3.141593
 			}],
 		"materials": [
 			{
@@ -49,12 +67,76 @@
 				"color": 5465019,
 				"roughness": 1,
 				"metalness": 0,
-				"emissive": 0
+				"emissive": 0,
+				"depthFunc": 3,
+				"depthTest": true,
+				"depthWrite": true,
+				"skinning": false,
+				"morphTargets": false
 			},
 			{
 				"uuid": "F5361474-F5F1-412F-8D99-3699B868092D",
 				"type": "SpriteMaterial",
-				"color": 16777215
+				"color": 16777215,
+				"depthFunc": 3,
+				"depthTest": true,
+				"depthWrite": true
+			},
+			{
+				"uuid": "2EEF9FF2-A17E-48CA-A2E8-1F71396457A1",
+				"type": "SpriteMaterial",
+				"color": 16777215,
+				"map": "6D4B2BE7-95AD-4DCD-926A-A24D9008070D",
+				"transparent": true,
+				"depthFunc": 3,
+				"depthTest": true,
+				"depthWrite": true,
+				"alphaTest": 0.48
+			},
+			{
+				"uuid": "C3E30926-0DE9-46A8-8206-EA7F0444C82C",
+				"type": "MeshStandardMaterial",
+				"color": 16777215,
+				"roughness": 0.5,
+				"metalness": 0.5,
+				"emissive": 0,
+				"depthFunc": 3,
+				"depthTest": true,
+				"depthWrite": true,
+				"skinning": false,
+				"morphTargets": false
+			},
+			{
+				"uuid": "6289112F-E191-484F-A93A-8EE3F3E8D2DA",
+				"type": "MeshStandardMaterial",
+				"color": 16777215,
+				"roughness": 0.5,
+				"metalness": 0.5,
+				"emissive": 0,
+				"depthFunc": 3,
+				"depthTest": true,
+				"depthWrite": true,
+				"skinning": false,
+				"morphTargets": false
+			}],
+		"textures": [
+			{
+				"uuid": "6D4B2BE7-95AD-4DCD-926A-A24D9008070D",
+				"name": "",
+				"mapping": 300,
+				"repeat": [1,1],
+				"offset": [0,0],
+				"wrap": [1001,1001],
+				"minFilter": 1008,
+				"magFilter": 1006,
+				"anisotropy": 1,
+				"flipY": true,
+				"image": "E2D1AE14-1AFE-432B-9080-A9C3EAAD44AD"
+			}],
+		"images": [
+			{
+				"uuid": "E2D1AE14-1AFE-432B-9080-A9C3EAAD44AD",
+				"url": "data:image/png;base64,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"
 			}],
 		"object": {
 			"uuid": "3741222A-BD8F-401C-A5D2-5A907E891896",
@@ -66,7 +148,8 @@
 					"uuid": "05B57416-1BE5-4A96-BB05-9D9CD112D52B",
 					"type": "Mesh",
 					"name": "Ground",
-					"matrix": [1,0,0,0,0,0.0007959486683830619,-0.9999997019767761,0,0,0.9999997019767761,0.0007959486683830619,0,0,-0.5,0,1],
+					"receiveShadow": true,
+					"matrix": [1,0,0,0,0,0.00079,-1,0,0,1,0.00079,0,0,-0.5,0,1],
 					"geometry": "E80D9EC5-D722-4812-8226-5F355EAC9B96",
 					"material": "3A9449D2-62DB-4BB4-ABBD-6F3F9D46DE1A"
 				},
@@ -74,26 +157,127 @@
 					"uuid": "0A3CB873-07E6-4EEB-830B-68192504111B",
 					"type": "Sprite",
 					"name": "Particle",
-					"matrix": [0.4000000059604645,0,0,0,0,0.4000000059604645,0,0,0,0,0.4000000059604645,0,0,0,0,1],
+					"matrix": [0.4,0,0,0,0,0.4,0,0,0,0,0.4,0,0,0,0,1],
 					"material": "F5361474-F5F1-412F-8D99-3699B868092D"
 				},
 				{
 					"uuid": "40E5CDA4-0E39-4265-9293-3E9EC3207F61",
 					"type": "PointLight",
 					"name": "PointLight",
-					"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,11.828879356384277,0,1],
+					"castShadow": true,
+					"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,33.050373,0,1],
 					"color": 16777215,
 					"intensity": 1,
 					"distance": 0,
-					"decay": 1
-				}]
+					"decay": 1,
+					"shadow": {
+						"camera": {
+							"uuid": "389BC84A-1265-4112-A4B0-7AABE5AC2EE4",
+							"type": "PerspectiveCamera",
+							"fov": 90,
+							"zoom": 1,
+							"near": 0.5,
+							"far": 500,
+							"focus": 10,
+							"aspect": 1,
+							"filmGauge": 35,
+							"filmOffset": 0
+						}
+					}
+				},
+				{
+					"uuid": "89AC01DE-86AC-4A6F-8451-DC6963EECB36",
+					"type": "Sprite",
+					"name": "Sprite 1",
+					"castShadow": true,
+					"matrix": [3,0,0,0,0,3,0,0,0,0,3,0,1.081586,1.609554,-6.033817,1],
+					"material": "2EEF9FF2-A17E-48CA-A2E8-1F71396457A1"
+				},
+				{
+					"uuid": "DD8D3C14-CAB3-4A76-8D8D-4C8B081A974A",
+					"type": "Mesh",
+					"name": "Box 1",
+					"castShadow": true,
+					"matrix": [2.64168,-1.421803,0,0,1.421803,2.64168,0,0,0,0,3,0,7.577156,15.723034,-0.232813,1],
+					"geometry": "C6389168-8826-47DB-9CEE-00E06D73BEB1",
+					"material": "C3E30926-0DE9-46A8-8206-EA7F0444C82C"
+				},
+				{
+					"uuid": "FD7711F2-2E8F-4DE6-8F04-D9BFE3CAF468",
+					"type": "Mesh",
+					"name": "Sphere 2",
+					"castShadow": true,
+					"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,3.893204,0,1],
+					"geometry": "B9014385-CDE2-4717-A98E-53C69F35D1C1",
+					"material": "6289112F-E191-484F-A93A-8EE3F3E8D2DA"
+				}],
+			"background": 0,
+			"fog": {
+				"type": "FogExp2",
+				"color": 0,
+				"density": 0.005
+			}
 		}
 	},
 	"scripts": {
 		"3741222A-BD8F-401C-A5D2-5A907E891896": [
 			{
 				"name": "Fountain",
-				"source": "var original = this.getObjectByName( 'Particle' );\n\nvar particles = [];\n\nfor ( var i = 0; i < 100; i ++ ) {\n\n\tvar particle = original.clone();\n\tparticle.userData.velocity = new THREE.Vector3();\n\tthis.add( particle );\n\n\tparticles.push( particle );\n\n}\n\nfunction update( event ) {\n\t\n\tvar particle = particles.shift();\n\tparticles.push( particle );\n\t\t\n\tvar velocity = particle.userData.velocity;\n\tvelocity.x = Math.random() - 0.5;\n\tvelocity.y = Math.random() + 1;\n\tvelocity.z = Math.random() - 0.5;\n\n\tfor ( var i = 0; i < particles.length; i ++ ) {\n\n\t\tvar particle = particles[ i ];\n\n\t\tvar velocity = particle.userData.velocity;\n\n\t\tvelocity.y -= 0.098;\n\n\t\tparticle.position.add( velocity );\n\n\t\tif ( particle.position.y < 0 ) {\n\n\t\t\tparticle.position.y = 0;\n\n\t\t\tvelocity.y = - velocity.y;\n\t\t\tvelocity.multiplyScalar( 0.6 );\n\n\t\t}\n\n\t}\n\n}"
+				"source": "var original = this.getObjectByName( 'Particle' );\n\nvar particles = [];\n\nfor ( var i = 0; i < 100; i ++ ) {\n\n\tvar particle = original.clone();\n\tparticle.userData.velocity = new THREE.Vector3();\n\tthis.add( particle );\n\n\tparticles.push( particle );\n\n}\n\nfunction update() {\n\t\n\tvar particle = particles.shift();\n\tparticles.push( particle );\n\t\t\n\tvar velocity = particle.userData.velocity;\n\tvelocity.x = Math.random() - 0.5;\n\tvelocity.y = Math.random() + 1;\n\tvelocity.z = Math.random() - 0.5;\n\n\tfor ( var i = 0; i < particles.length; i ++ ) {\n\n\t\tvar particle = particles[ i ];\n\n\t\tvar velocity = particle.userData.velocity;\n\n\t\tvelocity.y -= 0.098;\n\n\t\tparticle.position.add( velocity );\n\n\t\tif ( particle.position.y < 0 ) {\n\n\t\t\tparticle.position.y = 0;\n\n\t\t\tvelocity.y = - velocity.y;\n\t\t\tvelocity.multiplyScalar( 0.6 );\n\n\t\t}\n\n\t}\n\n}\n\npool.add({\n\tonTick:update,\n\tdestroy:function(){ pool.remove(this); }\n});"
+			},
+			{
+				"hidden": true,
+				"name": "cmp.PhysiScene",
+				"source": "return addComponent({})"
+			}],
+		"89AC01DE-86AC-4A6F-8451-DC6963EECB36": [
+			{
+				"hidden": true,
+				"name": "cmp.AutoFlip",
+				"source": "return addComponent({\"mirror\":false})"
+			},
+			{
+				"hidden": true,
+				"name": "cmp.PhysiNode",
+				"source": "return addComponent({\"mass\":0.1,\"bounciness\":1,\"friction\":0})"
+			},
+			{
+				"hidden": true,
+				"name": "cmp.FlyAI",
+				"source": "return addComponent({\"speed\":0.5})"
+			}],
+		"DD8D3C14-CAB3-4A76-8D8D-4C8B081A974A": [
+			{
+				"hidden": true,
+				"name": "cmp.PhysiNode",
+				"source": "return addComponent({\"mass\":1,\"mesh\":\"Box\",\"bounciness\":0.64,\"friction\":1,\"name\":\"Box\"})"
+			},
+			{
+				"name": "on hit sphere",
+				"source": "addComponent(CLAZZ({\n\tINJECT:[\"entity\", \"asset\"],\n\tdoClone:true,\n\t\n\tonHitBall:function(other){\n\t\tif( !this.doClone ) return;\n\t\tthis.doClone = false;\n\t\t\n\t\tvar e = this.entity.clone();\n\t\te.position.y += 1;\n\t\te.position.x -= 1;\n\t\tother.clone().position.y += 1;\n\t\t\n\t\tthis.entity.scale.y = 0.1;\n\t}\n\n}))"
+			}],
+		"05B57416-1BE5-4A96-BB05-9D9CD112D52B": [
+			{
+				"hidden": true,
+				"name": "cmp.PhysiNode",
+				"source": "return addComponent({\"mesh\":\"Plane\",\"friction\":0.5,\"bounciness\":1})"
+			}],
+		"FD7711F2-2E8F-4DE6-8F04-D9BFE3CAF468": [
+			{
+				"hidden": true,
+				"name": "cmp.Bob",
+				"source": "return addComponent({\"amplitude\":{\"x\":20,\"y\":0,\"z\":0},\"speed\":{\"x\":0.05,\"y\":0,\"z\":0}})"
+			},
+			{
+				"hidden": true,
+				"name": "cmp.PhysiNode",
+				"source": "return addComponent({\"mesh\":\"Sphere\",\"mass\":1,\"name\":\"Ball\",\"bounciness\":0.8})"
+			}],
+		"40E5CDA4-0E39-4265-9293-3E9EC3207F61": [
+			{
+				"hidden": true,
+				"name": "cmp.FlyAI",
+				"source": "return addComponent({\"speed\":0.2})"
 			}]
 	}
 }

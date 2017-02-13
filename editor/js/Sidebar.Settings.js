@@ -14,7 +14,7 @@ Sidebar.Settings = function ( editor ) {
 	// component stuff
 
 	var compRow = new UI.Row();
-	var compPath = new UI.Input( config.getKey('editorComponentPath') || "./" ).setWidth( '130px' ).setFontSize( '12px' );
+	var compPath = new UI.Input( config.getKey('editorComponentPath') || "../cmp" ).setWidth( '130px' ).setFontSize( '12px' );
 	compPath.onChange( function () {
 
 		editor.config.setKey('editorComponentPath', this.getValue());

@@ -1,0 +1,69 @@
+CLAZZ("cmp.PhysiNode", {
+    INJECT:["entity", "asset", "game", "mass", "mesh", "friction", "bounciness"],
+    node:null,
+
+    "@mass":{type:"float", min:0},
+    mass:0,
+
+    "@mesh":{type:"enum", options:[
+        "Box",
+        "Cylinder",
+        "Capsule",
+        "Cone",
+        "Concave",
+        "Convex",
+        "Heightfield",
+        "Mesh",
+        "Plane",
+        "Sphere"
+    ]},
+    mesh:"Box",
+
+    "@friction":{type:"float", min:0, max:1},
+    friction:0.1,
+
+    "@bounciness":{type:"float", min:0, max:1},
+    bounciness:0.98,
+
+    create:function(){
+        var entity = this.entity, asset = this.asset, node;
+
+        node = this.node = Physijs[ this.mesh + "Mesh"]( null, null, this.mass, this.entity.getNode() );
+
+        node.friction = this.friction;
+        node.restitution = this.bounciness;
+
+        if( this.game.scene.physijs )
+            this.game.scene.physijs.add( this.node );
+
+        entity.position = Object.create(null, {
+            x:{
+                get:function(){ return asset.position.x; },
+                set:function(v){ if( v != asset.position.x ){ asset.position.x = v||0; node.__dirtyPosition = true; } }
+            },
+            y:{
+                get:function(){ return asset.position.y; },
+                set:function(v){ if( v != asset.position.y ){ asset.position.y = v||0; node.__dirtyPosition = true; } }
+            },
+            z:{
+                get:function(){ return asset.position.z; },
+                set:function(v){ if( v != asset.position.z ){ asset.position.z = v||0; node.__dirtyPosition = true; } }
+            }
+        });
+
+        entity.rotation = Object.create(null, {
+            x:{
+                get:function(){ return asset.rotation.x; },
+                set:function(v){ if( v != asset.rotation.x ){ asset.rotation.x = v||0; node.__dirtyRotation = true; } }
+            },
+            y:{
+                get:function(){ return asset.rotation.y; },
+                set:function(v){ if( v != asset.rotation.y ){ asset.rotation.y = v||0; node.__dirtyRotation = true; } }
+            },
+            z:{
+                get:function(){ return asset.rotation.z; },
+                set:function(v){ if( v != asset.rotation.z ){ asset.rotation.z = v||0; node.__dirtyRotation = true; } }
+            }
+        });        
+    }
+});

@@ -2,7 +2,7 @@ CLAZZ("cmp.ThreeNode", {
     INJECT:["entity", "gameState", "asset", "scripts"],
 
     CONSTRUCTOR:function(){
-        var entity = this.entity, script;
+        var entity = this.entity, script, asset = this.asset;
         entity.position = this.asset.position;
         entity.rotation = this.asset.rotation;
         entity.scale = this.asset.scale;
@@ -24,5 +24,9 @@ CLAZZ("cmp.ThreeNode", {
                 console.warn(ex);
             }
         }
-    }    
+    },
+
+    getNode:function(){
+        return this.asset;
+    }
 })

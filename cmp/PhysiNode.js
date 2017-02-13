@@ -1,6 +1,17 @@
+need([
+    {FQCN:"THREE", URL:"lib/three.js"},
+    {FQCN:"Physijs", URL:"lib/physi.js", NEEDS:[
+         {FQCN:"THREE", URL:"lib/three.js"}
+    ]}
+], function( ){
+
+
 CLAZZ("cmp.PhysiNode", {
-    INJECT:["entity", "asset", "game", "mass", "mesh", "friction", "bounciness"],
+    INJECT:["entity", "asset", "game", "mass", "mesh", "friction", "bounciness", "name", "gravity"],
     node:null,
+
+    "@name":{type:"string"},
+    name:"",
 
     "@mass":{type:"float", min:0},
     mass:0,
@@ -25,13 +36,22 @@ CLAZZ("cmp.PhysiNode", {
     "@bounciness":{type:"float", min:0, max:1},
     bounciness:0.98,
 
+    "@gravity":{type:"float", min:0, max:1},
+    gravity:1,
+
     create:function(){
         var entity = this.entity, asset = this.asset, node;
-
         node = this.node = Physijs[ this.mesh + "Mesh"]( null, null, this.mass, this.entity.getNode() );
 
+        node.entity = this.entity;
         node.friction = this.friction;
         node.restitution = this.bounciness;
+
+        if( this.name )
+            node.addEventListener('collision', function(other, linear, angular){
+                var cb = entity["onHit" + other.entity.physiNode.name];
+                if( cb ) cb.call(entity, other.entity, linear, angular);
+            });
 
         if( this.game.scene.physijs )
             this.game.scene.physijs.add( this.node );
@@ -65,5 +85,17 @@ CLAZZ("cmp.PhysiNode", {
                 set:function(v){ if( v != asset.rotation.z ){ asset.rotation.z = v||0; node.__dirtyRotation = true; } }
             }
         });        
+    },
+
+    onTick:function(){
+        if( this.gravity < 1 ){
+            this.node.applyCentralForce();
+        }
+    },
+
+    addForce:function(x,y,z){
+        this.node.applyCentralForce({x:x,y:y,z:z});
     }
+});
+
 });

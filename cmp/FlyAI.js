@@ -4,6 +4,7 @@ CLAZZ("cmp.FlyAI",{
     targetX:0,
     targetY:0,
     targetZ:0,
+    "@speed":{type:"float"},
     speed:1,
     error:20,
     _timeout:0,
@@ -14,7 +15,7 @@ CLAZZ("cmp.FlyAI",{
     pickRandomTarget:function(){
         if( !this.bounds ){
             this.bounds = {};
-            this.call("getWorldBounds", bounds);
+            this.call("getWorldBounds", this.bounds);
         }
 
         var pos = this.entity.position, tries = 100;
@@ -29,7 +30,7 @@ CLAZZ("cmp.FlyAI",{
         this._timeout = 0;
     },
 
-    update:function(){
+    onTick:function(){
         if( this.enabled ){
             this._timeout++;
 
@@ -42,7 +43,7 @@ CLAZZ("cmp.FlyAI",{
             var vz = 0; // Math.random() * speed * 0.2;
             var dx = this.targetX - pos.x;
             var dy = this.targetY - pos.y;
-            var dz = this.targetY - pos.z;
+            var dz = this.targetZ - pos.z;
             if( Math.abs(dx) + Math.abs(dy) + Math.abs(dz) < speed*this.error ){
                 if( this.entity.onGetTarget )
                     this.entity.apply(this.entity.onGetTarget);
@@ -53,7 +54,13 @@ CLAZZ("cmp.FlyAI",{
             vx += speed * Math.sign(dx);
             vy += speed * Math.sign(dy);
             vz += speed * Math.sign(dz);
-            this.entity.addForce(vx, vy, vz);
+
+            if( this.entity.addForce ) this.entity.addForce(vx, vy, vz);
+            else{
+                this.entity.position.x += vx;
+                this.entity.position.y += vy;
+                this.entity.position.z += vz;
+            }
         }
     }
 });

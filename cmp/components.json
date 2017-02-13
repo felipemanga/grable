@@ -6,6 +6,8 @@
     "cmp.Event":{"phaserjs":true, "threejs":true},
     "cmp.FlyAI":{"phaserjs":true, "threejs":true},
     "cmp.FollowCamera":{"phaserjs":true, "threejs":true},
+    "cmp.Force":{"phaserjs":true, "threejs":true},
+    
     "cmp.ImgDiff":{"phaserjs":true},
     "cmp.Inertia":{"phaserjs":true, "threejs":true},
 

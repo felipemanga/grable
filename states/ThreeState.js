@@ -108,7 +108,9 @@ var ThreeGame = CLAZZ({
 	__animate: function ( time ) {
 		this.request = requestAnimationFrame( this.__animateBound );
 
-        this.pool.call("onTick", (time - this.prevTime)/1000 );
+        var delta = (time - this.prevTime)/1000;
+        this.pool.call("onTick", delta );
+        this.pool.call("onPostTick", delta );
 
         if ( this.isVR === true ) {
             this.camera.updateMatrixWorld();

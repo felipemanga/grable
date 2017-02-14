@@ -29,7 +29,7 @@ CLAZZ("cmp.ThreeNode", {
                 var f = new Function('pool', 'addComponent', script.source);
                 f.call(this.asset, this.gameState.pool, addComponent);
             }catch(ex){
-                console.warn(ex);
+                console.warn( script.name, ex );
             }
         }
     },

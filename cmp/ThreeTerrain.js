@@ -2,22 +2,35 @@
 'use strict';
 
 CLAZZ("cmp.ThreeTerrain", {
-    INJECT:["entity", "asset", "height", "octaves"],
+    INJECT:["entity", "asset", "height", "octaves", "island"],
 
 	"@height":{type:"float", min:0},
     height:1,
 
 	"@octaves":{type:"vec3f", min:0},
     octaves:0,
+
+    "@island":{type:"float", min:0},
+    island:0,
     
 
     create:function(){
         if( !(this.asset.geometry instanceof THREE.PlaneGeometry) || !this.octaves )
             return;
 
+        this.generate();
+
+		this.asset.geometry.computeFaceNormals();
+		this.asset.geometry.computeVertexNormals();        
+        
+    },
+
+    generate:function(){
+
         var geometry = this.asset.geometry, 
             noise = this.entity.noise, 
             ctx = this.entity, 
+            island = this.island,
             height = this.height, 
             octaves = this.octaves,
             weights = {
@@ -26,6 +39,13 @@ CLAZZ("cmp.ThreeTerrain", {
                 z:0.125
             };
 
+        if( geometry.parameters.width != geometry.parameters.height ){
+            console.warn("Terrain not square!");
+            return;
+        }
+
+        var size = geometry.parameters.width / 2;
+        
         if( !noise ){
             ctx = new SimplexNoise();
             noise = ctx.noise;
@@ -37,17 +57,21 @@ CLAZZ("cmp.ThreeTerrain", {
             for( var j in octaves ){
                 var scale = octaves[j];
 			    if( scale )
-                    vertex.z += noise.call( ctx, vertex.x / scale, vertex.y / scale ) * height * weights[j];
+                    vertex.z += (1+0.5*noise.call( ctx, vertex.x / scale, vertex.y / scale )) * height * weights[j];
             }
 
-		}
+            if( island ){
+                var f = 1.4 - Math.sqrt( vertex.x*vertex.x + vertex.y*vertex.y ) / size;
+                if( f < 0 ) f = 0;
+                if( f > 1 ) f = 1;
 
-		geometry.computeFaceNormals();
-		geometry.computeVertexNormals();        
-        
-    },
+                if( f < 0.5 ) f = Math.pow( f * 2, island ) / 2;
+                else if( f > 0.5 ) f = 1 - Math.pow( (1-f) * 2, island ) / 2;
 
-    __noise:function(){
+                vertex.z *= f;
+            }
+
+		}        
 
     }
 });

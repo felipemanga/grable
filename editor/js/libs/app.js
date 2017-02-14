@@ -18,6 +18,7 @@ var APP = {
 		this.width = 500;
 		this.height = 500;
 		this.scene = null;
+		this.pool = null;
 
 		this.load = function ( json ) {
 
@@ -42,7 +43,7 @@ var APP = {
 			this.setScene( loader.parse( json.scene ) );
 			this.setCamera( loader.parse( json.camera ) );
 
-			pool = new DOC.Pool();
+			pool = this.pool = new DOC.Pool();
 
 			events = {
 				init: [],

@@ -46,8 +46,7 @@ Sidebar.Material = function ( editor ) {
 
 	// type
 
-	var materialClassRow = new UI.Row();
-	var materialClass = new UI.Select().setOptions( {
+	var options = {
 
 		'LineBasicMaterial': 'LineBasicMaterial',
 		'LineDashedMaterial': 'LineDashedMaterial',
@@ -61,7 +60,13 @@ Sidebar.Material = function ( editor ) {
 		'ShaderMaterial': 'ShaderMaterial',
 		'SpriteMaterial': 'SpriteMaterial'
 
-	} ).setWidth( '150px' ).setFontSize( '12px' ).onChange( update );
+	};
+
+	if( THREE.WaterMaterial )
+		options['WaterMaterial'] = 'WaterMaterial';
+
+	var materialClassRow = new UI.Row();
+	var materialClass = new UI.Select().setOptions( options ).setWidth( '150px' ).setFontSize( '12px' ).onChange( update );
 
 	materialClassRow.add( new UI.Text( 'Type' ).setWidth( '90px' ) );
 	materialClassRow.add( materialClass );

@@ -8,57 +8,18 @@
 	<body ontouchstart="">
 		<link href="css/main.css" rel="stylesheet" />
 		<link id="theme" href="css/light.css" rel="stylesheet" />
-		<script src="js/libs/CLAZZ.js"></script>
-		<script src="js/libs/doc.js"></script>
-		<script src="js/libs/Entity.js"></script>
+		<script src="../lib/CLAZZ.js"></script>
+		<script src="../lib/doc.js"></script>
+		<script src="../lib/Entity.js"></script>
+		<script src="../cmp/ThreeNode.js"></script>
 		<script>
 		function need(deps, cb){
 			cb();
 		}
-CLAZZ("cmp.ThreeNode", {
-    INJECT:["entity", "pool", "asset", "scripts"],
-
-    CONSTRUCTOR:function(){
-        var entity = this.entity, script;
-        if( entity.isClone ){
-            var parent = this.asset.parent;
-            this.asset = this.asset.clone();
-            parent.add( this.asset );
-            CLAZZ.set("asset", this.asset);
-        }
-
-        entity.position = this.asset.position;
-        entity.rotation = this.asset.rotation;
-        entity.scale = this.asset.scale;
-
-        function addComponent( name, data ){
-            if( typeof name != "string" && script.hidden ){
-                data = name;
-                name = script.name;
-            }
-
-            entity.addComponent( name, data );
-        };
-        
-        for( var i=0; i<this.scripts.length; ++i ){
-            script = this.scripts[i];
-            try{
-                var f = new Function('pool', 'addComponent', script.source);
-                f.call(this.asset, this.pool, addComponent);
-            }catch(ex){
-                console.warn(ex);
-            }
-        }
-    },
-
-    getNode:function(){
-        return this.asset;
-    }    
-});
 		</script>
 
 		<script src="js/libs/three.min.js"></script>
-		<script src="js/libs/physi.js"></script>
+		<script src="../lib/physi.js"></script>
 		<script src="js/examples/libs/system.min.js"></script>
 
 		<script src="js/examples/controls/EditorControls.js"></script>

@@ -19,7 +19,19 @@ CLAZZ("cmp.PhysiScene", {
         this.scene = Physijs.Scene({
             fixedTimeStep: 1/30
         }, this.entity.getNode());
+
         this.setGravity( this.gravity );
+    },
+
+    destroy:function(){
+        if( !this.scene ){
+            console.log("double destroy", this.entity);
+            return;
+        }
+
+        this.scene._worker.onmessage = null;
+        this.scene._worker = null;
+        this.scene = null;
     },
 
     setGravity:function( gravity ){

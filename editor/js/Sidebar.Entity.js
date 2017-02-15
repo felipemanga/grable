@@ -282,7 +282,8 @@ Sidebar.Entity = function ( editor ) {
 			var desc = {
 				priority: meta.priority || 0,
 				meta:  meta,
-				value: data[k] || clazz.CLAZZ[k],
+				value: (k in data ? data[k] : clazz.CLAZZ[k]),
+				default: clazz.CLAZZ[k],
 				key:k,
 
 				row: row,
@@ -291,9 +292,13 @@ Sidebar.Entity = function ( editor ) {
 				update: function(value){
 					if( value == undefined ) value = this.value;
 					else this.value = value;
+					if( data[ this.key ] == value ) return;
 					data[ this.key ] = value;
 
 					src = jsonPrefix + JSON.stringify(data) + jsonPostfix;
+
+                    if( script.source == src )
+                        return;
 					
 					editor.execute( new SetScriptValueCommand( object, script, 'source', src, {line: 1, ch: 1}, {left:0, top:0, width:0, height:0, clientWidth:0, clientHeight:0} ) );
 
@@ -325,13 +330,27 @@ Sidebar.Entity = function ( editor ) {
 			factory( desc );
 			props.push( desc );
 
+			var OPS = {
+				AND,
+				OR,
+				EQ,
+				NEQ,
+				IN,
+				NIN
+			};
+
             function AND( data, clazz, tests ){
                 for( var op in tests ){
-                    switch(op){
-                    case "eq": if( !EQ(data, clazz, tests[op]) ) return false;
-                    }
+                	if( !OPS[(op||"").toUpperCase()](data, clazz, tests[op]) ) return false;
                 }
                 return true;
+            }
+
+            function OR( data, clazz, tests ){
+                for( var op in tests ){
+                	if( OPS[(op||"").toUpperCase()](data, clazz, tests[op]) ) return true;
+                }
+                return false;
             }
 
             function EQ( data, clazz, tests ){
@@ -342,6 +361,33 @@ Sidebar.Entity = function ( editor ) {
                 }
                 return true;
             }
+
+            function NEQ( data, clazz, tests ){
+                for( var key in tests ){
+                    var value = data[key];
+                    if( value === undefined ) value = clazz[key];
+                    if( value == tests[key] ) return false;
+                }
+                return true;
+            }            
+
+            function IN( data, clazz, tests ){
+                for( var key in tests ){
+                    var value = data[key];
+                    if( value === undefined ) value = clazz[key];
+                    if( tests[key].indexOf(value) == -1 ) return false;
+                }
+                return true;
+            }
+
+            function NIN( data, clazz, tests ){
+                for( var key in tests ){
+                    var value = data[key];
+                    if( value === undefined ) value = clazz[key];
+                    if( tests[key].indexOf(value) != -1 ) return false;
+                }
+                return true;
+            }            
 		}
 
 		props.sort(function(a, b){
@@ -354,19 +400,91 @@ Sidebar.Entity = function ( editor ) {
 	var propEditor = {
 
 		unknown:function( obj ){
-			obj.row.add( new UI.Text( 'Unknown type:' + (obj.meta.type||"undefined")  ) );
+			obj.row.add( new UI.Text( 'Unknown type:' + (obj.meta.type||"undefined")  ) ).setStyle('float', ['right']);
 		},
 
 		string:function( obj ){
-			var e = new UI.Input().setValue(obj.value).setWidth( '180px' );
+			var e = new UI.Input().setValue(obj.value).setWidth( '180px' ).setStyle('float', ['right']);
 			obj.row.add( e );
 			e.onChange(function(){
-				obj.update(e.getValue());
+                var v = e.getValue();
+                if( obj.meta.trim ) v = v.trim();
+                if( obj.meta.lowercase ) v = v.toLowerCase();
+                if( obj.meta.uppercase ) v = v.toUpperCase();
+				obj.update(v);
 			});
 		},
 
+		json:function( obj ){
+			var e = new UI.Input().setValue(obj.value).setWidth( (obj.meta.width || 254) + 'px' );
+			obj.row.add( e );
+			e.onChange(function(){
+                var v = e.getValue();
+                try{
+                    JSON.parse( v );
+				    obj.update( v );
+                    e.setBackgroundColor('inherit');                    
+                }catch(err){
+                    e.setBackgroundColor('red');
+                }
+			});
+		},
+
+		array:function( obj ){
+            var arr = obj.value || [], meta = obj.meta;
+            var factory = propEditor[ meta.subtype ];
+			if( !factory ) factory = propEditor.unknown;
+
+			var e = new UI.Row();
+            render();
+			obj.row.add( e );
+
+            function render(){
+                e.clear();
+                for( var i=0; i<arr.length; ++i ){
+                    var sub = {
+                        meta:  {type:'subtype'},
+                        value: arr[i],
+                        default: meta.default,
+                        row: e,
+                        
+                        header: new UI.Button( 'x' )
+                            .setStyle('clear', ['both'])
+                            .setWidth( '30px' )
+                            .onClick((function(i){ 
+                                arr.splice(i, 1); 
+                                render(); 
+                            }).bind(this, i)),
+
+                        update: (function(i, value){
+                            if( value === undefined ) value = this.value;
+                            else this.value = value;
+                            arr[i] = value;
+                            render();
+                        }).bind(sub, i)
+                    };
+
+                    e.add( sub.header );
+                    factory( sub );
+                }
+
+                e.add( new UI.Button('add')
+                    .setStyle('clear', ['both'])
+                    .setStyle('margin-left', ['auto'])
+                    .setDisplay('block')
+                    .onClick(function(){
+                        arr.push(meta.default);
+                        render();
+                    }) 
+                );
+
+                obj.update(arr);
+                arr = arr.concat();
+            }
+		},        
+
 		bool:function( obj ){
-			var e = new UI.Checkbox(obj.value);
+			var e = new UI.Checkbox(obj.value).setStyle('float', 'right');
 			obj.row.add( e );
 			e.onChange(function(){
 				obj.update(e.getValue());
@@ -374,7 +492,7 @@ Sidebar.Entity = function ( editor ) {
 		},
 
 		enum:function( obj ){
-			var e = new UI.Select().setWidth( '180px' ).setFontSize( '12px' );
+			var e = new UI.Select().setWidth( '180px' ).setFontSize( '12px' ).setStyle('float', ['right']);
 			var opts = {};
 			var options = obj.meta.options || [];
 			
@@ -392,7 +510,7 @@ Sidebar.Entity = function ( editor ) {
 		},
 
 		string:function( obj ){
-			var e = new UI.Input().setValue(obj.value).setWidth( '180px' );
+			var e = new UI.Input().setValue(obj.value).setWidth( '180px' ).setStyle('float', ['right']);
 			obj.row.add( e );
 			e.onChange(function(){
 				obj.update(e.getValue());
@@ -450,7 +568,7 @@ Sidebar.Entity = function ( editor ) {
 		},
 
 		int:function( obj ){
-			var e = new UI.Integer(obj.value);
+			var e = new UI.Integer(obj.value).setStyle('float', ['right']);
 			obj.row.add( e );
 			if( "min" in obj.meta ) e.min = obj.meta.min;
 			if( "max" in obj.meta ) e.max = obj.meta.max;
@@ -461,7 +579,7 @@ Sidebar.Entity = function ( editor ) {
 		},
 
 		float:function( obj ){
-			var e = new UI.Number(obj.value);
+			var e = new UI.Number(obj.value).setStyle('float', ['right']);
 			obj.row.add( e );
 			if( "min" in obj.meta ) e.min = obj.meta.min;
 			if( "max" in obj.meta ) e.max = obj.meta.max;
@@ -508,12 +626,13 @@ Sidebar.Entity = function ( editor ) {
         },
 
         node:function( obj ){
-            var e = new UI.Select();
+            var e = new UI.Select().setStyle('float', ['right']);
             var opts = {}, meta = obj.meta;
+            opts[obj.default] = "";
             
             var instOf = meta["instanceof"];
             if( instOf && !(instOf instanceof Array) ) instOf = [instOf];
-            var instOfLength = instOf.length;
+            var instOfLength = (instOf && instOf.length) || 0;
 
             iterate( editor.scene );
 

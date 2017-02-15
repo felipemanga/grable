@@ -11,11 +11,13 @@ CLAZZ("cmp.ThreeNode", {
         }
 
         this.setNode( this.asset );
+        this.entity._addMethod( this.entity, "getEntity" + this.asset.uuid, function(){ return this; });
 
         function addComponent( name, data ){
             if( typeof name != "string" && script.hidden ){
                 data = name;
                 name = script.name;
+                if( !name ) return;
             }
 
             entity.addComponent( name, data );
@@ -31,6 +33,29 @@ CLAZZ("cmp.ThreeNode", {
             }
         }
     },
+
+    destroy:function(){
+        if( this.asset && this.asset.parent )
+            this.asset.parent.remove( this.asset );
+    },
+
+    setPosition:function( x, y, z ){
+        this.entity.position.x = x || 0;
+        this.entity.position.y = y || 0;
+        this.entity.position.z = z || 0;
+    },
+
+    setRotation:function( x, y, z ){
+        this.entity.rotation.x = x || 0;
+        this.entity.rotation.y = y || 0;
+        this.entity.rotation.z = z || 0;
+    },    
+
+    setScale:function( x, y, z ){
+        this.entity.scale.x = x || 0;
+        this.entity.scale.y = y || 0;
+        this.entity.scale.z = z || 0;
+    },    
 
     setNode:function( asset, optval ){
         var opts = {
@@ -62,6 +87,7 @@ CLAZZ("cmp.ThreeNode", {
         entity.position = asset.position;
         entity.rotation = asset.rotation;
         entity.scale    = asset.scale;
+        asset.entity = this.entity;
     },
 
     getNode:function(){

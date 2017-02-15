@@ -11,6 +11,8 @@
     "cmp.ImgDiff":{"phaserjs":true},
     "cmp.Inertia":{"phaserjs":true, "threejs":true},
 
+    "cmp.Overboard":{"threejs":true},
+
     "cmp.PhaserCollision":{"phaserjs":true},
     "cmp.PhaserMouse":{"phaserjs":true},
     "cmp.PhaserSprite":{"phaserjs":true},

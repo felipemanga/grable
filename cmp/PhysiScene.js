@@ -6,7 +6,7 @@ need([
 
 
 CLAZZ("cmp.PhysiScene", {
-    INJECT:["entity", "asset", "gravity"],
+    INJECT:["entity", "pool", "asset", "gravity"],
     scene:null,
     bounds:null,
 
@@ -14,6 +14,8 @@ CLAZZ("cmp.PhysiScene", {
     gravity:{x:0, y:-9.8, z:0},
 
     create:function(){
+        this.pool.silence("getWorldBounds");
+        
         this.bounds = new THREE.Box3().setFromObject( this.asset );
 
         this.scene = Physijs.Scene({

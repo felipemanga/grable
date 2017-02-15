@@ -91,6 +91,10 @@ CLAZZ("cmp.PhysiNode", {
         });        
     },
 
+    destroy:function(){
+        this.game.scene.physijs.remove( this.node );
+    },
+
     addForce:function(x,y,z){
         this.node.applyCentralForce({x:x,y:y,z:z});
     }

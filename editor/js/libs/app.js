@@ -96,7 +96,7 @@ var APP = {
 				});
 			}
 
-			pool.call("init", arguments);
+			pool.call("onSceneLoaded", arguments);
 
 		};
 		

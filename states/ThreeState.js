@@ -162,6 +162,7 @@ CLAZZ("states.ThreeState", {
         CLAZZ.set("game", this.game);
 
         this.game.load();
+        this.pool.call("onSceneLoaded");
         this.game.start();
     },
 

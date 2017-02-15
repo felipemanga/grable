@@ -7,7 +7,7 @@ need([
 
 
 CLAZZ("cmp.PhysiNode", {
-    INJECT:["entity", "asset", "game", "mass", "mesh", "friction", "bounciness", "name", "gravity"],
+    INJECT:["entity", "asset", "game", "mass", "mesh", "friction", "bounciness", "name", "linearDamping", "angularDamping"],
     node:null,
 
     "@name":{type:"string"},
@@ -36,8 +36,10 @@ CLAZZ("cmp.PhysiNode", {
     "@bounciness":{type:"float", min:0, max:1},
     bounciness:0.98,
 
-    "@gravity":{type:"float", min:0, max:1},
-    gravity:1,
+    "@linearDamping":{type:"float", min:0, max:1},
+    linearDamping:0,
+    "@angularDamping":{type:"float", min:0, max:1},
+    angularDamping:0,
 
     create:function(){
         var entity = this.entity, asset = this.asset, node;
@@ -46,6 +48,8 @@ CLAZZ("cmp.PhysiNode", {
         node.entity = this.entity;
         node.friction = this.friction;
         node.restitution = this.bounciness;
+
+        node.setDamping( this.linearDamping, this.angularDamping );
 
         if( this.name )
             node.addEventListener('collision', function(other, linear, angular){
@@ -85,12 +89,6 @@ CLAZZ("cmp.PhysiNode", {
                 set:function(v){ if( v != asset.rotation.z ){ asset.rotation.z = v||0; node.__dirtyRotation = true; } }
             }
         });        
-    },
-
-    onTick:function(){
-        if( this.gravity < 1 ){
-            this.node.applyCentralForce();
-        }
     },
 
     addForce:function(x,y,z){

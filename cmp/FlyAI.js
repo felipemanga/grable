@@ -1,5 +1,5 @@
 CLAZZ("cmp.FlyAI",{
-    INJECT:["entity", "speed", "call"],
+    INJECT:["entity", "speed", "call", "manualBounds"],
     enabled:true,
     targetX:0,
     targetY:0,
@@ -10,19 +10,23 @@ CLAZZ("cmp.FlyAI",{
     _timeout:0,
     timeout:100,
 
-    bounds:null,
+    "@bounds":{type:"enum", options:["world", "manual"]},
+    bounds:"world",
+
+    "@manualBounds":{ type:"bounds", test:{ eq:{bounds:"manual"} } },
+    manualBounds:null,
 
     pickRandomTarget:function(){
-        if( !this.bounds ){
-            this.bounds = {};
-            this.call("getWorldBounds", this.bounds);
+        if( !this.manualBounds ){
+            this.manualBounds = {};
+            this.call("getWorldBounds", this.manualBounds);
         }
 
         var pos = this.entity.position, tries = 100;
         do{
-            this.targetX = (Math.random() * this.bounds.width || 0) + (this.bounds.x || 0);
-            this.targetY = (Math.random() * this.bounds.height || 0) + (this.bounds.y || 0);
-            this.targetZ = (Math.random() * this.bounds.depth || 0) + (this.bounds.z || 0);
+            this.targetX = (Math.random() * this.manualBounds.width || 0) + (this.manualBounds.x || 0);
+            this.targetY = (Math.random() * this.manualBounds.height || 0) + (this.manualBounds.y || 0);
+            this.targetZ = (Math.random() * this.manualBounds.depth || 0) + (this.manualBounds.z || 0);
             var dx = this.targetX - pos.x || 0;
             var dy = this.targetY - pos.y || 0;
             var dz = this.targetZ - pos.z || 0;
@@ -30,7 +34,7 @@ CLAZZ("cmp.FlyAI",{
         this._timeout = 0;
     },
 
-    onTick:function(){
+    onTick:function( delta ){
         if( this.enabled ){
             this._timeout++;
 

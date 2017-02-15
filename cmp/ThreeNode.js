@@ -10,9 +10,7 @@ CLAZZ("cmp.ThreeNode", {
             CLAZZ.set("asset", this.asset);
         }
 
-        entity.position = this.asset.position;
-        entity.rotation = this.asset.rotation;
-        entity.scale = this.asset.scale;
+        this.setNode( this.asset );
 
         function addComponent( name, data ){
             if( typeof name != "string" && script.hidden ){
@@ -32,6 +30,38 @@ CLAZZ("cmp.ThreeNode", {
                 console.warn( script.name, ex );
             }
         }
+    },
+
+    setNode:function( asset, optval ){
+        var opts = {
+            keepPosition:true,
+            keepRotation:true,
+            keepScale:true,
+            parent:true,
+            remove:true,
+            dispose:true
+        };
+
+        for( var k in optval )
+            if( k in opts ) opts[k] = optval[k];
+
+        var entity = this.entity, oldAsset = this.asset;
+        this.asset = asset;
+
+        if( oldAsset && asset != oldAsset ){
+
+            if( opts.keepPosition ) asset.position.copy( oldAsset.position );
+            if( opts.keepRotation ) asset.rotation.copy( oldAsset.rotation );
+            if( opts.keepScale ) asset.scale.copy( oldAsset.scale );
+            if( opts.parent === true ) oldAsset.parent.add(asset);
+
+            if( opts.remove || opts.dispose ) oldAsset.parent.remove(oldAsset);
+            if( opts.dispose && oldAsset.dispose ) oldAsset.dispose();
+        }
+
+        entity.position = asset.position;
+        entity.rotation = asset.rotation;
+        entity.scale    = asset.scale;
     },
 
     getNode:function(){

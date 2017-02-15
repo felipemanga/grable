@@ -15,13 +15,12 @@ CLAZZ("cmp.ThreeTerrain", {
     
 
     create:function(){
-        if( !(this.asset.geometry instanceof THREE.PlaneGeometry) || !this.octaves )
+        if( !this.octaves )
             return;
 
         this.generate();
-
-		this.asset.geometry.computeFaceNormals();
-		this.asset.geometry.computeVertexNormals();        
+        this.asset.geometry.computeFaceNormals();
+        this.asset.geometry.computeVertexNormals();
         
     },
 
@@ -51,28 +50,58 @@ CLAZZ("cmp.ThreeTerrain", {
             noise = ctx.noise;
         }
 
-		for ( var i = 0; i < geometry.vertices.length; i++ ) {
-			var vertex = geometry.vertices[i];
+        if( geometry.isBufferGeometry ){
+            var vertices = geometry.getAttribute("position").array;
 
-            for( var j in octaves ){
-                var scale = octaves[j];
-			    if( scale )
-                    vertex.z += (1+0.5*noise.call( ctx, vertex.x / scale, vertex.y / scale )) * height * weights[j];
+            for ( var i = 0; i < vertices.length; i += 3 ) {
+
+                var vx = vertices[i  ];
+                var vy = vertices[i+1];
+                var vz = vertices[i+2];
+
+                for( var j in octaves ){
+                    var scale = octaves[j];
+                    if( scale )
+                        vertices[i+2] += (1+0.5*noise.call( ctx, vx / scale, vy / scale )) * height * weights[j];
+                }
+
+                if( island ){
+                    var f = 1.4 - Math.sqrt( vx*vx + vy*vy ) / size;
+                    if( f < 0 ) f = 0;
+                    if( f > 1 ) f = 1;
+
+                    if( f < 0.5 ) f = Math.pow( f * 2, island ) / 2;
+                    else if( f > 0.5 ) f = 1 - Math.pow( (1-f) * 2, island ) / 2;
+
+                    vertices[i+2] *= f;
+                }
+
             }
 
-            if( island ){
-                var f = 1.4 - Math.sqrt( vertex.x*vertex.x + vertex.y*vertex.y ) / size;
-                if( f < 0 ) f = 0;
-                if( f > 1 ) f = 1;
+        }else{
+            for ( var i = 0; i < geometry.vertices.length; i++ ) {
+                var vertex = geometry.vertices[i];
 
-                if( f < 0.5 ) f = Math.pow( f * 2, island ) / 2;
-                else if( f > 0.5 ) f = 1 - Math.pow( (1-f) * 2, island ) / 2;
+                for( var j in octaves ){
+                    var scale = octaves[j];
+                    if( scale )
+                        vertex.z += (1+0.5*noise.call( ctx, vertex.x / scale, vertex.y / scale )) * height * weights[j];
+                }
 
-                vertex.z *= f;
+                if( island ){
+                    var f = 1.4 - Math.sqrt( vertex.x*vertex.x + vertex.y*vertex.y ) / size;
+                    if( f < 0 ) f = 0;
+                    if( f > 1 ) f = 1;
+
+                    if( f < 0.5 ) f = Math.pow( f * 2, island ) / 2;
+                    else if( f > 0.5 ) f = 1 - Math.pow( (1-f) * 2, island ) / 2;
+
+                    vertex.z *= f;
+                }
+
             }
 
-		}        
-
+        }
     }
 });
 

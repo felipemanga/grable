@@ -19,12 +19,15 @@ var APP = {
 		this.height = 500;
 		this.scene = null;
 		this.pool = null;
+		this.scene = null;
+		this.camera = null;
+		this.renderer = null;
 
 		this.load = function ( json ) {
 
 			isVR = json.project.vr;
 
-			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			this.renderer = renderer = new THREE.WebGLRenderer( { antialias: true } );
 			renderer.setClearColor( 0x000000 );
 			renderer.setPixelRatio( window.devicePixelRatio );
 
@@ -110,7 +113,7 @@ var APP = {
 
 		this.setCamera = function ( value ) {
 
-			camera = value;
+			this.camera = camera = value;
 			camera.aspect = this.width / this.height;
 			camera.updateProjectionMatrix();
 

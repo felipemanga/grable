@@ -273,6 +273,8 @@ Sidebar.Entity = function ( editor ) {
 		if( !data ) data = {};
 		else data = JSON.parse(data[1]);
 
+        var triggers = {};
+
 		for( var k in clazz.meta ){
 			var meta = clazz.meta[k], factory = propEditor[meta.type];
 			if( !factory ) factory = propEditor.unknown;
@@ -282,7 +284,10 @@ Sidebar.Entity = function ( editor ) {
 				meta:  meta,
 				value: data[k] || clazz.CLAZZ[k],
 				key:k,
+
 				row: row,
+                header: new UI.Text( meta.label || k ).setWidth( '90px' ),
+
 				update: function(value){
 					if( value == undefined ) value = this.value;
 					else this.value = value;
@@ -291,12 +296,52 @@ Sidebar.Entity = function ( editor ) {
 					src = jsonPrefix + JSON.stringify(data) + jsonPostfix;
 					
 					editor.execute( new SetScriptValueCommand( object, script, 'source', src, {line: 1, ch: 1}, {left:0, top:0, width:0, height:0, clientWidth:0, clientHeight:0} ) );
-				}
+
+                    if( this.key in triggers ){
+                        var list = triggers[this.key];
+                        for( var i=0; i<list.length; ++i )
+                            list[i].test();
+                    }
+				},
+
+                test:function(){
+                    var pass = !this.meta.test || AND( data, clazz.CLAZZ, this.meta.test );
+                    this.row.setDisplay( pass?'block':'none' );
+                    if( !pass ) this.update( clazz.CLAZZ[this.key] );
+                }
 			};
 
-			row.add( new UI.Text( meta.label || k ).setWidth( '90px' ) );
+			row.add( desc.header );
+
+            for( var op in desc.meta.test ){
+                for( var k in desc.meta.test[op] ){
+                    triggers[k] = triggers[k] || [];
+                    triggers[k].push( desc );
+                }
+            }
+
+            desc.test();
+            
 			factory( desc );
 			props.push( desc );
+
+            function AND( data, clazz, tests ){
+                for( var op in tests ){
+                    switch(op){
+                    case "eq": if( !EQ(data, clazz, tests[op]) ) return false;
+                    }
+                }
+                return true;
+            }
+
+            function EQ( data, clazz, tests ){
+                for( var key in tests ){
+                    var value = data[key];
+                    if( value === undefined ) value = clazz[key];
+                    if( value != tests[key] ) return false;
+                }
+                return true;
+            }
 		}
 
 		props.sort(function(a, b){
@@ -424,7 +469,100 @@ Sidebar.Entity = function ( editor ) {
 			e.onChange(function(){
 				obj.update(e.getValue());
 			});
-		}
+		},
+
+        bounds:function( obj ){
+            var bounds = {};
+            
+            var r = new UI.Row();
+            obj.row.add(r);
+            add(r, "min x", "x");
+            add(r, "max x", "width", "x");
+            add(r, "min y", "y");
+            add(r, "max y", "top", "y");
+            add(r, "min z", "z");
+            add(r, "max z", "far", "z");
+
+            function add( row, name, prop, sub ){
+                var v = (obj.value && obj.value[prop]) || 0;
+                bounds[prop] = v;
+
+                if( obj.value && sub ) v += obj.value[sub];
+
+                row.add( new UI.Text(name).setWidth("50px") );
+
+                var e = new UI.Number(v);
+                row.add( e );
+                e.setWidth("80px");
+                if( "min" in obj.meta ) e.min = obj.meta.min;
+                if( "max" in obj.meta ) e.max = obj.meta.max;
+                if( "step" in obj.meta ) e.step = obj.meta.step;
+                e.onChange(function(){
+                    bounds[prop] = e.getValue();
+                    if( sub ) bounds[prop] -= bounds[sub];
+
+                    obj.update( bounds );
+                });
+
+            }
+        },
+
+        node:function( obj ){
+            var e = new UI.Select();
+            var opts = {}, meta = obj.meta;
+            
+            var instOf = meta["instanceof"];
+            if( instOf && !(instOf instanceof Array) ) instOf = [instOf];
+            var instOfLength = instOf.length;
+
+            iterate( editor.scene );
+
+
+			e.setOptions( opts )
+			 .setValue( obj.value )
+			 .onChange(function(){
+				obj.update(e.getValue());
+			});
+
+            obj.row.add( e );
+            return;
+
+            function iterate(n){
+                if( !n ) return;
+                check( n );
+                if( n.children ){
+                    for( var i=0; i<n.children.length; ++i )
+                        iterate(n.children[i]);
+                }
+            }
+
+            function check(n){
+
+                if( n.uuid ){
+
+                    if( instOf ){
+                        for( var i=0; i<instOfLength; ++i ){
+
+                            if( typeof instOf[i] != "string" )
+                                continue;
+
+                            var clazz = DOC.resolve( instOf[i] );
+                            if( clazz && !(n instanceof clazz) )
+                                return;
+                        }
+                    }
+
+                    for( var k in meta.eq ){
+                         if( meta.eq[k] != n[k] )
+                            return;
+                    }
+
+                    opts[ n.uuid ] = n.name;
+
+                }
+
+            }
+        }
 
 	};
 

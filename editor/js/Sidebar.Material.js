@@ -62,9 +62,6 @@ Sidebar.Material = function ( editor ) {
 
 	};
 
-	if( THREE.WaterMaterial )
-		options['WaterMaterial'] = 'WaterMaterial';
-
 	var materialClassRow = new UI.Row();
 	var materialClass = new UI.Select().setOptions( options ).setWidth( '150px' ).setFontSize( '12px' ).onChange( update );
 

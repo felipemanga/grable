@@ -8,6 +8,8 @@ need([
 
 CLAZZ("cmp.PhysiNode", {
     INJECT:["entity", "asset", "game", "mass", "mesh", "friction", "bounciness", "name", "linearDamping", "angularDamping"],
+    PROVIDES:{"Physics":"implements"},
+
     node:null,
 
     "@name":{type:"string"},

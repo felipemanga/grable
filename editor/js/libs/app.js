@@ -25,6 +25,8 @@ var APP = {
 
 		this.load = function ( json ) {
 
+			this.sceneLoaded = false;
+
 			isVR = json.project.vr;
 
 			this.renderer = renderer = new THREE.WebGLRenderer( { antialias: true } );

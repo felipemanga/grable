@@ -5,9 +5,12 @@ CLAZZ("cmp.ThreeNode", {
         var entity = this.entity, script;
         if( entity.isClone ){
             var parent = this.asset.parent;
+
             this.asset = this.asset.clone();
-            parent.add( this.asset );
             CLAZZ.set("asset", this.asset);
+
+            if( parent )
+                parent.add( this.asset );
         }
 
         this.setNode( this.asset );

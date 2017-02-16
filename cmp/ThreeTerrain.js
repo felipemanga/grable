@@ -1,17 +1,27 @@
-(function (){
+need([
+
+    {FQCN:"RAND_MT", URL:"lib/mersenne-twister.js"}
+
+],
+
+function (){
 'use strict';
 
 CLAZZ("cmp.ThreeTerrain", {
-    INJECT:["entity", "asset", "height", "octaves", "island"],
+    INJECT:["entity", "asset", "height", "octaves", "island", "seed"],
 
 	"@height":{type:"float", min:0},
     height:1,
+
+    "@seed":{type:"int"},
+    seed:0xDEADBEEF,
 
 	"@octaves":{type:"vec3f", min:0},
     octaves:0,
 
     "@island":{type:"float", min:0},
     island:0,
+
     
 
     create:function(){
@@ -21,13 +31,21 @@ CLAZZ("cmp.ThreeTerrain", {
         this.generate();
         this.asset.geometry.computeFaceNormals();
         this.asset.geometry.computeVertexNormals();
-        
+    },
+
+    STATIC:{
+        preview:function( values ){
+            var inst = CLAZZ.get( cmp.ThreeTerrain, values );
+            inst.generate();
+            inst.asset.geometry.computeFaceNormals();
+            inst.asset.geometry.computeVertexNormals();
+        }
     },
 
     generate:function(){
 
         var geometry = this.asset.geometry, 
-            noise = this.entity.noise, 
+            noise = this.entity && this.entity.noise, 
             ctx = this.entity, 
             island = this.island,
             height = this.height, 
@@ -46,18 +64,20 @@ CLAZZ("cmp.ThreeTerrain", {
         var size = geometry.parameters.width / 2;
         
         if( !noise ){
-            ctx = new SimplexNoise();
+            var gen = new MersenneTwister( this.seed );
+            ctx = new SimplexNoise( gen );
             noise = ctx.noise;
         }
 
         if( geometry.isBufferGeometry ){
-            var vertices = geometry.getAttribute("position").array;
+            var posatt = geometry.getAttribute("position");
+            var vertices = posatt.array;
 
             for ( var i = 0; i < vertices.length; i += 3 ) {
 
                 var vx = vertices[i  ];
                 var vy = vertices[i+1];
-                var vz = vertices[i+2];
+                var vz = vertices[i+2] = 0;
 
                 for( var j in octaves ){
                     var scale = octaves[j];
@@ -78,9 +98,13 @@ CLAZZ("cmp.ThreeTerrain", {
 
             }
 
+            posatt.needsUpdate = true;
+
         }else{
             for ( var i = 0; i < geometry.vertices.length; i++ ) {
                 var vertex = geometry.vertices[i];
+
+                vertex.z = 0;
 
                 for( var j in octaves ){
                     var scale = octaves[j];
@@ -289,4 +313,4 @@ var SimplexNoise = (function() {
 	return SimplexNoise;
 })();
 
-})();
+});

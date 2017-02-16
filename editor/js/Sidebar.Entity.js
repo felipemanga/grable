@@ -243,12 +243,44 @@ Sidebar.Entity = function ( editor ) {
                 scriptsContainer.add( remove );
 
                 scriptsContainer.add( new UI.Break() );
+                
+                showPreview( object, script );
 
             } )( object, scripts[ i ] )
 
         }
 
 	}
+
+    function showPreview( object, script, data ){
+        if( components 
+            && components[script.name] 
+            && components[script.name].clazz 
+            && typeof components[script.name].clazz.preview == "function"
+            ){
+                var clazz = components[script.name].clazz;
+                if( !data )
+                    data = getScriptData(script);
+                else data = Object.assign({}, data);
+
+                for( var key in clazz.meta ){
+                    if( !(key in data) )
+                        data[key] = clazz.CLAZZ[key];
+                }
+                data.entity = null;
+                data.asset  = object;
+                data.game   = null;
+                clazz.preview( data );
+                editor.signals.geometryChanged.dispatch( object );
+            }
+    }
+
+    function getScriptData( script ){
+        var data = (script.source||"").match(/^[^(]+\((.*)\)$/);
+		if( !data ) data = {};
+		else data = JSON.parse(data[1]);
+        return data;
+    }
 
 	function editProps( object, script ){
 		editingComponent = script;
@@ -262,15 +294,11 @@ Sidebar.Entity = function ( editor ) {
 			return;
 
 		var clazz = components[script.name].clazz;
-		var props = [], data = (script.source||"").match(/^[^(]+\((.*)\)$/);
+		var props = [], data = getScriptData(script);
 
 		var header = new UI.Row();
 		header.add( new UI.Text(script.name) );
 		propsContainer.add(header)
-
-		
-		if( !data ) data = {};
-		else data = JSON.parse(data[1]);
 
         var triggers = {};
 
@@ -306,6 +334,8 @@ Sidebar.Entity = function ( editor ) {
                         for( var i=0; i<list.length; ++i )
                             list[i].test();
                     }
+
+                    showPreview( object, script, data )
 				},
 
                 test:function(){

@@ -22,11 +22,13 @@ CLAZZ("cmp.SnapToGround", {
         if( !ground ) 
             return;
 
+
         var position = this.entity.position;
+        var y = 0;
 
         if( ground.getHeightAtXZ ){
 
-            ground.getHeightAtXZ( position );
+            y = ground.getHeightAtXZ( position );
 
         }else if( ground.geometry ){
             var geometry = ground.geometry;
@@ -50,12 +52,17 @@ CLAZZ("cmp.SnapToGround", {
 
             var intersects = raycaster.intersectObject( ground );
             if( intersects && intersects.length ){
-                position.y = intersects[0].point.y;
+                y = intersects[0].point.y;
+            }else{
+                y = -this.offsetY;
             }
 
             ground.material.side = side;
         }
 
-        position.y += this.offsetY;
+        y += this.offsetY;
+
+        if( (position.y > y && this.dropToGround) || (position.y < y && this.raiseToGround) ) 
+            position.y = y;
     }
 });

@@ -14,7 +14,7 @@ var APP = {
 		var events = {};
 
 		this.dom = document.createElement( 'div' );
-
+        this.sceneLoaded = false;
 		this.width = 500;
 		this.height = 500;
 		this.scene = null;
@@ -96,18 +96,24 @@ var APP = {
 				});
 			}
 
+            this.sceneLoaded = true;
 			pool.call("onSceneLoaded", arguments);
 
 		};
 		
 	    this.addEntity = function(name, inject){
-			return CLAZZ.get("Entity", DOC.mergeTo({
+			var e = CLAZZ.get("Entity", DOC.mergeTo({
 				gameState:this, 
 				pool:pool,
 				call:pool.call.bind(pool),
 				game:this,
 				descriptor:DOC.mergeTo({}, name, inject)
 			}, inject));
+
+            if( this.sceneLoaded && e.onSceneLoaded )
+                e.onSceneLoaded();
+                
+            return e;
 		};
 
 

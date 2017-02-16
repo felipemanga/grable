@@ -147,7 +147,6 @@ CLAZZ("states.ThreeState", {
         this.load = load;
 
         this.initResources();
-
         setTimeout(() => this.ldr.start(this.__onResourcesLoaded.bind(this)), 1);
     },
 
@@ -162,7 +161,9 @@ CLAZZ("states.ThreeState", {
         CLAZZ.set("game", this.game);
 
         this.game.load();
-        this.pool.call("onSceneLoaded");
+        
+        this.create();
+
         this.game.start();
     },
 

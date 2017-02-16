@@ -2,6 +2,8 @@ CLAZZ("states.State", {
     PROVIDES:{"states.State":"implements"},
     entities:null,
     entityDefinitions:null,
+    sceneLoaded:false,
+
     STATIC:{
         activeState:null,
     },
@@ -54,7 +56,6 @@ CLAZZ("states.State", {
         }
     },
 
-
     create:function(){
         var dlist = this.resources.entity;
         if( dlist instanceof Array ){
@@ -62,6 +63,9 @@ CLAZZ("states.State", {
             for( var i=0, l=dlist.length; i<l; ++i )
                 this.addEntity.apply(this, dlist[i]);
         }
+
+        this.sceneLoaded = true;
+        this.pool.call( "onSceneLoaded", true );
     },
 
     addEntity:function(name, inject){
@@ -72,6 +76,10 @@ CLAZZ("states.State", {
             call:this.__call.bind(this),
             descriptor:DOC.mergeTo({}, (typeof name == "string" ? this.entityDefinitions[name] : name), inject)
         }, inject));
+
+        if( this.sceneLoaded && e.onSceneLoaded )
+            e.onSceneLoaded( false );
+
         return e;
     },
 

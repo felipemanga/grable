@@ -33,9 +33,6 @@ CLAZZ("cmp.Overboard", {
         }
         
         cmp.Overboard.Service.add(this, "check");
-
-        if( this.entity.isClone )
-            this.onSceneLoaded();
     },
 
     onSceneLoaded:function(){

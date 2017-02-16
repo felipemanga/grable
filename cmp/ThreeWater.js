@@ -10,7 +10,7 @@ CLAZZ("cmp.ThreeWater", {
 
     water:null,
 
-    create:function(){
+    onSceneLoaded:function(){
         var entity = this.entity, oldAsset = this.asset;
 
 

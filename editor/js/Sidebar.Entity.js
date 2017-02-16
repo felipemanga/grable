@@ -210,9 +210,12 @@ Sidebar.Entity = function ( editor ) {
 
                 if( !script.hidden ) return;
 
-                var ref = new UI.Select().setWidth( '200px' ).setFontSize( '12px' );
-				ref.setOptions(refOpts);
-                ref.onChange( function () {
+                var ref = new UI.Select()
+					.setWidth( '200px' )
+					.setTextTransform( 'none' )
+					.setFontSize( '12px' )
+					.setOptions(refOpts)
+                	.onChange( function () {
 
                     editor.execute( new SetScriptValueCommand( editor.selected, script, 'name', this.getValue() ) );
 

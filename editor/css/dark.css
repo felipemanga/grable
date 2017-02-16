@@ -190,6 +190,7 @@ select {
 		color: #555;
 		border-right: 1px solid #222;
 		padding: 7px;
+		text-transform: capitalize;
 	}
 
 	#tabs span.selected {

@@ -48,10 +48,6 @@ Sidebar.Entity = function ( editor ) {
 	propsContainer.setDisplay( 'none' );    
     
 
-	function update() {
-
-	}
-
 	// events
 
 	signals.objectSelected.add( function ( object ) {

@@ -14,7 +14,12 @@ Menubar.Play = function ( editor ) {
 	var title = new UI.Panel();
 	title.setClass( 'title' );
 	title.setTextContent( 'Play' );
-	title.onClick( function () {
+	title.onClick( toggle );
+	container.add( title );
+
+    editor.signals.togglePlayer.add( toggle );
+
+    function toggle() {
 
 		if ( isPlaying === false ) {
 
@@ -30,8 +35,7 @@ Menubar.Play = function ( editor ) {
 
 		}
 
-	} );
-	container.add( title );
+	} 
 
 	return container;
 

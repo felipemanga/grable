@@ -21,6 +21,7 @@ var Editor = function () {
 
 		startPlayer: new Signal(),
 		stopPlayer: new Signal(),
+        togglePlayer: new Signal(),
 
 		// vr
 

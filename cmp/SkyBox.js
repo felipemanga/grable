@@ -18,7 +18,8 @@ CLAZZ("cmp.SkyBox", {
     "-z":'resources/image/nz.jpg',
 
     create:function(){
-        this.load();
+        if( this.enabled )
+            this.load();
     },
 
     load:function(){

@@ -659,7 +659,6 @@ Sidebar.Entity = function ( editor ) {
         },
 
         texture:function( obj ){
-            return;
             var url;
             var canvas = DOC.create('canvas', obj.row.dom, {
                 width:32,

@@ -101,8 +101,19 @@ CLAZZ("cmp.PhysiNode", {
             this.scene.remove( this.node );
     },
 
-    addForce:function(x,y,z){
-        this.node.applyCentralForce({x:x,y:y,z:z});
+    '@setLinearVelocity':{ velocity:{type:'vec3f'} },
+    setLinearVelocity:function( velocity ){
+        if( arguments.length == 3 || !velocity )
+            velocity = { x:arguments[0]||0, y:arguments[1]||0, z:arguments[2]||0 };
+        
+        this.node.setLinearVelocity(velocity);
+    },
+
+    '@addForce':{ force:{type:'vec3f'} },
+    addForce:function( force ){
+        if( arguments.length == 3 || !force )
+            force = { x:arguments[0]||0, y:arguments[1]||0, z:arguments[2]||0 };
+        this.node.applyCentralForce(force);
     }
 });
 

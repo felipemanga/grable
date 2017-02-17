@@ -179,6 +179,7 @@ select {
 	#sidebar .Row {
 		min-height: 20px;
 		margin-bottom: 10px;
+		clear: both;
 	}
 
 #tabs {

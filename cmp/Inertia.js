@@ -13,10 +13,17 @@ CLAZZ("cmp.Inertia", {
     "@velocity":{type:"vec3f"},
     velocity:null,
 
-    addForce:function(vx, vy, vz){
-        vx = vx || 0;
-        vy = vy || 0;
-        vz = vz || 0;
+    '@addForce':{ force:{type:'vec3f'} },
+    addForce:function( force ){
+        if( arguments.length == 3 ){
+            vx = arguments[0]||0;
+            vy = arguments[1]||0;
+            vz = arguments[2]||0;
+        }else{
+            var vx = force.x || 0;
+            var vy = force.y || 0;
+            var vz = force.z || 0;
+        }
 
         if( !this.velocity )
             this.velocity = {x:vx, y:vy, z:vz};

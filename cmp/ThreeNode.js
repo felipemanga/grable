@@ -42,19 +42,80 @@ CLAZZ("cmp.ThreeNode", {
             this.asset.parent.remove( this.asset );
     },
 
-    setPosition:function( x, y, z ){
+    '@message':{ __hidden:true },
+    message:function( msgs ){
+        if( !msgs ){
+            console.warn( this.asset.name, "Bad message list:", msgs);
+            return;
+        }
+
+        var target = null;
+        if( typeof msgs[0] == 'string' ) msgs = [msgs];
+        for( var i=0, l=msgs.length; i<l; ++i ){
+            var msg = msgs[i];
+            if( msg[0] == "" ) 
+                target = this.entity;
+            else if( msg == 'broadcast' ){
+                return this.pool.call( msg[1], msg[2] );
+            }else{
+                if( typeof msg[1] == "string" ){
+                    target = this.pool.call("getEntity" + msg[1]);
+                    msg[1] = target;
+                }
+                if( !target ) return;
+            }
+
+            if( msg[1] in target )
+                target[msg[1]].apply(target, msg[2]);
+        }
+    },
+
+    '@setPosition':{ position:{type:'vec3f'} },
+    setPosition:function( position ){
+        var x, y, z;
+        if( arguments.length == 3 ){
+            x = arguments[0];
+            y = arguments[1];
+            z = arguments[2];
+        }else{
+            x = position.x;
+            y = position.y;
+            z = position.z;
+        }
         this.entity.position.x = x || 0;
         this.entity.position.y = y || 0;
         this.entity.position.z = z || 0;
     },
 
-    setRotation:function( x, y, z ){
+    '@setRotation':{ position:{type:'vec3f'} },
+    setRotation:function( position ){
+        var x, y, z;
+        if( arguments.length == 3 ){
+            x = arguments[0];
+            y = arguments[1];
+            z = arguments[2];
+        }else{
+            x = position.x;
+            y = position.y;
+            z = position.z;
+        }
         this.entity.rotation.x = x || 0;
         this.entity.rotation.y = y || 0;
         this.entity.rotation.z = z || 0;
     },    
 
-    setScale:function( x, y, z ){
+    '@setScale':{ position:{type:'vec3f'} },
+    setScale:function( position ){
+        var x, y, z;
+        if( arguments.length == 3 ){
+            x = arguments[0];
+            y = arguments[1];
+            z = arguments[2];
+        }else{
+            x = position.x;
+            y = position.y;
+            z = position.z;
+        }
         this.entity.scale.x = x || 0;
         this.entity.scale.y = y || 0;
         this.entity.scale.z = z || 0;

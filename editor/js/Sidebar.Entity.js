@@ -4,7 +4,12 @@
 
 Sidebar.Entity = function ( editor ) {
 
-	var components = null, loadedCompPath = null, editingObject = null, editingComponent = null;
+	var components = null, 
+        loadedCompPath = null, 
+        editingObject = null, 
+        editingComponent = null, 
+        externalSlotIndex = {},
+        internalSlotIndex = {};
 
 	var jsonPrefix = 'return addComponent(', jsonPostfix = ')';
 
@@ -80,6 +85,9 @@ Sidebar.Entity = function ( editor ) {
 		loader.load( path + '/components.json', function ( text ) {
 			
 			components = JSON.parse(text) || {};
+            
+            if( !components['cmp.ThreeNode'] )
+                components['cmp.ThreeNode'] = {'threejs':true};
 
 			for( var k in components ){
 				var cmp = components[k];
@@ -129,16 +137,61 @@ Sidebar.Entity = function ( editor ) {
 		else document.head.appendChild(script);
 	}
 
+    function indexSlots( clazz, index )
+    {
+
+        for( var k in clazz.methods ){
+            if( !index[k] )
+                index[k] = [];
+
+            var argIndex = index[k];
+            var func = clazz.methods[k];
+            var meta = clazz.meta[k] || {};
+            if( meta.__hidden )
+                argIndex.__hidden = true;
+
+            var match = func.toString().match(/^[a-z0-9_$\s]*\(([^)]*)\)/i);
+            if( match ){
+                var args = match[1].trim();
+                if( args.length ){
+                    args.split(',').forEach( (argName, i) =>{
+                        argName = argName.trim();
+                        if( !argIndex[i] ){
+                            argIndex[i] = { 
+                                name:argName,
+                                type:null,
+                                default:null
+                            };
+                        }
+
+                        if( meta[argName] && typeof meta[argName] == 'object' ){
+                            var index = argIndex[i];
+                            if( meta[argName].type )
+                                index.type = meta[argName].type;
+
+                            if( meta[argName].default )
+                                index.default = meta[argName].default;
+                        }
+                    });
+                }
+            }else{
+            	// console.log(func.toString());
+            }
+        }
+        
+    }
+
 	function onLoadComponent( fqcn ){
 		loadQueueSize--;
 		var clazz = components[fqcn].clazz = CLAZZ.get(RESOLVE(fqcn));
 		var meta = clazz.CLAZZ;
 
-		if( CLAZZ.PROVIDES ){
-			for( var k in CLAZZ.PROVIDES )
+		if( clazz.PROVIDES ){
+			for( var k in clazz.PROVIDES )
 				components[k] = components[fqcn];
 		}
 
+        indexSlots( clazz, externalSlotIndex );
 
 		if( !loadQueueSize )
 			updateUI();
@@ -307,6 +360,9 @@ Sidebar.Entity = function ( editor ) {
         var triggers = {};
 
 		for( var k in clazz.meta ){
+            if( k in clazz.methods ) 
+                continue;
+
 			var meta = clazz.meta[k], factory = propEditor[meta.type];
 			if( !factory ) factory = propEditor.unknown;
 			var row = new UI.Row();
@@ -323,7 +379,10 @@ Sidebar.Entity = function ( editor ) {
 				update: function(value){
 					if( value == undefined ) value = this.value;
 					else this.value = value;
-					if( data[ this.key ] == value ) return;
+
+					if( data[ this.key ] == value && typeof value != 'object' )
+						return;
+						
 					data[ this.key ] = value;
 
 					src = jsonPrefix + JSON.stringify(data) + jsonPostfix;
@@ -449,13 +508,17 @@ Sidebar.Entity = function ( editor ) {
 		},
 
 		json:function( obj ){
-			var e = new UI.Input().setValue(obj.value).setWidth( (obj.meta.width || 254) + 'px' );
+			var e = new UI.Input()
+                .setValue( JSON.stringify(obj.value) )
+                .setWidth( (obj.meta.width || 260) - 6 + 'px' )
+                .setStyle('float', ['right']);
+
 			obj.row.add( e );
+
 			e.onChange(function(){
                 var v = e.getValue();
                 try{
-                    JSON.parse( v );
-				    obj.update( v );
+				    obj.update( JSON.parse( v ) );
                     e.setBackgroundColor('inherit');                    
                 }catch(err){
                     e.setBackgroundColor('red');
@@ -465,51 +528,75 @@ Sidebar.Entity = function ( editor ) {
 
 		array:function( obj ){
             var arr = obj.value || [], meta = obj.meta;
-            var factory = propEditor[ meta.subtype ];
-			if( !factory ) factory = propEditor.unknown;
 
-			var e = new UI.Row();
+			var e;
+            if( obj.e ){
+                e = obj.e;
+            }else{
+                e = new UI.Row();
+                obj.row.add( e );
+            }
+
             render();
-			obj.row.add( e );
 
             function render(){
                 e.clear();
                 for( var i=0; i<arr.length; ++i ){
                     var sub = {
-                        meta:  {type:'subtype'},
+                        meta:  {type:meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype},
                         value: arr[i],
                         default: meta.default,
                         row: e,
-                        
-                        header: new UI.Button( 'x' )
-                            .setStyle('clear', ['both'])
-                            .setWidth( '30px' )
-                            .onClick((function(i){ 
-                                arr.splice(i, 1); 
-                                render(); 
-                            }).bind(this, i)),
-
+                        header: null,
                         update: (function(i, value){
                             if( value === undefined ) value = this.value;
                             else this.value = value;
+                            
+                            if( (typeof value != 'object' && arr[i] == value) || JSON.stringify(arr[i]) == JSON.stringify(value) )
+                            	return;
                             arr[i] = value;
-                            render();
+                            obj.update( arr );
                         }).bind(sub, i)
                     };
 
-                    e.add( sub.header );
+                    if( meta.labels && meta.labels[i] ){
+                        sub.header = new UI.Text( meta.labels[i] )
+                            .setWidth( '90px' )
+                            .setStyle( 'float', ['left'] )
+                            .setStyle( 'clear', ['both'] );
+                        sub.meta.width = (290 - 90);
+                    }else if( meta.canResize !== false && !meta.labels ){
+                        sub.header = new UI.Button( 'x' )
+                            .setWidth( '30px' )
+                            .onClick((function(i){
+                                arr.splice(i, 1); 
+                                render(); 
+                            }).bind(this, i));
+                        sub.meta.width = (290 - 30);
+                    }
+
+                    if( sub.header )
+                        e.add( sub.header );
+
+                    var factory = propEditor[ sub.meta.type ];
+                    if( !factory ) factory = propEditor.unknown;
                     factory( sub );
                 }
 
-                e.add( new UI.Button('add')
-                    .setStyle('clear', ['both'])
-                    .setStyle('margin-left', ['auto'])
-                    .setDisplay('block')
-                    .onClick(function(){
-                        arr.push(meta.default);
-                        render();
-                    }) 
-                );
+                if( meta.canResize !== false && !meta.labels )
+                {
+                    e.add( new UI.Button('add')
+                        .setStyle('margin-left', ['auto'])
+                        .setDisplay('block')
+                        .setStyle('clear', ['both'])
+                        .onClick(function(){
+                            arr.push(meta.default);
+                            render();
+                        }) 
+                    );
+                }else{
+                    e.add( new UI.Row() );
+                }
 
                 obj.update(arr);
                 arr = arr.concat();
@@ -517,7 +604,7 @@ Sidebar.Entity = function ( editor ) {
 		},        
 
 		bool:function( obj ){
-			var e = new UI.Checkbox(obj.value).setStyle('float', 'right');
+			var e = new UI.Checkbox(obj.value).setMarginLeft('10px');
 			obj.row.add( e );
 			e.onChange(function(){
 				obj.update(e.getValue());
@@ -541,6 +628,140 @@ Sidebar.Entity = function ( editor ) {
 
 			obj.row.add( e );
 		},
+
+        slot:function( obj ){
+            var call = obj.value;
+            if( !Array.isArray(call) || call.length != 3 ) 
+                call = ["", "", []];
+            var args = call[2] || [];
+            var callName = call[1], callScope = call[0];
+            
+            var scopeOpts = {
+                "":"[ this entity ]",
+                "broadcast":"[ all entities ]"
+            };
+
+            iterate( editor.scene );
+
+            function iterate(n){
+                if( !n ) return;
+                scopeOpts[n.uuid] = n.name;
+                if( n.children ){
+                    for( var i=0; i<n.children.length; ++i )
+                        iterate(n.children[i]);
+                }
+            }            
+
+            var scope = new UI.Select()
+                .setWidth( '90px' )
+                .setFontSize( '12px' )
+                .setTextTransform('none')
+			    .setOptions( scopeOpts )
+                .setValue( callScope )
+                .onChange(update);
+
+            var isCustom = new UI.Checkbox().onChange(function(){
+                updateUI( !isCustom.getValue() );
+                update();
+            });
+
+            var opts = {};
+            for( var k in externalSlotIndex )
+                if( !externalSlotIndex[k].__hidden )
+                    opts[k] = k;
+
+			var list = new UI.Select()
+                .setWidth( '180px' )
+                .setFontSize( '12px' )
+                .setStyle('float', ['right'])
+                .setTextTransform('none')
+			    .setOptions( opts )
+                .setValue( callName )
+                .onChange(update);
+
+            var custom = new UI.Input()
+                .setWidth( '174px' )
+                .setStyle('float', ['right'])
+                .setValue( callName )
+                .onChange(update);
+
+            var argContainer = new UI.Row().setMarginTop('6px');
+            var callContainer = new UI.Row();
+
+			callContainer.add( scope );
+			callContainer.add( isCustom );
+			callContainer.add( list );
+			callContainer.add( custom );
+            obj.row.add( callContainer );
+            obj.row.add( argContainer );
+
+            updateUI();
+
+            return;
+
+            function update(){
+                var newName;
+                if( isCustom.getValue() ) newName = custom.getValue();
+                else newName = list.getValue();
+                var newScope = scope.getValue();
+
+                if( newScope != callScope || newName != callName )
+                {
+                    call = [newScope, newName];
+                    callName = newName;
+                    callScope = newScope;
+                    obj.update(call);
+					updateUI();
+                }
+            }
+
+            function updateUI( showList ){
+                if( showList === undefined )
+                    showList = callName in externalSlotIndex;
+                
+                isCustom.setValue( !showList );
+                custom.setValue( callName );
+
+                var index = externalSlotIndex[callName];
+                if( index )
+                    list.setValue( callName );
+
+                list.setDisplay( showList ? 'inline' : 'none' );
+                custom.setDisplay( showList ? 'none' : 'inline' );
+
+                var subtypes;
+
+                if( showList ){
+                    if( !index )
+                        index = externalSlotIndex[list.getValue()];
+                    var labels = [];
+                    var subtypes = [];
+                    if( index ){
+						args.length = index.length;
+						for( var i=0; i<args.length; ++i )
+						{
+							args[i] = args[i] === undefined ? index[i].default : args[i];
+							subtypes[i] = index[i].type || 'json';
+							labels[i] = index[i].name;
+						}
+                    }else args.length = 0;
+                }
+
+                var argDesc = {
+                    meta:  { type:'array', subtype:'json', subtypes:subtypes, labels:labels },
+                    value: args,
+                    default: [],
+                    e: argContainer,
+                    update: function(value){
+                        if( value === undefined ) value = argDesc.value;
+                        else argDesc.value = value;
+                        args = value;
+                        obj.update( [callScope, callName, value] );
+                    }
+                };
+                propEditor.array( argDesc );
+            }
+        },
 
 		string:function( obj ){
 			var e = new UI.Input().setValue(obj.value).setWidth( '180px' ).setStyle('float', ['right']);

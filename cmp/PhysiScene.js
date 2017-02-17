@@ -15,7 +15,7 @@ CLAZZ("cmp.PhysiScene", {
 
     create:function(){
         this.pool.silence("getWorldBounds");
-        
+
         this.bounds = new THREE.Box3().setFromObject( this.asset );
 
         this.scene = Physijs.Scene({
@@ -36,6 +36,7 @@ CLAZZ("cmp.PhysiScene", {
         this.scene = null;
     },
 
+    '@setGravity':{ gravity:{type:'vec3f'} },
     setGravity:function( gravity ){
         this.scene.setGravity( new THREE.Vector3( gravity.x||0, gravity.y||0, gravity.z||0 ) );
     },

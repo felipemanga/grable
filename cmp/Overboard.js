@@ -1,5 +1,5 @@
 CLAZZ("cmp.Overboard", {
-    INJECT:["entity", "pool", "bounds", "scope", "messageTarget", "message", "messageArgs", "limitSky" ],
+    INJECT:["entity", "pool", "bounds", "onOverboard", "limitSky" ],
 
     "@boundsType":{type:"enum", options:["world", "manual"]},
     boundsType:"world",
@@ -10,17 +10,8 @@ CLAZZ("cmp.Overboard", {
     "@bounds":{type:"bounds", test:{eq:{boundsType:"manual"}}},
     bounds:null,
 
-    "@scope":{type:"enum", options:["destroy", "broadcast", "message", "entity"]},
-    scope:"destroy",
-
-    "@messageTarget":{type:"node", test:{nin:{scope:["broadcast", "entity"]}} },
-    messageTarget:"entity",
-
-    "@message":{type:"string", test:{ neq:{scope:"destroy"} }, trim:true },
-    message:null,
-
-    "@messageArgs":{type:"array", subtype:"json", test:{ neq:{scope:"destroy"} } },
-    messageArgs:[],
+    "@onOverboard":{type:"array", subtype:"slot"},
+    onOverboard:null,
 
     isOverboard:false,
 
@@ -35,26 +26,11 @@ CLAZZ("cmp.Overboard", {
         cmp.Overboard.Service.add(this, "check");
     },
 
-    onSceneLoaded:function(){
-        if( this.messageTarget == "entity" ){
-            this.messageTarget = this.entity;
-
-            if( this.scope == "entity" )
-                this.scope = "message";
-        }
-        else if( this.messageTarget )
-            this.messageTarget = this.pool.call( 'getEntity' + this.messageTarget );
-
-        if( this.scope == "destroy" ){
-            this.scope = "message";
-            this.message = "destroy";
-        }
-    },
-
     destroy:function(){
         cmp.Overboard.Service.remove(this);
     },
 
+    '@onOverboardCheck':{__hidden:true},
     onOverboardCheck:function(){
         var b = this.bounds, p = this.entity.position;
         var px = p.x, py = p.y, pz = p.z;
@@ -67,15 +43,8 @@ CLAZZ("cmp.Overboard", {
         isOverboard = isOverboard || ( b.height && b.y + b.height < p.y );
         isOverboard = isOverboard || ( b.depth && b.z + b.depth < p.z );
         
-        if( isOverboard && !this.isOverboard ){
-            if( this.scope == "broadcast" ){
-                this.pool.call.apply( this.pool, [this.message].concat(this.messageArgs || []) );
-            }else{
-                var node = this.messageTarget;
-                if( !node || typeof node[ this.message ] != "function" ) return;
-                node[this.message].apply( node, this.messageArgs || [] );
-            }
-        }
+        if( isOverboard && !this.isOverboard )
+            this.entity.message( this.onOverboard );
 
         this.isOverboard = isOverboard;
     }

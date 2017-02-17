@@ -9,6 +9,10 @@ CLAZZ("cmp.Force",{
 
     onTick:function( delta ){
         if( !this.enabled || !this.force ) return;
-        this.entity.addForce( this.force.x*delta, this.force.y*delta, this.force.z*delta );
+        this.entity.addForce({
+            x:this.force.x*delta,
+            y:this.force.y*delta,
+            z:this.force.z*delta
+        });
     }
 });

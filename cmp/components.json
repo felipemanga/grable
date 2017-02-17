@@ -23,10 +23,11 @@
     "cmp.PhysiNode":{"threejs":true},
 
     "cmp.State":{"phaserjs":true, "threejs":true},
+    "cmp.SnapToGround":{"threejs":true},
+    "cmp.SkyBox":{"threejs":true},
     "cmp.ThreeSprite":{"phaserjs":false, "threejs":true},
     "cmp.ThreeTerrain":{"phaserjs":false, "threejs":true},
     "cmp.ThreeWater":{"phaserjs":false, "threejs":true},
-    "cmp.SnapToGround":{"threejs":true},
     
     "cmp.Tween":{"phaserjs":true, "threejs":true},
     "cmp.Wait":{"phaserjs":true, "threejs":true}

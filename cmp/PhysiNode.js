@@ -43,7 +43,9 @@ CLAZZ("cmp.PhysiNode", {
     "@angularDamping":{type:"float", min:0, max:1},
     angularDamping:0,
 
-    create:function(){
+    scene:null,
+
+    onSceneLoaded:function(){
         var entity = this.entity, asset = this.asset, node;
         node = this.node = Physijs[ this.mesh + "Mesh"]( null, null, this.mass, this.entity.getNode() );
 
@@ -59,8 +61,9 @@ CLAZZ("cmp.PhysiNode", {
                 if( cb ) cb.call(entity, other.entity, linear, angular);
             });
 
-        if( this.game.scene.physijs )
-            this.game.scene.physijs.add( this.node );
+        this.scene = this.game.scene.physijs;
+        if( this.scene )
+            this.scene.add( this.node );
 
         entity.position = Object.create(null, {
             x:{
@@ -94,7 +97,8 @@ CLAZZ("cmp.PhysiNode", {
     },
 
     destroy:function(){
-        this.game.scene.physijs.remove( this.node );
+        if( this.scene )
+            this.scene.remove( this.node );
     },
 
     addForce:function(x,y,z){

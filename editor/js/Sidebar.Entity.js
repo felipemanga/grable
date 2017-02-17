@@ -255,8 +255,9 @@ Sidebar.Entity = function ( editor ) {
     function showPreview( object, script, data ){
         if( components 
             && components[script.name] 
-            && components[script.name].clazz 
-            && typeof components[script.name].clazz.preview == "function"
+            && components[script.name].clazz
+            && components[script.name].clazz.CLAZZ
+            && typeof components[script.name].clazz.CLAZZ.preview == "function"
             ){
                 var clazz = components[script.name].clazz;
                 if( !data )
@@ -270,7 +271,10 @@ Sidebar.Entity = function ( editor ) {
                 data.entity = null;
                 data.asset  = object;
                 data.game   = null;
-                clazz.preview( data );
+
+                var inst = CLAZZ.get( clazz, data );
+                inst.preview();
+
                 editor.signals.geometryChanged.dispatch( object );
             }
     }
@@ -651,6 +655,50 @@ Sidebar.Entity = function ( editor ) {
                     obj.update( bounds );
                 });
 
+            }
+        },
+
+        texture:function( obj ){
+            return;
+            var url;
+            var canvas = DOC.create('canvas', obj.row.dom, {
+                width:32,
+                height:16,
+                style:{
+                    marginRight:'5px',
+                    border:'1px solid #888'
+                },
+                onclick:function(){
+                    if( url )
+                        window.open( url );
+                }
+            });
+        	var context = canvas.getContext( '2d' );
+            
+            var e = new UI.Input().setValue(obj.value).setWidth('155px').onChange(updateImage);
+            obj.row.add(e);
+
+            var image = DOC.create('img', {
+                onload:function(){
+                    var scale = canvas.width / image.width;
+                    context.drawImage( image, 0, 0, image.width * scale, image.height * scale );
+                    e.setBackgroundColor('initial');
+                    // obj.update( url );
+                },
+                onerror:function(){
+                    context.clearRect( 0, 0, canvas.width, canvas.height );
+                    e.setBackgroundColor('red');
+                    obj.update( obj.default );
+                }
+            });
+
+            updateImage();
+
+            function updateImage(){
+                var newURL = e.getValue();
+                if( newURL == url ) return;
+                url = newURL;
+                image.src = url;
             }
         },
 

@@ -33,13 +33,8 @@ CLAZZ("cmp.ThreeTerrain", {
         this.asset.geometry.computeVertexNormals();
     },
 
-    STATIC:{
-        preview:function( values ){
-            var inst = CLAZZ.get( cmp.ThreeTerrain, values );
-            inst.generate();
-            inst.asset.geometry.computeFaceNormals();
-            inst.asset.geometry.computeVertexNormals();
-        }
+    preview:function(){
+        this.create();
     },
 
     generate:function(){

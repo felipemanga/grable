@@ -1,5 +1,5 @@
 CLAZZ("cmp.AutoRotate", {
-    INJECT:["entity", "speed"],
+    INJECT:[ "entity", "speed", "movementThreshold" ],
     x:0,
     y:0,
     z:0,
@@ -12,6 +12,9 @@ CLAZZ("cmp.AutoRotate", {
 
     '@speed':{ type:'float', min:0, max:1 },
     speed:0.1,
+
+    '@movementThreshold':{ type:'float', min:0 },
+    movementThreshold:0.2,
 
     '@setAutoRotateEnabled':{type:'bool'},
     setAutoRotateEnabled:function(enabled){
@@ -44,7 +47,7 @@ CLAZZ("cmp.AutoRotate", {
         this.y = py;
         this.z = pz;
 
-        if( Math.abs(this.pdx) > 0.2 && Math.abs(this.pdz) > 0.2 ){
+        if( Math.abs(this.pdx) + Math.abs(this.pdz) > 0.2 ){
             var deltaY = entity.getRotationDeltaY( Math.atan2( this.pdx, this.pdz ) );
             // if( entity.applyTorque )
             //     entity.applyTorque(0, deltaY * this.speed * 100, 0);

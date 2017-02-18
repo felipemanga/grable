@@ -17,7 +17,8 @@ CLAZZ("cmp.ThreeNode", {
         this.entity._addMethod( this.entity, "getEntity" + this.asset.uuid, function(){ return this; });
 
         function addComponent( name, data ){
-            if( typeof name != "string" && script.hidden ){
+            if( script.hidden == true ) script.type = 'component';
+            if( typeof name != "string" && script.type == 'component' ){
                 data = name;
                 name = script.name;
                 if( !name ) return;
@@ -42,85 +43,46 @@ CLAZZ("cmp.ThreeNode", {
             this.asset.parent.remove( this.asset );
     },
 
-    '@message':{ __hidden:true },
-    message:function( msgs ){
-        if( !msgs ){
-            console.warn( this.asset.name, "Bad message list:", msgs);
-            return;
-        }
-
-        var target = null;
-        if( typeof msgs[0] == 'string' ) msgs = [msgs];
-        for( var i=0, l=msgs.length; i<l; ++i ){
-            var msg = msgs[i];
-            if( msg[0] == "" ) 
-                target = this.entity;
-            else if( msg == 'broadcast' ){
-                return this.pool.call( msg[1], msg[2] );
-            }else{
-                if( typeof msg[1] == "string" ){
-                    target = this.pool.call("getEntity" + msg[1]);
-                    msg[1] = target;
-                }
-                if( !target ) return;
-            }
-
-            if( msg[1] in target )
-                target[msg[1]].apply(target, msg[2]);
-        }
-    },
-
     '@setPosition':{ position:{type:'vec3f'} },
     setPosition:function( position ){
-        var x, y, z;
-        if( arguments.length == 3 ){
-            x = arguments[0];
-            y = arguments[1];
-            z = arguments[2];
+        if( arguments.length == 3 || !arguments[0] ){
+            this.entity.position.x = arguments[0] || 0;
+            this.entity.position.y = arguments[1] || 0;
+            this.entity.position.z = arguments[2] || 0;
         }else{
-            x = position.x;
-            y = position.y;
-            z = position.z;
+            this.entity.position.x = position.x || 0;
+            this.entity.position.y = position.y || 0;
+            this.entity.position.z = position.z || 0;
         }
-        this.entity.position.x = x || 0;
-        this.entity.position.y = y || 0;
-        this.entity.position.z = z || 0;
     },
 
     '@setRotation':{ position:{type:'vec3f'} },
     setRotation:function( position ){
-        var x, y, z;
-        if( arguments.length == 3 ){
-            x = arguments[0];
-            y = arguments[1];
-            z = arguments[2];
+        if( arguments.length == 3 || !arguments[0] ){
+            this.entity.rotation.x = arguments[0] || 0;
+            this.entity.rotation.y = arguments[1] || 0;
+            this.entity.rotation.z = arguments[2] || 0;
         }else{
-            x = position.x;
-            y = position.y;
-            z = position.z;
+            this.entity.rotation.x = position.x || 0;
+            this.entity.rotation.y = position.y || 0;
+            this.entity.rotation.z = position.z || 0;
         }
-        this.entity.rotation.x = x || 0;
-        this.entity.rotation.y = y || 0;
-        this.entity.rotation.z = z || 0;
     },    
 
     '@setScale':{ position:{type:'vec3f'} },
     setScale:function( position ){
-        var x, y, z;
-        if( arguments.length == 3 ){
-            x = arguments[0];
-            y = arguments[1];
-            z = arguments[2];
+        if( arguments.length == 3 || !arguments[0] ){
+            this.entity.scale.x = arguments[0] || 0;
+            this.entity.scale.y = arguments[1] || 0;
+            this.entity.scale.z = arguments[2] || 0;
         }else{
-            x = position.x;
-            y = position.y;
-            z = position.z;
+            this.entity.scale.x = position.x || 0;
+            this.entity.scale.y = position.y || 0;
+            this.entity.scale.z = position.z || 0;
         }
-        this.entity.scale.x = x || 0;
-        this.entity.scale.y = y || 0;
-        this.entity.scale.z = z || 0;
     },    
 
+    '@setNode':{ __hidden:true },
     setNode:function( asset, optval ){
         var opts = {
             keepPosition:true,
@@ -154,6 +116,7 @@ CLAZZ("cmp.ThreeNode", {
         asset.entity = this.entity;
     },
 
+    '@getNode':{ __hidden:true },
     getNode:function(){
         return this.asset;
     }

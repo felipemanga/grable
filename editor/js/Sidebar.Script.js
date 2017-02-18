@@ -58,7 +58,7 @@ Sidebar.Script = function ( editor ) {
 
 				( function ( object, script ) {
 
-					if( script.hidden )
+					if( script.hidden || (script.type && script.type != 'raw') )
 						return;
 
 					var name = new UI.Input( script.name ).setWidth( '130px' ).setFontSize( '12px' );

@@ -26,7 +26,6 @@ CLAZZ("cmp.PhysiNode", {
         "Concave",
         "Convex",
         "Heightfield",
-        "Mesh",
         "Plane",
         "Sphere"
     ]},
@@ -62,7 +61,8 @@ CLAZZ("cmp.PhysiNode", {
         if( this.name )
             node.addEventListener('collision', function(other, linear, angular){
                 var cb = entity["onHit" + other.entity.physiNode.name];
-                if( cb ) cb.call(entity, other.entity, linear, angular);
+                if( cb )
+                    cb.call(entity, other.entity, linear, angular);
             });
 
         this.scene = this.game.scene.physijs;
@@ -111,6 +111,14 @@ CLAZZ("cmp.PhysiNode", {
             velocity = { x:arguments[0]||0, y:arguments[1]||0, z:arguments[2]||0 };
         
         this.node.setLinearVelocity(velocity);
+    },
+
+    '@setAngularVelocity':{ velocity:{type:'vec3f'} },
+    setAngularVelocity:function( velocity ){
+        if( arguments.length == 3 || !velocity )
+            velocity = { x:arguments[0]||0, y:arguments[1]||0, z:arguments[2]||0 };
+        
+        this.node.setAngularVelocity(velocity);
     },
 
     '@addForce':{ force:{type:'vec3f'} },

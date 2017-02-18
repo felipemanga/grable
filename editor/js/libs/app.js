@@ -23,9 +23,12 @@ var APP = {
 		this.camera = null;
 		this.renderer = null;
 
+        isActive = true;
+
 		this.load = function ( json ) {
 
 			this.sceneLoaded = false;
+            isActive = true;
 
 			isVR = json.project.vr;
 
@@ -239,7 +242,13 @@ var APP = {
 
 		};
 
+        this.isActive = function(){
+            return isActive;
+        };
+
 		this.stop = function () {
+
+            isActive = false;
 
 			document.removeEventListener( 'keydown', onDocumentKeyDown );
 			document.removeEventListener( 'keyup', onDocumentKeyUp );

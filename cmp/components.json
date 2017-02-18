@@ -10,6 +10,7 @@
     
     "cmp.ImgDiff":{"phaserjs":true},
     "cmp.Inertia":{"phaserjs":true, "threejs":true},
+    "cmp.LoadTexture":{"threejs":true},
 
     "cmp.Overboard":{"threejs":true},
 

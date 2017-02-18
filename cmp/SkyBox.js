@@ -17,11 +17,13 @@ CLAZZ("cmp.SkyBox", {
     "@-z":{type:"texture"},
     "-z":'resources/image/nz.jpg',
 
+    '@create':{__hidden:true},
     create:function(){
         if( this.enabled )
             this.load();
     },
 
+    '@load':{__hidden:true},
     load:function(){
         var scope = this, ctl = new THREE.CubeTextureLoader();
         ctl.load([

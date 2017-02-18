@@ -23,7 +23,7 @@ CLAZZ("cmp.ThreeTerrain", {
     island:0,
 
     
-
+    '@create':{__hidden:true},
     create:function(){
         if( !this.octaves )
             return;
@@ -33,10 +33,12 @@ CLAZZ("cmp.ThreeTerrain", {
         this.asset.geometry.computeVertexNormals();
     },
 
+    '@preview':{__hidden:true},
     preview:function(){
         this.create();
     },
-
+    
+    '@generate':{__hidden:true},
     generate:function(){
 
         var geometry = this.asset.geometry, 

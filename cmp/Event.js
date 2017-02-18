@@ -1,12 +1,16 @@
 CLAZZ("cmp.Event", {
-    INJECT:["entity", "event"],
-    CONSTRUCTOR:function(){
-        for( k in this.event ){
-            this[k] = checkEvent.bind(this, this.event[k]);
-        }
+    INJECT:["entity", "events"],
 
-        function checkEvent(map){
-            this.entity.apply(map);
-        } 
+    '@events':{ type:'object', meta:{ type:'array', default:null, meta:{ type:'slot' } } },
+    events:null,
+
+    CONSTRUCTOR:function(){
+        var events = this.events;
+        for( var k in events ){
+            if( events[k] ){
+                var eventList = events[k].filter( e => !!e );
+                this[k] = this.entity.message.bind( this.entity, eventList );
+            }
+        }
     }
 });

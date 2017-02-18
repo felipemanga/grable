@@ -7,6 +7,7 @@ CLAZZ("cmp.Force",{
     "@force":{type:"vec3f", min:0},
     force:null,
 
+    '@onTick':{ __hidden:true },
     onTick:function( delta ){
         if( !this.enabled || !this.force ) return;
         this.entity.addForce({

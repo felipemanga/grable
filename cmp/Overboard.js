@@ -10,7 +10,7 @@ CLAZZ("cmp.Overboard", {
     "@bounds":{type:"bounds", test:{eq:{boundsType:"manual"}}},
     bounds:null,
 
-    "@onOverboard":{type:"array", subtype:"slot"},
+    "@onOverboard":{type:"array", meta:{type:"slot"} },
     onOverboard:null,
 
     isOverboard:false,
@@ -40,7 +40,7 @@ CLAZZ("cmp.Overboard", {
         isOverboard = isOverboard || ( b.y && b.y > p.y );
         isOverboard = isOverboard || ( b.z && b.z > p.z );
         isOverboard = isOverboard || ( b.width && b.x + b.width < p.x );
-        isOverboard = isOverboard || ( b.height && b.y + b.height < p.y );
+        isOverboard = isOverboard || ( this.limitSky && b.y + b.height < p.y );
         isOverboard = isOverboard || ( b.depth && b.z + b.depth < p.z );
         
         if( isOverboard && !this.isOverboard )

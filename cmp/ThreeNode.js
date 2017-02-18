@@ -38,6 +38,8 @@ CLAZZ("cmp.ThreeNode", {
         }
     },
 
+    clone:function(){},
+
     destroy:function(){
         if( this.asset && this.asset.parent )
             this.asset.parent.remove( this.asset );
@@ -56,6 +58,20 @@ CLAZZ("cmp.ThreeNode", {
         }
     },
 
+
+    '@addPosition':{ position:{type:'vec3f'} },
+    addPosition:function( position ){
+        if( arguments.length == 3 || !arguments[0] ){
+            this.entity.position.x += arguments[0] || 0;
+            this.entity.position.y += arguments[1] || 0;
+            this.entity.position.z += arguments[2] || 0;
+        }else{
+            this.entity.position.x += position.x || 0;
+            this.entity.position.y += position.y || 0;
+            this.entity.position.z += position.z || 0;
+        }
+    },    
+
     '@setRotation':{ position:{type:'vec3f'} },
     setRotation:function( position ){
         if( arguments.length == 3 || !arguments[0] ){
@@ -67,6 +83,45 @@ CLAZZ("cmp.ThreeNode", {
             this.entity.rotation.y = position.y || 0;
             this.entity.rotation.z = position.z || 0;
         }
+    },
+
+    '@getRotationDeltaY':{__hidden:true},
+    getRotationDeltaY:function( target ){
+        var current = this.entity.rotation.y;
+        if ( current < 0 ) current = (current % (Math.PI * 2)) + Math.PI * 2;
+        if ( target < 0  ) target  = (target  % (Math.PI * 2)) + Math.PI * 2;
+
+        var rotationDelta = target - current;
+        if (rotationDelta > Math.PI) rotationDelta -= 2 * Math.PI;
+        else if (rotationDelta < -Math.PI) rotationDelta += 2 * Math.PI;
+
+        return rotationDelta;
+    },    
+
+    '@getRotationDeltaX':{__hidden:true},
+    getRotationDeltaX:function( target ){
+        var current = this.entity.rotation.x;
+        if ( current < 0 ) current = (current % (Math.PI * 2)) + Math.PI * 2;
+        if ( target < 0  ) target  = (target  % (Math.PI * 2)) + Math.PI * 2;
+
+        var rotationDelta = target - current;
+        if (rotationDelta > Math.PI) rotationDelta -= 2 * Math.PI;
+        else if (rotationDelta < -Math.PI) rotationDelta += 2 * Math.PI;
+
+        return rotationDelta;
+    },    
+
+    '@getRotationDeltaZ':{__hidden:true},
+    getRotationDeltaZ:function( target ){
+        var current = this.entity.rotation.z;
+        if ( current < 0 ) current = (current % (Math.PI * 2)) + Math.PI * 2;
+        if ( target < 0  ) target  = (target  % (Math.PI * 2)) + Math.PI * 2;
+
+        var rotationDelta = target - current;
+        if (rotationDelta > Math.PI) rotationDelta -= 2 * Math.PI;
+        else if (rotationDelta < -Math.PI) rotationDelta += 2 * Math.PI;
+
+        return rotationDelta;
     },    
 
     '@setScale':{ position:{type:'vec3f'} },

@@ -11,7 +11,7 @@ CLAZZ("cmp.PhysiScene", {
     bounds:null,
 
     "@gravity":{type:"vec3f"},
-    gravity:{x:0, y:-9.8, z:0},
+    gravity:{x:0, y:-98, z:0},
 
     "@frameRate":{type:"float", min:0},
     frameRate:30,

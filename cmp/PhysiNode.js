@@ -7,7 +7,7 @@ need([
 
 
 CLAZZ("cmp.PhysiNode", {
-    INJECT:["entity", "asset", "game", "mass", "mesh", "friction", "bounciness", "name", "linearDamping", "angularDamping"],
+    INJECT:["entity", "asset", "game", "gameState", "mass", "mesh", "friction", "bounciness", "name", "linearDamping", "angularDamping"],
     PROVIDES:{"Physics":"implements"},
 
     node:null,
@@ -45,11 +45,23 @@ CLAZZ("cmp.PhysiNode", {
 
     scene:null,
 
+    create:function(){
+        var scene = this.game.scene;
+        if( !scene ) return;
+        if( !scene.entity ){
+            this.gameState.addEntity({
+					components:{
+						"cmp.ThreeNode":{ scripts: {}, asset:scene },
+                        "cmp.PhysiScene":{ asset:scene }
+					}                 
+            });
+        }
+    },
+
     onSceneLoaded:function(){
         var entity = this.entity, asset = this.asset, node;
         
-        var type = this.mesh;
-        if( this.mesh != "Mesh" ) type += "Mesh";
+        var type = this.mesh + "Mesh";
         node = this.node = Physijs[ type ]( null, null, this.mass, this.entity.getNode() );
 
         node.entity = this.entity;
@@ -119,6 +131,13 @@ CLAZZ("cmp.PhysiNode", {
             velocity = { x:arguments[0]||0, y:arguments[1]||0, z:arguments[2]||0 };
         
         this.node.setAngularVelocity(velocity);
+    },
+
+    '@applyTorque':{ torque:{type:'vec3f'} },
+    applyTorque:function( torque ){
+        if( arguments.length == 3 || !torque )
+            torque = { x:arguments[0]||0, y:arguments[1]||0, z:arguments[2]||0 };
+        this.node.applyTorque( torque );
     },
 
     '@addForce':{ force:{type:'vec3f'} },

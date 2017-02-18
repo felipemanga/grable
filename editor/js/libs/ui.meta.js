@@ -153,7 +153,9 @@ UI.Meta.prototype.factories = {
                     header: null
                 };
 
-                sub.header = new UI.Input(i).setWidth('90px');
+                sub.header = new UI.Input(i).setMarginBottom('3px');
+                if( sub.meta.type == 'array' ) sub.header.setWidth('200px');
+                else sub.header.setWidth('90px');
 
                 sub.header.onChange((function(i, title){
                     var newKey = title.getValue().trim();
@@ -262,7 +264,7 @@ UI.Meta.prototype.factories = {
                     }) 
                 );
             }else{
-                e.add( new UI.Row() );
+                e.add( new UI.Row().setStyle('min-height', ['1px']).setHeight('1px') );
             }
 
             obj.value = (arr);
@@ -368,8 +370,13 @@ UI.Meta.prototype.factories = {
             .setValue( callName )
             .onChange(update);
 
-        var argContainer = new UI.Row().setMarginTop('6px');
-        var callContainer = new UI.Row().setStyle('float', ['right']).setMarginTop('2px');
+        var argContainer = new UI.Row()
+            .setMarginTop('6px')
+            .setStyle('min-height', ['1px']);
+            
+        var callContainer = new UI.Row()
+            .setStyle('float', ['right'])
+            .setMarginTop('2px');
 
         callContainer.add( scopeSelect );
         callContainer.add( isCustom );
@@ -537,9 +544,9 @@ UI.Meta.prototype.factories = {
         add(r, "min x", "x");
         add(r, "max x", "width", "x");
         add(r, "min y", "y");
-        add(r, "max y", "top", "y");
+        add(r, "max y", "height", "y");
         add(r, "min z", "z");
-        add(r, "max z", "far", "z");
+        add(r, "max z", "depth", "z");
 
         function add( row, name, prop, sub ){
             var v = (obj.value && obj.value[prop]) || 0;

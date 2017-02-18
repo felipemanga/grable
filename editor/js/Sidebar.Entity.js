@@ -26,7 +26,7 @@ Sidebar.Entity = function ( editor ) {
 	var btns = new UI.Row();
 	container.add( btns );
 
-	var newScript = new UI.Button( 'Add Component' ).onClick( function () {
+	var newScript = new UI.Button( 'Add Component' ).setMargin('2px').onClick( function () {
 		editingComponent = null;
 		var script = { type: "component", name:"", source: jsonPrefix + '{}' + jsonPostfix };
 		editor.execute( new AddScriptCommand( editor.selected, script ) );
@@ -34,7 +34,7 @@ Sidebar.Entity = function ( editor ) {
 
 	btns.add( newScript );
 
-	var listCmps = new UI.Button( 'List Components' ).onClick( function () {
+	var listCmps = new UI.Button( 'List Components' ).setMargin('2px').onClick( function () {
 		editingComponent = null;
 
 		scriptsContainer.setDisplay( 'block' );
@@ -291,11 +291,9 @@ Sidebar.Entity = function ( editor ) {
                 remove.setMarginLeft( '4px' );
                 remove.onClick( function () {
 
-                    if ( confirm( 'Remove component ' + script.name + '?' ) ) {
-
-                        editor.execute( new RemoveScriptCommand( editor.selected, script ) );
-
-                    }
+                    editor.execute( new RemoveScriptCommand( editor.selected, script ) );
+                    editingComponent = null;
+                    updateUI();
 
                 } );
                 scriptsContainer.add( remove );

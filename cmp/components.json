@@ -1,6 +1,7 @@
 {
     "cmp.ActionAudio":{"phaserjs":true, "threejs":false},
     "cmp.AutoFlip":{"phaserjs":true, "threejs":true},
+    "cmp.AutoRotate":{"phaserjs":false, "threejs":true},
     "cmp.Background":{"phaserjs":true},
     "cmp.Bob":{"phaserjs":true, "threejs":true},
     "cmp.Event":{"phaserjs":true, "threejs":true},

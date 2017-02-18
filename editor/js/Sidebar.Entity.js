@@ -585,7 +585,7 @@ Sidebar.Entity = function ( editor ) {
 
                 if( meta.canResize !== false && !meta.labels )
                 {
-                    e.add( new UI.Button('add')
+                    e.add( new UI.Button('add ' + obj.key)
                         .setStyle('margin-left', ['auto'])
                         .setDisplay('block')
                         .setStyle('clear', ['both'])
@@ -671,22 +671,20 @@ Sidebar.Entity = function ( editor ) {
                     opts[k] = k;
 
 			var list = new UI.Select()
-                .setWidth( '180px' )
+                .setWidth( '150px' )
                 .setFontSize( '12px' )
-                .setStyle('float', ['right'])
                 .setTextTransform('none')
 			    .setOptions( opts )
                 .setValue( callName )
                 .onChange(update);
 
             var custom = new UI.Input()
-                .setWidth( '174px' )
-                .setStyle('float', ['right'])
+                .setWidth( '144px' )
                 .setValue( callName )
                 .onChange(update);
 
             var argContainer = new UI.Row().setMarginTop('6px');
-            var callContainer = new UI.Row();
+            var callContainer = new UI.Row().setStyle('float', ['right']).setMarginTop('2px');
 
 			callContainer.add( scope );
 			callContainer.add( isCustom );
@@ -750,6 +748,7 @@ Sidebar.Entity = function ( editor ) {
                 var argDesc = {
                     meta:  { type:'array', subtype:'json', subtypes:subtypes, labels:labels },
                     value: args,
+                    key:'argument',
                     default: [],
                     e: argContainer,
                     update: function(value){

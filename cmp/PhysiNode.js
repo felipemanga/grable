@@ -16,7 +16,7 @@ CLAZZ("cmp.PhysiNode", {
     name:"",
 
     "@mass":{type:"float", min:0},
-    mass:0,
+    mass:1,
 
     "@mesh":{type:"enum", options:[
         "Box",
@@ -40,6 +40,7 @@ CLAZZ("cmp.PhysiNode", {
 
     "@linearDamping":{type:"float", min:0, max:1},
     linearDamping:0,
+
     "@angularDamping":{type:"float", min:0, max:1},
     angularDamping:0,
 
@@ -47,7 +48,10 @@ CLAZZ("cmp.PhysiNode", {
 
     onSceneLoaded:function(){
         var entity = this.entity, asset = this.asset, node;
-        node = this.node = Physijs[ this.mesh + "Mesh"]( null, null, this.mass, this.entity.getNode() );
+        
+        var type = this.mesh;
+        if( this.mesh != "Mesh" ) type += "Mesh";
+        node = this.node = Physijs[ type ]( null, null, this.mass, this.entity.getNode() );
 
         node.entity = this.entity;
         node.friction = this.friction;

@@ -114,15 +114,22 @@ CLAZZ("cmp.ThreeNode", {
     '@getRotationDeltaZ':{__hidden:true},
     getRotationDeltaZ:function( target ){
         var current = this.entity.rotation.z;
-        if ( current < 0 ) current = (current % (Math.PI * 2)) + Math.PI * 2;
-        if ( target < 0  ) target  = (target  % (Math.PI * 2)) + Math.PI * 2;
+        // if ( current < 0 ) current = (current % (Math.PI * 2)) + Math.PI * 2;
+        // if ( target < 0  ) target  = (target  % (Math.PI * 2)) + Math.PI * 2;
 
         var rotationDelta = target - current;
         if (rotationDelta > Math.PI) rotationDelta -= 2 * Math.PI;
         else if (rotationDelta < -Math.PI) rotationDelta += 2 * Math.PI;
 
         return rotationDelta;
-    },    
+    },
+    //     var rotation = this.entity.rotation || 0;
+    //     if (entitySprite.rotation < 0) entitySprite.rotation = (entitySprite.rotation % (Math.PI * 2)) + Math.PI * 2;
+    //     if (rotation < 0) rotation = (rotation % (Math.PI * 2)) + Math.PI * 2;
+    //     var rotationDelta = rotation - entitySprite.rotation;
+    //     if (rotationDelta > Math.PI) rotationDelta -= 2 * Math.PI;
+    //     else if (rotationDelta < -Math.PI) rotationDelta += 2 * Math.PI;
+    //     entitySprite.rotation = (entitySprite.rotation + rotationDelta * 0.17) % (2 * Math.PI);
 
     '@setScale':{ position:{type:'vec3f'} },
     setScale:function( position ){

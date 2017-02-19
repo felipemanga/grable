@@ -1,5 +1,5 @@
 CLAZZ("cmp.FlyAI",{
-    INJECT:["entity", "speed", "call", "manualBounds"],
+    INJECT:["entity", "speed", "call", "manualBounds", "axis"],
     enabled:true,
     targetX:0,
     targetY:0,
@@ -9,6 +9,9 @@ CLAZZ("cmp.FlyAI",{
     error:20,
     _timeout:0,
     timeout:100,
+
+    "@axis":{type:"enum", options:["X Y", "X Z", "Y Z", "X Y Z"]},
+    axis:"X Y Z",
 
     "@bounds":{type:"enum", options:["world", "manual"]},
     bounds:"world",
@@ -22,15 +25,28 @@ CLAZZ("cmp.FlyAI",{
             this.call("getWorldBounds", this.manualBounds);
         }
 
-        var pos = this.entity.position, tries = 100;
+        var pos = this.entity.position, tries = 10, axis = this.axis;
         do{
-            this.targetX = (Math.random() * this.manualBounds.width || 0) + (this.manualBounds.x || 0);
-            this.targetY = (Math.random() * this.manualBounds.height || 0) + (this.manualBounds.y || 0);
-            this.targetZ = (Math.random() * this.manualBounds.depth || 0) + (this.manualBounds.z || 0);
-            var dx = this.targetX - pos.x || 0;
-            var dy = this.targetY - pos.y || 0;
-            var dz = this.targetZ - pos.z || 0;
-        }while( tries-- && Math.abs(dx) + Math.abs(dy) + Math.abs(dz) < this.speed*this.error )
+            if( axis.indexOf("X") != -1 )
+                this.targetX = (Math.random() * this.manualBounds.width || 0) + (this.manualBounds.x || 0);
+            else
+                this.targetX = undefined;
+            
+            if( axis.indexOf("Y") != -1 )
+                this.targetY = (Math.random() * this.manualBounds.height || 0) + (this.manualBounds.y || 0);
+            else
+                this.targetY = undefined;
+            
+            if( axis.indexOf("Z") != -1 )
+                this.targetZ = (Math.random() * this.manualBounds.depth || 0) + (this.manualBounds.z || 0);
+            else
+                this.targetZ = undefined;
+
+            var dx = (this.targetX - pos.x) || 0;
+            var dy = (this.targetY - pos.y) || 0;
+            var dz = (this.targetZ - pos.z) || 0;
+        }while( tries-- && Math.abs(dx) + Math.abs(dy) + Math.abs(dz) < this.error )
+
         this._timeout = 0;
     },
 
@@ -45,10 +61,10 @@ CLAZZ("cmp.FlyAI",{
             var vx = 0; // Math.random() * speed * 0.2;
             var vy = 0; // Math.random() * speed * 0.2;
             var vz = 0; // Math.random() * speed * 0.2;
-            var dx = this.targetX - pos.x;
-            var dy = this.targetY - pos.y;
-            var dz = this.targetZ - pos.z;
-            if( Math.abs(dx) + Math.abs(dy) + Math.abs(dz) < speed*this.error ){
+            var dx = (this.targetX - pos.x) || 0;
+            var dy = (this.targetY - pos.y) || 0;
+            var dz = (this.targetZ - pos.z) || 0;
+            if( Math.abs(dx) + Math.abs(dy) + Math.abs(dz) < this.error ){
                 if( this.entity.onGetTarget )
                     this.entity.apply(this.entity.onGetTarget);
                 else{

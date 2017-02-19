@@ -232,6 +232,7 @@ select {
 	cursor: default;
 	overflow: auto;
 	outline: none;
+	resize: vertical;
 }
 
 	.Outliner .option {

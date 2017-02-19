@@ -434,7 +434,9 @@ Sidebar.Entity = function ( editor ) {
         EQ,
         NEQ,
         IN,
-        NIN
+        NIN,
+        INSTANCEOF,
+        NOTINSTANCEOF
     };
 
     function AND( data, clazz, tests ){
@@ -483,6 +485,28 @@ Sidebar.Entity = function ( editor ) {
             var value = data[key];
             if( value === undefined ) value = clazz[key];
             if( tests[key].indexOf(value) != -1 ) return false;
+        }
+        return true;
+    }
+
+    function INSTANCEOF( data, clazz, tests ){
+        var ctx = Object.assign({ asset:editor.selected }, data);
+        for( var key in tests ){
+            var value = DOC.resolve( key, ctx );
+            if( value === undefined ) value = clazz[key];
+            if( !value || !(value instanceof DOC.resolve(tests[key])) ) 
+                return false;
+        }
+        return true;
+    }    
+
+    function NOTINSTANCEOF( data, clazz, tests ){
+        var ctx = Object.assign({ asset:editor.selected }, data);
+        for( var key in tests ){
+            var value = DOC.resolve( key, ctx );
+            if( value === undefined ) value = clazz[key];
+            if( value && (value instanceof DOC.resolve(tests[key])) ) 
+                return false;
         }
         return true;
     }    

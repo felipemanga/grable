@@ -23,7 +23,7 @@ CLAZZ("cmp.Overboard", {
                 this.bounds.height = 0;
         }
         
-        cmp.Overboard.Service.add(this, "check");
+        cmp.Overboard.Service.add(this);
     },
 
     destroy:function(){
@@ -55,7 +55,7 @@ CLAZZ("cmp.Overboard.Service", {
     pool:null,
     pos:0,
 
-    add:function(l, evt){
+    add:function(l){
         if( !this.listeners ){
             this.listeners = [];
             this.pool = l.pool;

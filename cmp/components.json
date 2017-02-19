@@ -21,8 +21,7 @@
     "cmp.PhaserWebcam":{"phaserjs":true},
     "cmp.PhaserText":{"phaserjs":true},
 
-    "cmp.PhysiScene":{"threejs":true},
-    "cmp.PhysiNode":{"threejs":true},
+    "cmp.PhysiJS":{"threejs":true},
 
     "cmp.State":{"phaserjs":true, "threejs":true},
     "cmp.SnapToGround":{"threejs":true},

@@ -76,11 +76,7 @@ CLAZZ("cmp.FlyAI",{
             vz += speed * Math.sign(dz);
 
             if( this.entity.addForce ) this.entity.addForce({x:vx, y:vy, z:vz});
-            else{
-                this.entity.position.x += vx;
-                this.entity.position.y += vy;
-                this.entity.position.z += vz;
-            }
+            else this.entity.addPosition(vx, vy, vz);
         }
     }
 });

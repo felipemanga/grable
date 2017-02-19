@@ -177,7 +177,7 @@ CLAZZ("states.ThreeState", {
                 var scriptList = scripts[k];
                 for( var i=0; i<scriptList.length; ++i ){
                     var script = scriptList[i];
-                    if( script.hidden )
+                    if( script.type == 'component' )
                         this.ldr.load(script.name.replace(/\./g, '/')+'.js')
                 }
             }

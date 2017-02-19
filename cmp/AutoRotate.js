@@ -31,7 +31,7 @@ CLAZZ("cmp.AutoRotate", {
         this.enabled = enabled;
     },
 
-    onSceneLoaded:function(){
+    onReady:function(){
         this.x = this.entity.position.x;
         this.y = this.entity.position.y;
         this.z = this.entity.position.z;

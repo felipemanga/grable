@@ -17,7 +17,7 @@ CLAZZ("cmp.SnapToGround", {
         raycaster:null,
     },
 
-    onSceneLoaded:function(){
+    onReady:function(){
         var ground = this.game.scene.getObjectByProperty( 'uuid', this.ground );
         if( !ground ) 
             return;

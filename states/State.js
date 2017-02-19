@@ -65,7 +65,7 @@ CLAZZ("states.State", {
         }
 
         this.sceneLoaded = true;
-        this.pool.call( "onSceneLoaded", true );
+        this.pool.call( "onReady", true );
     },
 
     addEntity:function(name, inject){
@@ -77,8 +77,8 @@ CLAZZ("states.State", {
             descriptor:DOC.mergeTo({}, (typeof name == "string" ? this.entityDefinitions[name] : name), inject)
         }, inject));
 
-        if( this.sceneLoaded && e.onSceneLoaded )
-            e.onSceneLoaded( false );
+        if( this.sceneLoaded && e.onReady )
+            e.onReady( false );
 
         return e;
     },

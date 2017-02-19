@@ -100,7 +100,7 @@ CLAZZ("cmp.PhysiJS", {
         return this.scene;
     },
 
-    onSceneLoaded:function(){
+    onReady:function(){
         var entity = this.entity, asset = this.asset, node;
 
         if( this.node == this.scene )

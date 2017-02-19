@@ -102,7 +102,7 @@ var APP = {
 			}
 
             this.sceneLoaded = true;
-			pool.call("onSceneLoaded", arguments);
+			pool.call("onReady", arguments);
 
 		};
 		
@@ -115,8 +115,8 @@ var APP = {
 				descriptor:DOC.mergeTo({}, name, inject)
 			}, inject));
 
-            if( this.sceneLoaded && e.onSceneLoaded )
-                e.onSceneLoaded();
+            if( this.sceneLoaded && e.onReady )
+                e.onReady();
                 
             return e;
 		};

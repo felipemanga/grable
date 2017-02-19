@@ -13,7 +13,7 @@ CLAZZ("cmp.Wait", {
     '@delay':{type:'int', min:0},
     delay:0,
 
-    '@effect':{type:'slot'},
+    '@effect':{ type:'array', default:null, meta:{ type:'slot' } },
     effect:null,
 
     handle:null,

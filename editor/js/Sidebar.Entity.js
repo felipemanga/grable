@@ -11,6 +11,9 @@ Sidebar.Entity = function ( editor ) {
         externalSlotIndex = {},
         internalSlotIndex = {};
 
+	loadedCompPath = editor.config.getKey('editorComponentPath') || "../cmp";
+	loadCompPath( loadedCompPath );
+
 	var jsonPrefix = 'return addComponent(', jsonPostfix = ')';
 
 	var signals = editor.signals;
@@ -54,6 +57,10 @@ Sidebar.Entity = function ( editor ) {
     
 
 	// events
+
+    signals.objectAdded.add( function ( object ){
+        preview( object, false ); 
+    } );
 
 	signals.objectSelected.add( function ( object ) {
 
@@ -198,8 +205,10 @@ Sidebar.Entity = function ( editor ) {
 
         indexSlots( clazz, externalSlotIndex );
 
-		if( !loadQueueSize )
+		if( !loadQueueSize ){
+            preview( editor.scene, true );
 			updateUI();
+        }
 	}
 
 	function onError(fqcn){
@@ -255,8 +264,9 @@ Sidebar.Entity = function ( editor ) {
 			}
 		}
 
-
         scriptsContainer.setDisplay( 'block' );
+
+        preview( object, false );
 
         for ( var i = 0; i < scripts.length; i ++ ) {
 
@@ -304,14 +314,29 @@ Sidebar.Entity = function ( editor ) {
                 scriptsContainer.add( remove );
 
                 scriptsContainer.add( new UI.Break() );
-                
-                showPreview( object, script );
 
             } )( object, scripts[ i ] )
 
         }
 
 	}
+
+    function preview( object, nest ){
+		var scripts = editor.scripts[ object.uuid ];
+
+        for( var k in scripts ){
+            showPreview( object, scripts[k] );
+        }
+
+        if( nest && object.children ){
+
+            for( var i=0; i<object.children.length; ++i ){
+                preview( object.children[i], true );
+            }
+
+        }
+        
+    }
 
     function showPreview( object, script, data ){
         if( components 
@@ -332,6 +357,8 @@ Sidebar.Entity = function ( editor ) {
                 data.entity = null;
                 data.asset  = object;
                 data.game   = null;
+
+                console.log(clazz);
 
                 var inst = CLAZZ.get( clazz, data );
                 inst.preview();

@@ -373,7 +373,7 @@ UI.Meta.prototype.factories = {
         var argContainer = new UI.Row()
             .setMarginTop('6px')
             .setStyle('min-height', ['1px']);
-            
+
         var callContainer = new UI.Row()
             .setStyle('float', ['right'])
             .setMarginTop('2px');
@@ -462,6 +462,28 @@ UI.Meta.prototype.factories = {
         e.onChange(function(){
             obj.value = (e.getValue());
         });
+    },
+
+    longstring:function( obj ){
+        var value = obj.value;
+        if( value === undefined )
+            value = '';
+
+        var script = {
+            type: 'text',
+            name: obj.key,
+            source: value,
+            onChange: function( value ){
+                script.value = obj.value = value;
+            }
+        };
+        var e = new UI.Button('EDIT')
+            .setWidth( '90px' )
+            .setStyle('float', ['right'])
+            .onClick(function(){
+                editor.signals.editScript.dispatch( editor.selected, script );
+            });
+        obj.row.add( e );        
     },
 
     vec3i:function( obj ){

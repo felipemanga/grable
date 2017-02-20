@@ -48,7 +48,7 @@ select {
 	position: absolute;
 	top: 32px;
 	left: 0;
-	right: 300px;
+	right: 330px;
 	bottom: 32px;
 }
 
@@ -61,7 +61,7 @@ select {
 	position: absolute;
 	top: 32px;
 	left: 0;
-	right: 300px;
+	right: 330px;
 	bottom: 32px;
 	opacity: 0.9;
 }
@@ -150,7 +150,7 @@ select {
 	right: 0;
 	top: 32px;
 	bottom: 0;
-	width: 310px;
+	width: 330px;
 	background: #eee;
 	overflow: auto;
 }

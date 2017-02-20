@@ -280,6 +280,15 @@ UI.Meta.prototype.factories = {
         });
     },
 
+    color:function( obj ){
+        var e = new UI.Color();
+        e.setValue( obj.value );
+        e.onChange(function(){
+            obj.value = this.getValue();
+        })
+        obj.row.add( e );
+    },
+
     enum:function( obj ){
         var e = new UI.Select().setWidth( '180px' ).setFontSize( '12px' ).setStyle('float', ['right']);
         var opts = {};

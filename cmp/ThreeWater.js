@@ -3,7 +3,13 @@ need([
 ], function(){
 
 CLAZZ("cmp.ThreeWater", {
-    INJECT:["entity", "game", "asset", "sunLight"],
+    INJECT:["entity", "game", "asset", "sunLight", "waterNormals", "waterColor"],
+
+    "@waterNormals":{type:"texture"},
+    waterNormals:'resources/image/waternormals.jpg',
+
+    "@waterColor":{type:"color"},
+    waterColor:"#001e0f",
 
     "@sunLight":{type:"node", "instanceof":"THREE.Light"},
     sunLight:null,
@@ -28,11 +34,19 @@ CLAZZ("cmp.ThreeWater", {
         if( !sunDirection ) 
             sunDirection = (new THREE.Vector3(1,1,0)).normalize();
 
-        var waterNormals = oldAsset.material.normalMap;
+        var waterNormals;
+        if( typeof this.waterNormals != 'string' ){
+
+            waterNormals = oldAsset.material.normalMap;
+
+        }else{
+
+            waterNormals = (new THREE.TextureLoader()).load( this.waterNormals );
+
+        }
+
         if( waterNormals )
-            waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping; 
-        else
-            console.warn("No normalMap in placeholder!");
+            waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
 
         var water = this.water = new THREE.Water(
             this.game.renderer,
@@ -45,7 +59,7 @@ CLAZZ("cmp.ThreeWater", {
                 alpha: 	1.0,
                 sunDirection: sunDirection,
                 sunColor: sunColor,
-                waterColor: 0x001e0f,
+                waterColor: this.waterColor,
                 distortionScale: 50.0
             });
 

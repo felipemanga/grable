@@ -13,10 +13,10 @@
     "cmp.Inertia":{"phaserjs":true, "threejs":true},
     "cmp.LoadTexture":{"threejs":true},
 
+    "cmp.Node":{"phaserjs":"cmp.PhaserNode", "threejs":"cmp.ThreeNode"},
     "cmp.Overboard":{"threejs":true},
 
     "cmp.PhaserCollision":{"phaserjs":true},
-    "cmp.PhaserMouse":{"phaserjs":true},
     "cmp.PhaserSprite":{"phaserjs":true},
     "cmp.PhaserWebcam":{"phaserjs":true},
     "cmp.PhaserText":{"phaserjs":true},
@@ -29,6 +29,7 @@
     "cmp.ThreeSprite":{"phaserjs":false, "threejs":true},
     "cmp.ThreeTerrain":{"phaserjs":false, "threejs":true},
     "cmp.ThreeWater":{"phaserjs":false, "threejs":true},
+    "cmp.Mouse":{"phaserjs":"cmp.PhaserMouse", "threejs":"cmp.ThreeMouse"},
     
     "cmp.Tween":{"phaserjs":true, "threejs":true},
     "cmp.Wait":{"phaserjs":true, "threejs":true}

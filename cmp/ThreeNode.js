@@ -1,18 +1,9 @@
 CLAZZ("cmp.ThreeNode", {
+    PROVIDES:{"cmp.Node":"implements"},
     INJECT:["entity", "gameState", "asset", "scripts"],
 
     CONSTRUCTOR:function(){
         var entity = this.entity, script;
-        if( entity.isClone ){
-            var parent = this.asset.parent;
-
-            this.asset = this.asset.clone();
-            CLAZZ.set("asset", this.asset);
-
-            if( parent )
-                parent.add( this.asset );
-        }
-
         this.setNode( this.asset );
         this.entity._addMethod( this.entity, "getEntity" + this.asset.uuid, function(){ return this; });
 
@@ -38,7 +29,11 @@ CLAZZ("cmp.ThreeNode", {
         }
     },
 
-    clone:function(){},
+    clone:function( _data, _inject ){
+        _inject.asset = this.asset.clone();
+        if( this.asset.parent )
+            this.asset.parent.add( _inject.asset );
+    },
 
     destroy:function(){
         if( this.asset && this.asset.parent )

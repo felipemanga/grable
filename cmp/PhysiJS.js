@@ -64,6 +64,7 @@ CLAZZ("cmp.PhysiJS", {
     create:function(){
         var scene = this.game.scene;
         if( !scene ) return;
+        
         if( scene == this.asset ){
 
             this.pool.silence("getWorldBounds");
@@ -78,9 +79,7 @@ CLAZZ("cmp.PhysiJS", {
 
             this.scene = this.node;
 
-            cmp.PhysiJS.Service.add( this );
-
-            cmp.PhysiJS.Service.instance.setGravity( this.gravity );
+            cmp.PhysiJS.Service.add( this ).setGravity( this.gravity );
 
         } else if( !scene.entity ){
 
@@ -101,13 +100,13 @@ CLAZZ("cmp.PhysiJS", {
     },
 
     onReady:function(){
-        var entity = this.entity, asset = this.asset, node;
+        var entity = this.entity, asset = this.entity.getNode(), node, scope = this;
 
         if( this.node == this.scene )
             return;
         
         var type = this.mesh + "Mesh";
-        node = this.node = Physijs[ type ]( null, null, this.mass, this.entity.getNode() );
+        node = this.node = Physijs[ type ]( null, null, this.mass, asset );
 
         node.entity = this.entity;
         node.friction = this.friction;
@@ -117,8 +116,11 @@ CLAZZ("cmp.PhysiJS", {
 
         if( this.name )
             node.addEventListener('collision', function(other, linear, angular){
+                if( !entity.isAlive || !other.entity.isAlive )
+                    return;
+
                 var cb = entity["onHit" + other.entity.physiJS.name];
-                if( cb )
+                if( scope.node && other.entity.physiJS.node && cb )
                     cb.call(entity, other.entity, linear, angular);
             });
 
@@ -160,13 +162,16 @@ CLAZZ("cmp.PhysiJS", {
         if( !this.node || !this.scene )
             return;
 
-        if( this.node != this.scene )
-            return this.scene.remove( this.node );
-
-        this.scene._worker.onmessage = null;
-        this.scene._worker = null;
+        if( this.node != this.scene ){
+            this.scene.remove( this.node );
+            this.node = null;
+        } else {
+            cmp.PhysiJS.Service.remove(this);
+            this.scene._worker.onmessage = null;
+            this.scene._worker = null;
+        }
         this.scene = null;
-        cmp.PhysiJS.Service.remove(this);
+
     },
 
     '@setLinearVelocity':{ velocity:{type:'vec3f'} },
@@ -193,7 +198,8 @@ CLAZZ("cmp.PhysiJS", {
     },
 
     '@addForce':{ force:{type:'vec3f'} },
-    addForce:function( force ){
+    addForce:function( _force ){
+        var force = _force; // work-around: Not optmized: Assignment to parameter in arguments object
         if( arguments.length == 3 || !force )
             force = { x:arguments[0]||0, y:arguments[1]||0, z:arguments[2]||0 };
         this.node.applyCentralForce(force);
@@ -232,21 +238,25 @@ CLAZZ("cmp.PhysiJS.Service", {
     },
 
     STATIC:{
-        instance:null,
+        instances:{},
 
         add:function( l ){
             if( !l || !l.pool || !l.entity )
                 return;
 
-            if( !this.instance )
-                this.instance = new cmp.PhysiJS.Service();
+            var instance = this.instances[ l.scene.id ];
+
+            if( !instance )
+                this.instances[ l.scene.id ] = instance = new cmp.PhysiJS.Service();
             
-            this.instance.add( l );
+            instance.add( l );
+
+            return instance;
         },
 
         remove:function( l ){
-            if( !l || !this.instance ) return;
-            this.instance.remove(l);
+            if( !l || !this.instances[ l.scene.id ] ) return;
+            this.instances[ l.scene.id ].remove(l);
         }
     },
 

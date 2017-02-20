@@ -51,7 +51,7 @@ var APP = {
 			this.setScene( loader.parse( json.scene ) );
 			this.setCamera( loader.parse( json.camera ) );
 
-			pool = this.pool = new DOC.Pool();
+			pool = this.pool = self.POOL = new DOC.Pool();
 
 			events = {
 				init: [],
@@ -91,14 +91,15 @@ var APP = {
 
 				}
 
-				this.addEntity({ 
+				this.addEntity({
 					components:{
 						"cmp.ThreeNode":{
 							scripts: json.scripts[ uuid ],
-							asset:object
 						}
 					} 
-				});
+				}, {
+                    asset:object
+                });
 			}
 
             this.sceneLoaded = true;

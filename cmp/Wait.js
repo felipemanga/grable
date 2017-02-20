@@ -32,10 +32,9 @@ CLAZZ("cmp.Wait", {
 
                 scope.handle = setTimeout( function(){
                     scope.handle = null;
-                    if( scope.gameState.isActive() )
+                    if( scope.entity.isAlive && scope.gameState.isActive() )
                         scope.entity.message( scope.effect );
                 }, scope.delay );
-
             };
         }
     },

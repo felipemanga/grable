@@ -86,14 +86,16 @@ Sidebar.Entity = function ( editor ) {
 			
 			components = JSON.parse(text) || {};
             
-            if( !components['cmp.ThreeNode'] )
-                components['cmp.ThreeNode'] = {'threejs':true};
+            if( !components['cmp.Node'] )
+                components['cmp.Node'] = {'threejs':'cmp.ThreeNode'};
 
 			for( var k in components ){
 				var cmp = components[k];
-				if( cmp && cmp.threejs )
-					loadComponent(path, k);
-				else components[k] = null;
+				if( cmp && cmp.threejs ){
+                    if( cmp.threejs === true )
+                        cmp.threejs = k;
+					loadComponent( path, cmp.threejs, k );
+                } else components[k] = null;
 			}
 
 		});
@@ -102,7 +104,7 @@ Sidebar.Entity = function ( editor ) {
 
 	var CLAZZQueue = null;
 
-	function loadComponent(path, fqcn){
+	function loadComponent(path, fqcn, interface){
 		loadQueueSize++;
 		var i = 0, script;
 		var pathparts = path.split("/");
@@ -131,7 +133,7 @@ Sidebar.Entity = function ( editor ) {
 
 		script = document.createElement("script");
 		script.src = cmpPath;
-		script.onload = onLoadComponent.bind(null, fqcn);
+		script.onload = onLoadComponent.bind(null, fqcn, interface);
 		script.onerror = onError.bind(null, fqcn);
 		if( CLAZZQueue ) CLAZZQueue.push(script);
 		else document.head.appendChild(script);
@@ -156,6 +158,9 @@ Sidebar.Entity = function ( editor ) {
                 if( args.length ){
                     args.split(',').forEach( (argName, i) =>{
                         argName = argName.trim();
+                        if( argName[0] == '_' )
+                            return;
+                            
                         if( !argIndex[i] ){
                             argIndex[i] = { 
                                 name:argName,
@@ -181,9 +186,9 @@ Sidebar.Entity = function ( editor ) {
         
     }
 
-	function onLoadComponent( fqcn ){
+	function onLoadComponent( fqcn, interface ){
 		loadQueueSize--;
-		var clazz = components[fqcn].clazz = CLAZZ.get(RESOLVE(fqcn));
+		var clazz = components[interface].clazz = DOC.resolve(fqcn);
 		var meta = clazz.CLAZZ;
 
 		if( clazz.PROVIDES ){

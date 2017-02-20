@@ -78,10 +78,11 @@ var ThreeGame = CLAZZ({
             this.gameState.addEntity({ 
                 components:{
                     "cmp.ThreeNode":{
-                        scripts: this.json.scripts[ uuid ],
-                        asset:object
+                        scripts: this.json.scripts[ uuid ]
                     }
                 } 
+            }, {
+                asset:object
             });
         }
         
@@ -172,13 +173,30 @@ CLAZZ("states.ThreeState", {
     },
 
     load:{
-        scripts:function( scripts ){
-            for( var k in scripts ){
+        scripts:function( scripts )
+        {
+            for( var k in scripts )
+            {
                 var scriptList = scripts[k];
-                for( var i=0; i<scriptList.length; ++i ){
+                for( var i=0; i<scriptList.length; ++i )
+                {
                     var script = scriptList[i];
-                    if( script.type == 'component' )
-                        this.ldr.load(script.name.replace(/\./g, '/')+'.js')
+                    if( script.type != 'component' )
+                        continue;
+
+                    var implementation = script.name;
+                    
+                    var binding = cmp.components[script.name];
+                    if( binding )
+                    {
+                        if( !binding.threejs )
+                            continue; // should never happen?
+
+                        if( typeof binding.threejs == 'string' )
+                            implementation = binding.threejs;
+                    }
+
+                    this.ldr.load( implementation.replace(/\./g, '/')+'.js' );
                 }
             }
         }

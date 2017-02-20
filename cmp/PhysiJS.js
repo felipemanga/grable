@@ -8,7 +8,7 @@ need([
 
 CLAZZ("cmp.PhysiJS", {
     INJECT:[
-        "entity", "pool", "asset", "game", "gameState", 
+        "entity", "pool", "game", "gameState", 
 
         // scene configs
         "gravity", "frameRate",
@@ -18,6 +18,7 @@ CLAZZ("cmp.PhysiJS", {
     ],
     PROVIDES:{"Physics":"implements"},
 
+    asset:null,
     scene:null,
     node:null,
     bounds:null,
@@ -64,6 +65,8 @@ CLAZZ("cmp.PhysiJS", {
     create:function(){
         var scene = this.game.scene;
         if( !scene ) return;
+
+        this.asset = this.entity.getNode();
         
         if( scene == this.asset ){
 

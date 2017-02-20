@@ -84,7 +84,16 @@ var Script = function ( editor ) {
 
 				if ( value !== currentScript.source ) {
 
-					editor.execute( new SetScriptValueCommand( currentObject, currentScript, 'source', value, codemirror.getCursor(), codemirror.getScrollInfo() ) );
+                    if( typeof( currentScript.onChange ) ){
+
+                        currentScript.onChange( value );
+
+                    } else {
+
+					    editor.execute( new SetScriptValueCommand( currentObject, currentScript, 'source', value, codemirror.getCursor(), codemirror.getScrollInfo() ) );
+
+                    }
+
 
 				}
 				return;
@@ -360,7 +369,11 @@ var Script = function ( editor ) {
 
 		if ( typeof( script ) === 'object' ) {
 
-			mode = 'javascript';
+			mode = script.type || 'javascript';
+            
+            if( mode == 'component' )
+                mode = 'javascript';
+
 			name = script.name;
 			source = script.source;
 			title.setValue( object.name + ' / ' + name );

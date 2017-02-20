@@ -28,6 +28,7 @@
     "cmp.SkyBox":{"threejs":true},
     "cmp.ThreeSprite":{"phaserjs":false, "threejs":true},
     "cmp.ThreeTerrain":{"phaserjs":false, "threejs":true},
+    "cmp.ThreeTreeGen":{ "threejs":true },
     "cmp.ThreeWater":{"phaserjs":false, "threejs":true},
     "cmp.Mouse":{"phaserjs":"cmp.PhaserMouse", "threejs":"cmp.ThreeMouse"},
     

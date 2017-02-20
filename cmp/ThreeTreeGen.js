@@ -3,9 +3,18 @@ need([
     "lib.Task"
 ], function(){
 
+function CustomAttribute( buffer, itemSize ){
+    THREE.BufferAttribute.call( this, buffer, itemSize );
+}
+
+CustomAttribute.prototype = THREE.Float32BufferAttribute.prototype;
+
 CLAZZ("cmp.ThreeTreeGen", {
 
     INJECT:['entity', 'seed', 'iterations', 'source'],
+
+    '@hidePlaceholder':{type:'bool'},
+    hidePlaceholder:true,
 
     "@seed":{type:"int"},
     seed:0xDEADBEEF,
@@ -16,16 +25,36 @@ CLAZZ("cmp.ThreeTreeGen", {
     '@source':{ type:'longstring' },
     source: '',
 
+    asset:null,
+
     create: function(){
-        var placeholder = this.entity.getNode();
-        if( placeholder.parent )
-            placeholder.parent.remove( placeholder );
+        this.asset = this.entity.getNode();
+
+        if( this.hidePlaceholder )
+            this.asset.visible = false;
 
         cmp.ThreeTreeGen.Service.generate( this );
     },
 
     _onGenerate: function( position, uv, normal )
     {
+        var node = this.asset;
+
+        if( this.hidePlaceholder )
+            node.visible = true;
+                    
+        if( !position )
+            return;
+        
+        var geometry = new THREE.BufferGeometry();
+        geometry.addAttribute('position', new CustomAttribute( position, 3 ) );
+        geometry.addAttribute('uv', new CustomAttribute( uv, 2 ) );
+        geometry.addAttribute('normal', new CustomAttribute( normal, 3 ) );
+        node.geometry = geometry;
+
+        if( this.entity.onGenerate )
+            this.entity.onGenerate();
+
         console.log( "onGenerate", position, uv, normal );
     }
 

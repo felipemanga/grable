@@ -281,8 +281,19 @@ Sidebar.Entity = function ( editor ) {
 
                 if( script.type != 'component' ) return;
 
+                var remove = new UI.Button( 'X' );
+                remove.setMarginRight( '4px' );
+                remove.onClick( function () {
+
+                    editor.execute( new RemoveScriptCommand( editor.selected, script ) );
+                    editingComponent = null;
+                    updateUI();
+
+                } );
+                scriptsContainer.add( remove );
+
                 var ref = new UI.Select()
-					.setWidth( '200px' )
+					.setWidth( '170px' )
 					.setTextTransform( 'none' )
 					.setFontSize( '12px' )
 					.setOptions(refOpts)
@@ -304,16 +315,20 @@ Sidebar.Entity = function ( editor ) {
                 } );
                 scriptsContainer.add( edit );
 
-                var remove = new UI.Button( 'X' );
-                remove.setMarginLeft( '4px' );
-                remove.onClick( function () {
+                var help = new UI.Button( '?' );
+                help.setMarginLeft( '4px' );
+                help.onClick( function () {
 
-                    editor.execute( new RemoveScriptCommand( editor.selected, script ) );
-                    editingComponent = null;
-                    updateUI();
+                    var cmpSrc = {
+                        type: 'text',
+                        name: script.name + ' [READ ONLY]',
+                        source: components[ script.name ].help,
+                        onChange: function(){}
+                    };
+                    editor.signals.editScript.dispatch( editor.selected, cmpSrc );
 
                 } );
-                scriptsContainer.add( remove );
+                scriptsContainer.add( help );                
 
                 scriptsContainer.add( new UI.Break() );
 

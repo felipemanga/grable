@@ -322,7 +322,7 @@ Sidebar.Entity = function ( editor ) {
                     var cmpSrc = {
                         type: 'text',
                         name: script.name + ' [READ ONLY]',
-                        source: components[ script.name ].help,
+                        source: components[ script.name ].help || "",
                         onChange: function(){}
                     };
                     editor.signals.editScript.dispatch( editor.selected, cmpSrc );
@@ -421,7 +421,7 @@ Sidebar.Entity = function ( editor ) {
                 var cmpSrc = {
                     type: 'text',
                     name: script.name + ' [READ ONLY]',
-                    source: components[ script.name ].help,
+                    source: components[ script.name ].help || "",
                     onChange: function(){}
                 };
                 editor.signals.editScript.dispatch( editor.selected, cmpSrc );

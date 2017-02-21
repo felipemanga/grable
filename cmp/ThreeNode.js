@@ -17,12 +17,18 @@ CLAZZ("cmp.ThreeNode", {
 
             entity.addComponent( name, data );
         };
+
+        function _CLAZZ(){
+            var clazz = CLAZZ.call( self, arguments[0], arguments[1] );
+            entity.addComponent( clazz, {} );
+            return clazz;
+        }
         
         for( var i=0; i<this.scripts.length; ++i ){
             script = this.scripts[i];
             try{
-                var f = new Function('pool', 'addComponent', script.source);
-                f.call(this.asset, this.gameState.pool, addComponent);
+                var f = new Function('pool', 'addComponent', 'CLAZZ', script.source);
+                var ret = f.call(this.asset, this.gameState.pool, addComponent, _CLAZZ);
             }catch(ex){
                 console.warn( script.name, ex );
             }

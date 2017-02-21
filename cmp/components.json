@@ -1,37 +1,36 @@
 {
     "cmp.ActionAudio":{"phaserjs":true, "threejs":false},
-    "cmp.AutoFlip":{"phaserjs":true, "threejs":true},
-    "cmp.AutoRotate":{"phaserjs":false, "threejs":true},
+    "cmp.AutoFlip":{"phaserjs":true, "threejs":true, "help":"Intended for 2D-sprites. Mirrors the sprite when moving along the X-axis."},
+    "cmp.AutoRotate":{"phaserjs":false, "threejs":true, "help":"Points the node in the direction it is moving."},
     "cmp.Background":{"phaserjs":true},
-    "cmp.Bob":{"phaserjs":true, "threejs":true},
-    "cmp.Event":{"phaserjs":true, "threejs":true},
-    "cmp.FlyAI":{"phaserjs":true, "threejs":true},
-    "cmp.FollowCamera":{"phaserjs":true, "threejs":true},
-    "cmp.Force":{"phaserjs":true, "threejs":true},
+    "cmp.Bob":{"phaserjs":true, "threejs":true, "help":"Moves the node along a sine-wave. Can be used to make bobbing on any axis (like a head moving up-and-down) or circular movement."},
+    "cmp.Event":{"phaserjs":true, "threejs":true, "help":"Allows the triggering of events when other events are heard."},
+    "cmp.FlyAI":{"phaserjs":true, "threejs":true, "help":"Randomly moves the node around, attempting to stay within the defined bounds."},
+    "cmp.FollowCamera":{"phaserjs":true},
+    "cmp.Force":{"phaserjs":true, "threejs":true, "help":"Add a pre-determined amount of force to the object every frame.\nUse with cmp.Inertia or cmp.PhysiJS."},
     
     "cmp.ImgDiff":{"phaserjs":true},
     "cmp.Inertia":{"phaserjs":true, "threejs":true},
-    "cmp.LoadTexture":{"threejs":true},
+    "cmp.LoadTexture":{"threejs":true, "help":"Load an external texture into the current material after the scene has loaded.\nKeeps the scene JSON file small and scene load-times quick."},
 
     "cmp.Node":{"phaserjs":"cmp.PhaserNode", "threejs":"cmp.ThreeNode"},
-    "cmp.Overboard":{"threejs":true},
+    "cmp.Overboard":{"threejs":true, "help":"Fires an event when the node exits the bounds.\nUpper Y bounds are ignored if limitSky is set."},
 
     "cmp.PhaserCollision":{"phaserjs":true},
     "cmp.PhaserSprite":{"phaserjs":true},
     "cmp.PhaserWebcam":{"phaserjs":true},
     "cmp.PhaserText":{"phaserjs":true},
 
-    "cmp.PhysiJS":{"threejs":true},
+    "cmp.PhysiJS":{"threejs":true, "help":"Add to scene nodes for instant physics!\nIf using with cmp.ThreeTerrain, set mesh to \"HEIGHTFIELD\" and be sure the cmp.PhysiJS component comes after (is below) cmp.ThreeTerrain in the component list."},
 
     "cmp.State":{"phaserjs":true, "threejs":true},
-    "cmp.SnapToGround":{"threejs":true},
-    "cmp.SkyBox":{"threejs":true},
-    "cmp.ThreeSprite":{"phaserjs":false, "threejs":true},
-    "cmp.ThreeTerrain":{"phaserjs":false, "threejs":true},
+    "cmp.SnapToGround":{"threejs":true, "help":"This component puts the node on the ground when the onReady event is fired."},
+    "cmp.SkyBox":{"threejs":true, "help":"Use this on a cube.\nThis component changes the node's material for a new one, once the external textures have loaded."},
+    "cmp.ThreeTerrain":{"phaserjs":false, "threejs":true, "help":"Use this on a plane.\nThis component modifies the scene node into a pseudo-random terrain.\nTerrain generation by Felipe Manga\nSimplex noise by Sean McCullough banksean@gmail.com\nMersenne-Twister by Sean McCullough, Makoto Matsumoto and Takuji Nishimura"},
     "cmp.ThreeTreeGen":{ "threejs":true },
-    "cmp.ThreeWater":{"phaserjs":false, "threejs":true},
+    "cmp.ThreeWater":{"phaserjs":false, "threejs":true, "help":"Use this on a plane.\nThis component replaces the scene node with a water plane of the same size.\n\n* @author jbouny / https://github.com/jbouny\n* Work based on :\n* @author Slayvin / http://slayvin.net : Flat mirror for three.js\n* @author Stemkoski / http://www.adelphi.edu/~stemkoski : An implementation of water shader based on the flat mirror\n* @author Jonas Wagner / http://29a.ch/ && http://29a.ch/slides/2012/webglwater/ : Water shader explanations in WebGL\n\n"},
     "cmp.Mouse":{"phaserjs":"cmp.PhaserMouse", "threejs":"cmp.ThreeMouse"},
     
     "cmp.Tween":{"phaserjs":true, "threejs":true},
-    "cmp.Wait":{"phaserjs":true, "threejs":true}
+    "cmp.Wait":{"phaserjs":true, "threejs":true, "help":"When an event (cause) is heard, wait delay milliseconds then raise the effect events.\nIf cancelPrevious is set and cause is heard twice before the effect can happen, the first effect is cancelled.\nIf multiple is set and an effect is pending, any new effects are cancelled.\n"}
 }

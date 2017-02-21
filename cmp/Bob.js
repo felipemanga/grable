@@ -20,6 +20,11 @@ CLAZZ("cmp.Bob", {
         this.iterator = this.iterator || {x:0, y:0, z:0};
     },
 
+    '@setBobEnabled':{ enabled:{type:'bool'} },
+    setBobEnabled:function( enabled ){
+        this.enabled = enabled;
+    },
+
     onTick:function( time ){
         if( !this.enabled )
             return;

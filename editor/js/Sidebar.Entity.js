@@ -111,7 +111,7 @@ Sidebar.Entity = function ( editor ) {
 
 	var CLAZZQueue = null;
 
-	function loadComponent(path, fqcn, interface){
+	function loadComponent(path, fqcn, _interface){
 		loadQueueSize++;
 		var i = 0, script;
 		var pathparts = path.split("/");
@@ -138,9 +138,11 @@ Sidebar.Entity = function ( editor ) {
 			CLAZZQueue = [];
 		}
 
+        components[ _interface ].src = cmpPath;
+
 		script = document.createElement("script");
 		script.src = cmpPath;
-		script.onload = onLoadComponent.bind(null, fqcn, interface);
+		script.onload = onLoadComponent.bind(null, fqcn, _interface);
 		script.onerror = onError.bind(null, fqcn);
 		if( CLAZZQueue ) CLAZZQueue.push(script);
 		else document.head.appendChild(script);
@@ -388,6 +390,36 @@ Sidebar.Entity = function ( editor ) {
 
 		var header = new UI.Row();
 		header.add( new UI.Text(script.name) );
+        header.add( new UI.Button('SOURCE').setMarginLeft('10px').onClick(function(){
+            DOC.getURL( components[ script.name ].src, function( src ){
+                var cmpSrc = {
+                    name: script.name + ' [READ ONLY]',
+                    source: src,
+                    onChange: function(){ 
+                        cmpSrc.src = src; 
+                        editor.signals.editScript.dispatch( editor.selected, cmpSrc );
+                    }
+                };
+                editor.signals.editScript.dispatch( editor.selected, cmpSrc );
+            });
+        }));
+
+        if( components[ script.name ].help ){
+            header.add( new UI.Button('HELP').setMarginLeft('10px').onClick(function(){
+                var cmpSrc = {
+                    type: 'text',
+                    name: script.name + ' [READ ONLY]',
+                    source: components[ script.name ].help,
+                    onChange: function(){ 
+                        cmpSrc.src = components[ script.name ].help; 
+                        editor.signals.editScript.dispatch( editor.selected, cmpSrc );
+                    }
+                };
+                editor.signals.editScript.dispatch( editor.selected, cmpSrc );
+            }));
+        }
+
+
 		propsContainer.add(header)
 
         var triggers = {};

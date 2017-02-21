@@ -21,7 +21,7 @@ Sidebar.Script = function ( editor ) {
 	var newScript = new UI.Button( 'New' );
 	newScript.onClick( function () {
 
-		var script = { name: '', source: 'function update( event ) {}' };
+		var script = { name: '', source: 'CLAZZ({\n\tINJECT:["entity"],\n\n\tonReady:function(){\n\n\t\t// TO-DO\n\n\t},\n\n\tonTick:function( delta ){\n\n\t\t// TO-DO\n\n\t},\n\n\tdestroy:function(){\n\n\t\t// TO-DO\n\n\t}\n});' };
 		editor.execute( new AddScriptCommand( editor.selected, script ) );
 
 	} );

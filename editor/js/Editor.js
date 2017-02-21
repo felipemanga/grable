@@ -463,6 +463,7 @@ Editor.prototype = {
 		var camera = loader.parse( json.camera );
 
 		this.camera.copy( camera );
+        this.camera.uuid = camera.uuid;
 		this.camera.aspect = this.DEFAULT_CAMERA.aspect;
 		this.camera.updateProjectionMatrix();
 
@@ -478,13 +479,14 @@ Editor.prototype = {
 		// scripts clean up
 
 		var scene = this.scene;
+		var camera = this.camera;
 		var scripts = this.scripts;
 
 		for ( var key in scripts ) {
 
 			var script = scripts[ key ];
 
-			if ( script.length === 0 || scene.getObjectByProperty( 'uuid', key ) === undefined ) {
+			if ( script.length === 0 || ( key !== camera.uuid && scene.getObjectByProperty( 'uuid', key ) === undefined ) ) {
 
 				delete scripts[ key ];
 

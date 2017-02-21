@@ -86,8 +86,13 @@ var APP = {
 
 				if ( object === undefined ) {
 
-					console.warn( 'APP.Player: Script without object.', uuid );
-					continue;
+                    if( uuid == this.camera.uuid ){
+                        object = this.camera;
+                    }else{
+                        console.warn( 'APP.Player: Script without object.', uuid );
+                        continue;
+                    }
+
 
 				}
 

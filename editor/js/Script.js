@@ -326,6 +326,7 @@ var Script = function ( editor ) {
 	} );
 
 	codemirror.setOption( 'extraKeys', {
+        'Ctrl-Enter': function(cm) { editor.signals.togglePlayer.dispatch(); },
 		'Ctrl-Space': function(cm) { server.complete(cm); },
 		'Ctrl-I': function(cm) { server.showType(cm); },
 		'Ctrl-O': function(cm) { server.showDocs(cm); },

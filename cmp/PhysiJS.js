@@ -30,13 +30,6 @@ CLAZZ("cmp.PhysiJS", {
     "@frameRate":{type:"float", min:0, test:{'instanceof':{'asset':'THREE.Scene'}}},
     frameRate:30,
 
-    // node configs
-    "@name":{type:"string", test:{'notinstanceof':{'asset':'THREE.Scene'}}},
-    name:"",
-
-    "@mass":{type:"float", min:0, test:{'notinstanceof':{'asset':'THREE.Scene'}}},
-    mass:1,
-
     "@mesh":{type:"enum", test:{'notinstanceof':{'asset':'THREE.Scene'}}, options:[
         "Box",
         "Cylinder",
@@ -49,6 +42,13 @@ CLAZZ("cmp.PhysiJS", {
         "Sphere"
     ]},
     mesh:"Box",
+
+    // node configs
+    "@name":{type:"string", test:{'notinstanceof':{'asset':'THREE.Scene'}}},
+    name:"",
+
+    "@mass":{type:"float", min:0, test:{'notinstanceof':{'asset':'THREE.Scene'}}},
+    mass:1,
 
     "@friction":{type:"float", min:0, max:1, test:{'notinstanceof':{'asset':'THREE.Scene'}}},
     friction:0.1,
@@ -253,6 +253,11 @@ CLAZZ("cmp.PhysiJS.Service", {
                 this.instances[ l.scene.id ] = instance = new cmp.PhysiJS.Service();
             
             instance.add( l );
+
+            l.pool.silence('onPhysicsUpdate')
+            l.scene.add('update', function(){
+                l.pool.call('onPhysicsUpdate');
+            });
 
             return instance;
         },

@@ -21,7 +21,7 @@
     "cmp.PhaserWebcam":{"phaserjs":true},
     "cmp.PhaserText":{"phaserjs":true},
 
-    "cmp.PhysiJS":{"threejs":true, "help":"Add to scene nodes for instant physics!\nIf using with cmp.ThreeTerrain, set mesh to \"HEIGHTFIELD\" and be sure the cmp.PhysiJS component comes after (is below) cmp.ThreeTerrain in the component list."},
+    "cmp.PhysiJS":{"threejs":true, "help":"Add to scene nodes for instant physics!\nIf using with cmp.ThreeTerrain, set mesh to \"HEIGHTFIELD\" and be sure the cmp.PhysiJS component comes after (is below) cmp.ThreeTerrain in the component list.\n\nTo detect collision events, add a component with an onHit[name] function, where \"name\" is a property of the PhyisiJS component, not the object name.\nBoth objects must have a physics name for collision triggering to happen.\n\nPhysi.js is an Ammo.js wrapper for Three.js, written by Chandler Prall / https://github.com/chandlerprall\n"},
 
     "cmp.State":{"phaserjs":true, "threejs":true},
     "cmp.SnapToGround":{"threejs":true, "help":"This component puts the node on the ground when the onReady event is fired."},

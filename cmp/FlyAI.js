@@ -1,14 +1,17 @@
 CLAZZ("cmp.FlyAI",{
-    INJECT:["entity", "speed", "call", "manualBounds", "axis"],
-    enabled:true,
+    INJECT:["entity", "speed", "call", "manualBounds", "axis", "enabled"],
     targetX:0,
     targetY:0,
     targetZ:0,
-    "@speed":{type:"float"},
-    speed:1,
     error:20,
     _timeout:0,
     timeout:100,
+
+    "@enabled":{type:"bool"},
+    enabled:true,
+
+    "@speed":{type:"float"},
+    speed:1,
 
     "@axis":{type:"enum", options:["X Y", "X Z", "Y Z", "X Y Z"]},
     axis:"X Y Z",
@@ -18,6 +21,12 @@ CLAZZ("cmp.FlyAI",{
 
     "@manualBounds":{ type:"bounds", test:{ eq:{bounds:"manual"} } },
     manualBounds:null,
+
+
+    '@setFlyAIEnabled':{ enabled:{type:'bool'} },
+    setFlyAIEnabled:function( enabled ){
+        this.enabled = enabled;
+    },
 
     pickRandomTarget:function(){
         if( !this.manualBounds ){

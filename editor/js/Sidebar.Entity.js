@@ -395,10 +395,7 @@ Sidebar.Entity = function ( editor ) {
                 var cmpSrc = {
                     name: script.name + ' [READ ONLY]',
                     source: src,
-                    onChange: function(){ 
-                        cmpSrc.src = src; 
-                        editor.signals.editScript.dispatch( editor.selected, cmpSrc );
-                    }
+                    onChange: function(){}
                 };
                 editor.signals.editScript.dispatch( editor.selected, cmpSrc );
             });
@@ -410,10 +407,7 @@ Sidebar.Entity = function ( editor ) {
                     type: 'text',
                     name: script.name + ' [READ ONLY]',
                     source: components[ script.name ].help,
-                    onChange: function(){ 
-                        cmpSrc.src = components[ script.name ].help; 
-                        editor.signals.editScript.dispatch( editor.selected, cmpSrc );
-                    }
+                    onChange: function(){}
                 };
                 editor.signals.editScript.dispatch( editor.selected, cmpSrc );
             }));

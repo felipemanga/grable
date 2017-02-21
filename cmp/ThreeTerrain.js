@@ -8,7 +8,11 @@ function (){
 'use strict';
 
 CLAZZ("cmp.ThreeTerrain", {
-    INJECT:["entity", "asset", "height", "octaves", "island", "seed"],
+    INJECT:["entity", "asset", "height", "sizes", "island", "seed", "varyContrast", "discardBelow"],
+
+    "@varyContrast":{type:"bool"},
+    varyContrast:true,
+
 
 	"@height":{type:"float", min:0},
     height:1,
@@ -16,42 +20,37 @@ CLAZZ("cmp.ThreeTerrain", {
     "@seed":{type:"int"},
     seed:0xDEADBEEF,
 
-	"@octaves":{type:"vec3f", min:0},
-    octaves:0,
+	"@sizes":{type:"array", meta:{type:'float', min:0} },
+    sizes:[400,200,100],
 
     "@island":{type:"float", min:0},
     island:0,
 
+    "@discardBelow":{type:"float"},
+    discardBelow:0,
+
     
     '@create':{__hidden:true},
     create:function(){
-        if( !this.octaves )
-            return;
-
-        this.generate();
-        this.asset.geometry.computeFaceNormals();
-        this.asset.geometry.computeVertexNormals();
+        this.generate( true );
     },
 
     '@preview':{__hidden:true},
     preview:function(){
-        this.create();
+        this.generate( false );
     },
-    
-    '@generate':{__hidden:true},
-    generate:function(){
 
-        var geometry = this.asset.geometry, 
+    '@generate':{__hidden:true},
+    generate:function( doDiscard ){
+
+        var geometry = this.asset.geometry, discardBelow = this.discardBelow, 
             noise = this.entity && this.entity.noise, 
             ctx = this.entity, 
+            ctx2, noise2, cPow, cMul,
             island = this.island,
             height = this.height, 
-            octaves = this.octaves,
-            weights = {
-                x:0.5,
-                y:0.25,
-                z:0.125
-            };
+            sizes = this.sizes,
+            sizesLength = this.sizes.length;
 
         if( geometry.parameters.width != geometry.parameters.height ){
             console.warn("Terrain not square!");
@@ -61,25 +60,51 @@ CLAZZ("cmp.ThreeTerrain", {
         var size = geometry.parameters.width / 2;
         
         if( !noise ){
-            var gen = new MersenneTwister( this.seed );
-            ctx = new SimplexNoise( gen );
+            ctx = new SimplexNoise( new MersenneTwister( this.seed ) );
             noise = ctx.noise;
+        }
+
+        if( this.varyContrast ){
+        	var gen = new MersenneTwister( 2 * this.seed );
+            ctx2 = new SimplexNoise( gen );
+            noise2 = ctx2.noise;
+            cPow = 1+gen.random()*10;
+            cMul = 1+gen.random()*10;
         }
 
         if( geometry.isBufferGeometry ){
             var posatt = geometry.getAttribute("position");
-            var vertices = posatt.array;
+            var vertices = posatt.array, indices = geometry.getIndex().array;
+
+            var min = 10, max = -10, offsetY = this.asset.position.y;
 
             for ( var i = 0; i < vertices.length; i += 3 ) {
 
                 var vx = vertices[i  ];
                 var vy = vertices[i+1];
-                var vz = vertices[i+2] = 0;
+                var vz = 0;
 
-                for( var j in octaves ){
-                    var scale = octaves[j];
-                    if( scale )
-                        vertices[i+2] += (1+0.5*noise.call( ctx, vx / scale, vy / scale )) * height * weights[j];
+                var contrast = 0, weight = 0.5;
+
+                for( var j=0; j<sizesLength; ++j ){
+                    var scale = sizes[j];
+                    if( scale ){
+                        vz += (0.5+0.5*noise.call( ctx, vx / scale, vy / scale )) * weight;
+                        if( noise2 )
+                            contrast += (0.5+0.5*noise2.call( ctx2, vx / scale / 2, vy / scale / 2 )) * weight;
+                    }
+                    weight *= 0.5;
+                }
+
+                if( vz > max )
+                    max = vz;
+                if( vz < min )
+                    min = vz;
+
+                if( noise2 ){
+                    contrast = Math.pow( contrast, cPow ) * cMul;
+                    if( vz < 0.5 ) vz = Math.pow( vz * 2, contrast ) / 2;
+                    else if( vz > 0.5 ) vz = 1 - Math.pow( (1-vz) * 2, contrast ) / 2;
                 }
 
                 if( island ){
@@ -90,9 +115,59 @@ CLAZZ("cmp.ThreeTerrain", {
                     if( f < 0.5 ) f = Math.pow( f * 2, island ) / 2;
                     else if( f > 0.5 ) f = 1 - Math.pow( (1-f) * 2, island ) / 2;
 
-                    vertices[i+2] *= f;
+                    vz *= f;
                 }
 
+                vz *= height;
+
+                vertices[i+2] = vz;
+            }
+
+            this.asset.geometry.computeFaceNormals();
+            this.asset.geometry.computeVertexNormals();
+
+            if( indices && !isNaN(discardBelow) ){
+                var write = 0, l = indices.length;
+                if( doDiscard )
+                {
+                    for( i = 0; i<l; i+=3, write+=3 ){
+
+                        var A = vertices[ indices[i  ] * 3 + 2 ] + offsetY;
+                        var B = vertices[ indices[i+1] * 3 + 2 ] + offsetY;
+                        var C = vertices[ indices[i+2] * 3 + 2 ] + offsetY;
+
+                        if( A < discardBelow && B < discardBelow && C < discardBelow )
+                            write -= 3;
+                        else{
+                            indices[write  ] = indices[i  ];
+                            indices[write+1] = indices[i+1];
+                            indices[write+2] = indices[i+2];
+                        }
+                    }
+
+                    geometry.setDrawRange( 0, write );
+                    geometry.elementsNeedUpdate = true;
+                } else {
+                    var normatt = this.asset.geometry.getAttribute('normal');
+                    var normal = normatt.array;
+
+                    for( i = 0; i<l; i+=3){
+
+                        var A = vertices[ indices[i  ] * 3 + 2 ] + offsetY;
+                        var B = vertices[ indices[i+1] * 3 + 2 ] + offsetY;
+                        var C = vertices[ indices[i+2] * 3 + 2 ] + offsetY;
+
+                        if( A < discardBelow && B < discardBelow && C < discardBelow ){
+                            normal[ indices[i  ] * 3 + 1 ] = NaN;
+                            normal[ indices[i+1] * 3 + 1 ] = NaN;
+                            normal[ indices[i+2] * 3 + 1 ] = NaN;
+                        }
+                    }
+
+                    normatt.needsUpdate = true;
+
+                    
+                }
             }
 
             posatt.needsUpdate = true;
@@ -102,11 +177,14 @@ CLAZZ("cmp.ThreeTerrain", {
                 var vertex = geometry.vertices[i];
 
                 vertex.z = 0;
+                weight = 1;
 
-                for( var j in octaves ){
-                    var scale = octaves[j];
+                for( var j=0; j<sizesLength; ++j ){
+                    var scale = sizes[j];
                     if( scale )
-                        vertex.z += (1+0.5*noise.call( ctx, vertex.x / scale, vertex.y / scale )) * height * weights[j];
+                        vertex.z += (0.5+0.5*noise.call( ctx, vertex.x / scale, vertex.y / scale )) * height * weight;
+
+                    weight *= 0.5;
                 }
 
                 if( island ){
@@ -121,6 +199,8 @@ CLAZZ("cmp.ThreeTerrain", {
                 }
 
             }
+            this.asset.geometry.computeFaceNormals();
+            this.asset.geometry.computeVertexNormals();
 
         }
     }

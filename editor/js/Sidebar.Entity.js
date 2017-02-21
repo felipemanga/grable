@@ -358,8 +358,6 @@ Sidebar.Entity = function ( editor ) {
                 data.asset  = object;
                 data.game   = null;
 
-                console.log(clazz);
-
                 var inst = CLAZZ.get( clazz, data );
                 inst.preview();
 

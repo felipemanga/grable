@@ -216,6 +216,8 @@ UI.Meta.prototype.factories = {
         function render(){
             e.clear();
             for( var i=0; i<arr.length; ++i ){
+                e.add(new UI.Break());
+                
                 var sub = {
                     meta:  meta.meta || {type:meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype},
                     index: i,

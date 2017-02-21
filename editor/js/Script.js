@@ -84,7 +84,7 @@ var Script = function ( editor ) {
 
 				if ( value !== currentScript.source ) {
 
-                    if( typeof( currentScript.onChange ) ){
+                    if( typeof( currentScript.onChange ) == "function" ){
 
                         currentScript.onChange( value );
 

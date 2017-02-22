@@ -485,7 +485,7 @@ UI.Meta.prototype.factories = {
             name: obj.key,
             source: value,
             onChange: function( value ){
-                script.value = obj.value = value;
+                script.source = obj.value = value;
             }
         };
         var e = new UI.Button('EDIT')

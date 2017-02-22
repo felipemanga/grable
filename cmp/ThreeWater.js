@@ -19,7 +19,6 @@ CLAZZ("cmp.ThreeWater", {
     onReady:function(){
         var entity = this.entity, oldAsset = this.asset;
 
-
         var sunDirection, sunColor = 0xffffff;
         if( this.sunLight ){
             var node = this.game.scene.getObjectByProperty( 'uuid', this.sunLight );
@@ -75,6 +74,7 @@ CLAZZ("cmp.ThreeWater", {
         mirror.receiveShadow = oldAsset.receiveShadow;
         
         entity.setNode( mirror );
+        mirror.visible = oldAsset.visible;
     },
 
     onPostTick:function( delta ){

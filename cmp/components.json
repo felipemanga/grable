@@ -14,14 +14,14 @@
     "cmp.LoadTexture":{"threejs":true, "help":"Load an external texture into the current material after the scene has loaded.\nKeeps the scene JSON file small and scene load-times quick."},
 
     "cmp.Node":{"phaserjs":"cmp.PhaserNode", "threejs":"cmp.ThreeNode"},
-    "cmp.Overboard":{"threejs":true, "help":"Fires an event when the node exits the bounds.\nUpper Y bounds are ignored if limitSky is set."},
+    "cmp.Overboard":{"threejs":true, "help":"Fires an event when the node exits the bounds.\nUpper Y bounds are ignored if limitSky is not set."},
 
     "cmp.PhaserCollision":{"phaserjs":true},
     "cmp.PhaserSprite":{"phaserjs":true},
     "cmp.PhaserWebcam":{"phaserjs":true},
     "cmp.PhaserText":{"phaserjs":true},
 
-    "cmp.PhysiJS":{"threejs":true, "help":"Add to scene nodes for instant physics!\nIf using with cmp.ThreeTerrain, set mesh to \"HEIGHTFIELD\" and be sure the cmp.PhysiJS component comes after (is below) cmp.ThreeTerrain in the component list.\n\nTo detect collision events, add a component with an onHit[name] function, where \"name\" is a property of the PhyisiJS component, not the object name.\nBoth objects must have a physics name for collision triggering to happen.\n\nPhysi.js is an Ammo.js wrapper for Three.js, written by Chandler Prall / https://github.com/chandlerprall\n"},
+    "cmp.PhysiJS":{"threejs":true, "help":"Add to nodes for instant physics!\nAdd this component to the root scene node for global configurations like gravity.\nIf using with cmp.ThreeTerrain, set mesh to \"HEIGHTFIELD\" and be sure the cmp.PhysiJS component comes after (is below) cmp.ThreeTerrain in the component list.\n\nTo detect collision events, add a component with an onHit[name] function, where \"name\" is a property of the PhyisiJS component, not the object name.\nBoth objects must have a physics name for collision triggering to happen.\n\nPhysi.js is an Ammo.js wrapper for Three.js, written by Chandler Prall / https://github.com/chandlerprall\n"},
 
     "cmp.State":{"phaserjs":true, "threejs":true},
     "cmp.SnapToGround":{"threejs":true, "help":"This component puts the node on the ground when the onReady event is fired."},

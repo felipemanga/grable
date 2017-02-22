@@ -69,12 +69,10 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         this.taskman = new lib.Task([
             root + "lib/CLAZZ.js",
             root + "lib/doc.js",
+            root + "lib/three.js",
             root + "lib/LSystem.js",
             root + "lib/ProcGeom.js"
-        ], {
-            WebGLRenderingContext,
-            THREE
-        });
+        ]);
     },
 
     generate:function( tree ){
@@ -89,16 +87,20 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             iterations: tree.iterations, 
             source: tree.source, 
             seed: tree.seed,
-            boundingBox: box
+            boundingBox: box,
+            matrixWorld: node.matrixWorld.elements,
+            lod:0
         }], [], tree._onGenerate.bind( tree ) );
     },
 
     _generate:function( params ){
+        debugger;
+
         var lsys = new lib.LSystem();
         lsys.source( params.source );
         var code = lsys.generate( params.iterations );
 
-        var proc = new lib.ProcGeom();
+        var proc = new lib.ProcGeom( params.matrixWorld, params.lod );
         var keys = Object.keys( lib.ProcGeom.methods );
         var values = keys.map( k => proc[k].bind(proc) );
 

@@ -112,17 +112,16 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         var MT = new MersenneTwister( params.seed );
         lsys.random = MT.random.bind(MT);
 
-        lsys.source( params.source );
-        var code = lsys.generate( params.iterations );
-
         var proc = new lib.ProcGeom( params.matrixWorld, params.lod, params.tiles, lsys.random );
         var keys = Object.keys( lib.ProcGeom.methods );
         var values = keys.map( k => proc[k].bind(proc) );
 
-        keys.unshift( null );
-        keys.push( code );
-
         try{
+            lsys.source( params.source );
+            var code = lsys.generate( params.iterations );
+            keys.unshift( null );
+            keys.push( code );
+            
             func = new (Function.bind.apply( Function, keys ));
             var ret = func.apply( null, values );
             if( ret !== undefined )
@@ -131,6 +130,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             var mesh = proc._build();
         }catch( ex ){
             console.log( ex.stack, "\n\n", code );
+            debugger;
             return null;
         }
 

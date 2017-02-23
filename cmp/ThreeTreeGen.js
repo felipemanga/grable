@@ -12,7 +12,7 @@ CustomAttribute.prototype = THREE.Float32BufferAttribute.prototype;
 
 CLAZZ("cmp.ThreeTreeGen", {
 
-    INJECT:['entity', 'asset', 'seed', 'iterations', 'source'],
+    INJECT:['entity', 'asset', 'seed', 'iterations', 'source', 'tiles'],
 
     '@hidePlaceholder':{type:'bool'},
     hidePlaceholder:true,
@@ -25,6 +25,9 @@ CLAZZ("cmp.ThreeTreeGen", {
 
     '@source':{ type:'longstring' },
     source: '',
+
+    '@tiles':{ type:'vec2i', min:1 },
+    tiles:{x:1, y:1},
 
     asset:null,
 
@@ -98,7 +101,8 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             seed: tree.seed,
             boundingBox: box,
             matrixWorld: applyTransform ? node.matrixWorld.elements : (new THREE.Matrix4()).identity(),
-            lod:0
+            lod:0,
+            tiles: tree.tiles
         }], [], tree._onGenerate.bind( tree ) );
     },
 
@@ -111,7 +115,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         lsys.source( params.source );
         var code = lsys.generate( params.iterations );
 
-        var proc = new lib.ProcGeom( params.matrixWorld, params.lod, lsys.random );
+        var proc = new lib.ProcGeom( params.matrixWorld, params.lod, params.tiles, lsys.random );
         var keys = Object.keys( lib.ProcGeom.methods );
         var values = keys.map( k => proc[k].bind(proc) );
 
@@ -123,14 +127,12 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             var ret = func.apply( null, values );
             if( ret !== undefined )
                 console.log( ret );
+                
+            var mesh = proc._build();
         }catch( ex ){
             console.log( ex.stack, "\n\n", code );
             return null;
         }
-
-        // debugger;
-
-        var mesh = proc._build();
 
         return new REPLY( new NESTED(mesh) );
     },

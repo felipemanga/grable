@@ -485,7 +485,7 @@ UI.Meta.prototype.factories = {
             name: obj.key,
             source: value,
             onChange: function( value ){
-                script.value = obj.value = value;
+                script.source = obj.value = value;
             }
         };
         var e = new UI.Button('EDIT')
@@ -497,6 +497,27 @@ UI.Meta.prototype.factories = {
         obj.row.add( e );        
     },
 
+    vec2i:function( obj ){
+        var x = new UI.Integer( obj.value && obj.value.x || 0 ).setWidth( '50px' );
+        var y = new UI.Integer( obj.value && obj.value.y || 0 ).setWidth( '50px' );
+        obj.row.add( x );
+        obj.row.add( y );
+
+        if( "min" in obj.meta ) x.min = y.min = obj.meta.min;
+        if( "max" in obj.meta ) x.max = y.max = obj.meta.max;
+        if( "step" in obj.meta ) x.step = y.step = obj.meta.step;
+
+        x.onChange(onChange);
+        y.onChange(onChange);
+        
+        function onChange(){
+            obj.value = ({
+                x:x.getValue(),
+                y:y.getValue()
+            });
+        }
+    },
+
     vec3i:function( obj ){
         var x = new UI.Integer( obj.value && obj.value.x || 0 ).setWidth( '50px' );
         var y = new UI.Integer( obj.value && obj.value.y || 0 ).setWidth( '50px' );
@@ -506,8 +527,8 @@ UI.Meta.prototype.factories = {
         obj.row.add( z );
 
         if( "min" in obj.meta ) x.min = y.min = z.min = obj.meta.min;
-        if( "max" in obj.meta ) x.min = y.min = z.max = obj.meta.max;
-        if( "step" in obj.meta ) x.min = y.min = z.step = obj.meta.step;
+        if( "max" in obj.meta ) x.max = y.max = z.max = obj.meta.max;
+        if( "step" in obj.meta ) x.step = y.step = z.step = obj.meta.step;
 
         x.onChange(onChange);
         y.onChange(onChange);
@@ -522,6 +543,27 @@ UI.Meta.prototype.factories = {
         }
     },
 
+    vec2f:function( obj ){
+        var x = new UI.Number( obj.value && obj.value.x || 0 ).setWidth( '50px' );
+        var y = new UI.Number( obj.value && obj.value.y || 0 ).setWidth( '50px' );
+        obj.row.add( x );
+        obj.row.add( y );
+
+        if( "min" in obj.meta ) x.min = y.min = obj.meta.min;
+        if( "max" in obj.meta ) x.max = y.max = obj.meta.max;
+        if( "step" in obj.meta ) x.step = y.step = obj.meta.step;
+
+        x.onChange(onChange);
+        y.onChange(onChange);
+        
+        function onChange(){
+            obj.value = ({
+                x:x.getValue(),
+                y:y.getValue()
+            });
+        }
+    },
+
     vec3f:function( obj ){
         var x = new UI.Number( obj.value && obj.value.x || 0 ).setWidth( '50px' );
         var y = new UI.Number( obj.value && obj.value.y || 0 ).setWidth( '50px' );
@@ -531,8 +573,8 @@ UI.Meta.prototype.factories = {
         obj.row.add( z );
 
         if( "min" in obj.meta ) x.min = y.min = z.min = obj.meta.min;
-        if( "max" in obj.meta ) x.min = y.min = z.max = obj.meta.max;
-        if( "step" in obj.meta ) x.min = y.min = z.step = obj.meta.step;
+        if( "max" in obj.meta ) x.max = y.max = z.max = obj.meta.max;
+        if( "step" in obj.meta ) x.step = y.step = z.step = obj.meta.step;
 
         x.onChange(onChange);
         y.onChange(onChange);

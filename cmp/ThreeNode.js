@@ -124,14 +124,7 @@ CLAZZ("cmp.ThreeNode", {
 
         return rotationDelta;
     },
-    //     var rotation = this.entity.rotation || 0;
-    //     if (entitySprite.rotation < 0) entitySprite.rotation = (entitySprite.rotation % (Math.PI * 2)) + Math.PI * 2;
-    //     if (rotation < 0) rotation = (rotation % (Math.PI * 2)) + Math.PI * 2;
-    //     var rotationDelta = rotation - entitySprite.rotation;
-    //     if (rotationDelta > Math.PI) rotationDelta -= 2 * Math.PI;
-    //     else if (rotationDelta < -Math.PI) rotationDelta += 2 * Math.PI;
-    //     entitySprite.rotation = (entitySprite.rotation + rotationDelta * 0.17) % (2 * Math.PI);
-
+    
     '@setScale':{ position:{type:'vec3f'} },
     setScale:function( position ){
         if( arguments.length == 3 || !arguments[0] ){

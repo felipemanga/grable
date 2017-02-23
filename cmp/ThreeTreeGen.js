@@ -1,6 +1,7 @@
 need([
     "lib.LSystem",
-    "lib.Task"
+    "lib.Task",
+    "lib.ProcGeom"
 ], function(){
 
 function CustomAttribute( buffer, itemSize ){
@@ -11,7 +12,7 @@ CustomAttribute.prototype = THREE.Float32BufferAttribute.prototype;
 
 CLAZZ("cmp.ThreeTreeGen", {
 
-    INJECT:['entity', 'seed', 'iterations', 'source'],
+    INJECT:['entity', 'asset', 'seed', 'iterations', 'source', 'tiles'],
 
     '@hidePlaceholder':{type:'bool'},
     hidePlaceholder:true,
@@ -25,39 +26,49 @@ CLAZZ("cmp.ThreeTreeGen", {
     '@source':{ type:'longstring' },
     source: '',
 
+    '@tiles':{ type:'vec2i', min:1 },
+    tiles:{x:1, y:1},
+
     asset:null,
 
     create: function(){
-        this.asset = this.entity.getNode();
-
         if( this.hidePlaceholder )
             this.asset.visible = false;
 
-        cmp.ThreeTreeGen.Service.generate( this );
+        cmp.ThreeTreeGen.Service.generate( this, true );
     },
 
-    _onGenerate: function( position, uv, normal )
+    preview: function(){
+        // cmp.ThreeTreeGen.Service.generate( this, false );
+    },
+
+    _onGenerate: function( mesh )
     {
         var node = this.asset;
+        console.log( "onGenerate", mesh );
 
         if( this.hidePlaceholder )
             node.visible = true;
                     
-        if( !position )
+        if( !mesh || !mesh.position )
             return;
         
         var geometry = new THREE.BufferGeometry();
-        geometry.addAttribute('position', new CustomAttribute( position, 3 ) );
-        geometry.addAttribute('uv', new CustomAttribute( uv, 2 ) );
-        geometry.addAttribute('normal', new CustomAttribute( normal, 3 ) );
+        geometry.addAttribute('position', new CustomAttribute( mesh.position, 3 ) );
+        geometry.addAttribute('uv', new CustomAttribute( mesh.uv, 2 ) );
+        geometry.addAttribute('normal', new CustomAttribute( mesh.normal, 3 ) );
+        geometry.addAttribute('color', new CustomAttribute( mesh.color, 3 ) );
         node.geometry = geometry;
 
-        if( this.entity.onGenerate )
-            this.entity.onGenerate();
+        if( this.entity ){
+            this.entity.setPosition(0,0,0);
+            this.entity.setRotation(0,0,0);
+            this.entity.setScale(1,1,1);
 
-        console.log( "onGenerate", position, uv, normal );
+            if( this.entity.onGenerate )
+                this.entity.onGenerate();
+        }
     }
-
 });
 
 CLAZZ("cmp.ThreeTreeGen.Service", {
@@ -71,12 +82,13 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             root + "lib/doc.js",
             root + "lib/three.js",
             root + "lib/LSystem.js",
-            root + "lib/ProcGeom.js"
+            root + "lib/ProcGeom.js",
+            root + "lib/mersenne-twister.js"
         ]);
     },
 
-    generate:function( tree ){
-        var node = tree.entity.getNode();
+    generate:function( tree, applyTransform ){
+        var node = tree.asset || tree.entity.getNode();
         if( !node.geometry.boundingBox )
             node.geometry.computeBoundingBox();
 
@@ -88,19 +100,22 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             source: tree.source, 
             seed: tree.seed,
             boundingBox: box,
-            matrixWorld: node.matrixWorld.elements,
-            lod:0
+            matrixWorld: applyTransform ? node.matrixWorld.elements : (new THREE.Matrix4()).identity(),
+            lod:0,
+            tiles: tree.tiles
         }], [], tree._onGenerate.bind( tree ) );
     },
 
     _generate:function( params ){
-        debugger;
-
         var lsys = new lib.LSystem();
+
+        var MT = new MersenneTwister( params.seed );
+        lsys.random = MT.random.bind(MT);
+
         lsys.source( params.source );
         var code = lsys.generate( params.iterations );
 
-        var proc = new lib.ProcGeom( params.matrixWorld, params.lod );
+        var proc = new lib.ProcGeom( params.matrixWorld, params.lod, params.tiles, lsys.random );
         var keys = Object.keys( lib.ProcGeom.methods );
         var values = keys.map( k => proc[k].bind(proc) );
 
@@ -108,30 +123,26 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         keys.push( code );
 
         try{
-            var func = new (Function.bind.apply( Function, keys ));
+            func = new (Function.bind.apply( Function, keys ));
             var ret = func.apply( null, values );
             if( ret !== undefined )
                 console.log( ret );
+                
+            var mesh = proc._build();
         }catch( ex ){
-            console.log( ex.stack, code );
+            console.log( ex.stack, "\n\n", code );
             return null;
         }
 
-        proc._build();
-
-        return new REPLY( 
-            new MOVE(proc.position), 
-            new MOVE(proc.uv), 
-            new MOVE(proc.normal)
-        );
+        return new REPLY( new NESTED(mesh) );
     },
 
     STATIC:{
         instance:null,
-        generate:function( tree ){
+        generate:function( tree, applyTransform ){
             if( !this.instance )
                 this.instance = new cmp.ThreeTreeGen.Service();
-            this.instance.generate( tree );
+            this.instance.generate( tree, applyTransform );
         }
     }
 

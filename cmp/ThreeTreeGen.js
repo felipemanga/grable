@@ -33,7 +33,7 @@ CLAZZ("cmp.ThreeTreeGen", {
         if( this.hidePlaceholder )
             this.asset.visible = false;
 
-        // cmp.ThreeTreeGen.Service.generate( this );
+        cmp.ThreeTreeGen.Service.generate( this );
     },
 
     _onGenerate: function( position, uv, normal )

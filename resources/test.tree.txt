@@ -1,14 +1,15 @@
-axiom => ^{ UP(5) BRANCH }$
+axiom => ^{ BRANCH }$
 
-BRANCH => { RZ(10,20) UP(5) RGB(1,0,0) BRANCH }
+BRANCH => { RY(-10,10) RZ(-30,30) BRANCH }
 
-BRANCH => { RGB(0,1,0) RX(-50,-40) UP(15) BRANCH } {RGB(0,0,1) RX(40,50) RZ(-20,20) UP(20) BRANCH}
+BRANCH => { RY(-10,10) RX(-50,-40) RZ(-20,20) BRANCH } { RY(-10,10) RX(40,50) RZ(-20,20) BRANCH }
 
 
 
 
 ^ ->
-	var tree = extrude({ width:5, ring:1 })
+	rotateY(rnd(0,360));
+	var tree = extrude({ width:5, ring:1, data:{ length:15 } }).setId(1)
 	;
 
 RGB(1,2,3) -> 
@@ -32,9 +33,10 @@ UP(A) ->
 	;
 
 { ->
-	tree = tree.extrude()
-		.mulWidth(0.6180339887)
-		;
+	tree = tree.extrude().mulWidth(0.6180339887);
+	tree.data.length *= 0.618033;
+	tree.translate(0, tree.data.length, 0)
+	;
 
 } ->
 	tree = tree.parent

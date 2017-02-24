@@ -514,6 +514,8 @@ Sidebar.Entity = function ( editor ) {
         OR,
         EQ,
         NEQ,
+        GT,
+        LT,
         IN,
         NIN,
         INSTANCEOF,
@@ -533,6 +535,24 @@ Sidebar.Entity = function ( editor ) {
         }
         return false;
     }
+
+    function GT( data, clazz, tests ){
+        for( var key in tests ){
+            var value = data[key];
+            if( value === undefined ) value = clazz[key];
+            if( value <= tests[key] ) return false;
+        }
+        return true;
+    }
+
+    function LT( data, clazz, tests ){
+        for( var key in tests ){
+            var value = data[key];
+            if( value === undefined ) value = clazz[key];
+            if( value >= tests[key] ) return false;
+        }
+        return true;
+    }    
 
     function EQ( data, clazz, tests ){
         for( var key in tests ){

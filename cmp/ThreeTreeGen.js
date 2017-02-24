@@ -12,10 +12,19 @@ CustomAttribute.prototype = THREE.Float32BufferAttribute.prototype;
 
 CLAZZ("cmp.ThreeTreeGen", {
 
-    INJECT:['entity', 'asset', 'seed', 'iterations', 'source', 'tiles'],
+    INJECT:['entity', 'asset', 'seed', 'iterations', 'source', 'tiles', 'amount', 'ground', 'spread'],
 
     '@hidePlaceholder':{type:'bool'},
     hidePlaceholder:true,
+
+    '@amount':{type:'int', min:1},
+    amount:1,
+
+    '@ground':{type:'node', test:{gt:{amount:1}} },
+    ground:null,
+
+    '@spread':{type:'float', test:{gt:{amount:1}} },
+    spread:10,
 
     "@seed":{type:"int"},
     seed:0xDEADBEEF,
@@ -61,7 +70,7 @@ CLAZZ("cmp.ThreeTreeGen", {
         if( !this.entity ) geometry = node.geometry.clone();
         else geometry = new THREE.BufferGeometry();
         oldGeometry.dispose();
-
+        geometry.setIndex(null);
         geometry.addAttribute('position', new CustomAttribute( mesh.position, 3 ) );
         geometry.addAttribute('uv', new CustomAttribute( mesh.uv, 2 ) );
         geometry.addAttribute('normal', new CustomAttribute( mesh.normal, 3 ) );
@@ -97,44 +106,61 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
 
     generate:function( tree, applyTransform ){
         var node = tree.asset || tree.entity.getNode();
-        if( !node.geometry.boundingBox )
-            node.geometry.computeBoundingBox();
-
-        var box = node.geometry.boundingBox.clone();
-        box.applyMatrix4( node.matrixWorld );
-
-        this.taskman.call( this._generate, [{
+        var transfer = [], list = [], params = {
             iterations: tree.iterations, 
             source: tree.source, 
             seed: tree.seed,
-            boundingBox: box,
-            matrixWorld: applyTransform ? node.matrixWorld.elements : (new THREE.Matrix4()).identity().elements,
             lod:0,
             tiles: tree.tiles
-        }], [], tree._onGenerate.bind( tree ) );
+        };
+
+        var a = 0;
+        for( var i=0; i<tree.amount; ++i ){
+            var transform = new THREE.Matrix4();
+            if( applyTransform ) transform.elements.set( node.matrixWorld.elements );
+            else transform.identity();
+            var r = i/tree.amount * tree.spread;
+            var cosa = Math.cos(a * Math.PI * 0.2) * r;
+            var sina = Math.sin(a * Math.PI * 0.2) * r;
+            a += 1.618033;
+
+            transform.elements[12] += sina;
+            // to-do: transform[13] = tree.ground...
+            transform.elements[14] += cosa;            
+            list[i] = transform.elements;
+            transfer[i] = transform.elements.buffer;
+        }
+
+        
+        this.taskman.call( this._generate, [params, list], transfer, tree._onGenerate.bind( tree ) );
     },
 
-    _generate:function( params ){
+    _generate:function( params, list ){
         var lsys = new lib.LSystem();
 
         var MT = new MersenneTwister( params.seed );
         lsys.random = MT.random.bind(MT);
 
-        var proc = new lib.ProcGeom( params.matrixWorld, params.lod, params.tiles, lsys.random );
+        var proc = new lib.ProcGeom( params.lod, params.tiles, lsys.random );
         var keys = Object.keys( lib.ProcGeom.methods );
         var values = keys.map( k => proc[k].bind(proc) );
+        keys.unshift( null );
 
         try{
             lsys.source( params.source );
-            var code = lsys.generate( params.iterations );
-            keys.unshift( null );
-            keys.push( code );
-            
-            func = new (Function.bind.apply( Function, keys ));
-            var ret = func.apply( null, values );
-            if( ret !== undefined )
-                console.log( ret );
+
+            for( var i=0; i<list.length; i++ ){
+                var code = lsys.generate( params.iterations );
+                keys.push( code );
                 
+                proc.transform.elements.set( list[i] );
+                func = new (Function.bind.apply( Function, keys ));
+                var ret = func.apply( null, values );
+                if( ret !== undefined )
+                    console.log( ret );
+                
+                keys.pop();
+            }
             var mesh = proc._build();
         }catch( ex ){
             console.log( ex.stack, "\n\n", code );

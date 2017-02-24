@@ -9,7 +9,8 @@ Sidebar.Entity = function ( editor ) {
         editingObject = null, 
         editingComponent = null, 
         externalSlotIndex = {},
-        internalSlotIndex = {};
+        internalSlotIndex = {},
+        nextPreviewHnd = {};
 
 	loadedCompPath = editor.config.getKey('editorComponentPath') || "../cmp";
 	loadCompPath( loadedCompPath );
@@ -355,13 +356,22 @@ Sidebar.Entity = function ( editor ) {
         
     }
 
-    function showPreview( object, script, data ){
+    function showPreview( object, script, data, immediate ){
         if( components 
             && components[script.name] 
             && components[script.name].clazz
             && components[script.name].clazz.CLAZZ
             && typeof components[script.name].clazz.CLAZZ.preview == "function"
             ){
+                if( nextPreviewHnd[script.name] ){
+                    clearTimeout( nextPreviewHnd[script.name] );
+                }
+                if( !immediate ){
+                    nextPreviewHnd[script.name] = setTimeout( showPreview.bind(this, object, script, data, true), 1000 );
+                    return;
+                }
+                delete nextPreviewHnd[script.name];
+                
                 var clazz = components[script.name].clazz;
                 if( !data )
                     data = getScriptData(script);

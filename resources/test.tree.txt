@@ -1,0 +1,43 @@
+axiom => ^{ UP(5) BRANCH }$
+
+BRANCH => { RZ(10,20) UP(5) RGB(1,0,0) BRANCH }
+
+BRANCH => { RGB(0,1,0) RX(-50,-40) UP(15) BRANCH } {RGB(0,0,1) RX(40,50) RZ(-20,20) UP(20) BRANCH}
+
+
+
+
+^ ->
+	var tree = extrude({ width:5, ring:1 })
+	;
+
+RGB(1,2,3) -> 
+	tree.color(1,2,3)
+	;
+
+RX(-,+) -> 
+	tree.rotateX(rnd(-,+))
+	;
+
+RY(-,+) -> 
+	tree.rotateY(rnd(-,+))
+	;
+
+RZ(-,+) -> 
+	tree.rotateZ(rnd(-,+))
+	;
+
+UP(A) ->
+	tree.translate(0,A,0)
+	;
+
+{ ->
+	tree = tree.extrude()
+		.mulWidth(0.6180339887)
+		;
+
+} ->
+	tree = tree.parent
+	;
+
+$ -> ;

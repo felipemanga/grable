@@ -39,7 +39,7 @@ CLAZZ("cmp.ThreeTreeGen", {
     },
 
     preview: function(){
-        // cmp.ThreeTreeGen.Service.generate( this, false );
+        cmp.ThreeTreeGen.Service.generate( this, false );
     },
 
     _onGenerate: function( mesh )
@@ -52,8 +52,16 @@ CLAZZ("cmp.ThreeTreeGen", {
                     
         if( !mesh || !mesh.position )
             return;
-        
-        var geometry = new THREE.BufferGeometry();
+
+        var geometry;
+
+
+        var geometry;
+        var oldGeometry = node.geometry;
+        if( !this.entity ) geometry = node.geometry.clone();
+        else geometry = new THREE.BufferGeometry();
+        oldGeometry.dispose();
+
         geometry.addAttribute('position', new CustomAttribute( mesh.position, 3 ) );
         geometry.addAttribute('uv', new CustomAttribute( mesh.uv, 2 ) );
         geometry.addAttribute('normal', new CustomAttribute( mesh.normal, 3 ) );
@@ -67,7 +75,7 @@ CLAZZ("cmp.ThreeTreeGen", {
 
             if( this.entity.onGenerate )
                 this.entity.onGenerate();
-        }
+        } else editor.signals.geometryChanged.dispatch( node );
     }
 });
 
@@ -100,7 +108,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             source: tree.source, 
             seed: tree.seed,
             boundingBox: box,
-            matrixWorld: applyTransform ? node.matrixWorld.elements : (new THREE.Matrix4()).identity(),
+            matrixWorld: applyTransform ? node.matrixWorld.elements : (new THREE.Matrix4()).identity().elements,
             lod:0,
             tiles: tree.tiles
         }], [], tree._onGenerate.bind( tree ) );

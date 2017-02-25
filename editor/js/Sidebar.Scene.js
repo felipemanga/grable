@@ -150,7 +150,7 @@ Sidebar.Scene = function ( editor ) {
 
 	// fog density
 
-	var fogDensity = new UI.Number( 0.05 ).setWidth( '40px' ).setRange( 0, 0.1 ).setPrecision( 3 ).onChange( onFogChanged );
+	var fogDensity = new UI.Number( 0.05 ).setWidth( '40px' ).setRange( 0, 0.1 ).setPrecision( 5 ).onChange( onFogChanged );
 	fogPropertiesRow.add( fogDensity );
 
 	//

@@ -347,7 +347,7 @@ Sidebar.Entity = function ( editor ) {
         if( nest && object.children ){
 
             for( var i=0; i<object.children.length; ++i ){
-                preview( object.children[i], true );
+                preview( object.children[i], true, immediate );
             }
 
         }

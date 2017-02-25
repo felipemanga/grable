@@ -3,7 +3,10 @@ need([
 ], function(){
 
 CLAZZ("cmp.ThreeWater", {
-    INJECT:["entity", "game", "asset", "sunLight", "waterNormals", "waterColor"],
+    INJECT:["entity", "game", "asset", "sunLight", "waterNormals", "waterColor", "fog"],
+
+    "@fog":{type:"bool"},
+    fog:true,
 
     "@waterNormals":{type:"texture"},
     waterNormals:'resources/image/waternormals.jpg',
@@ -51,6 +54,7 @@ CLAZZ("cmp.ThreeWater", {
             this.game.renderer,
             this.game.camera,
             this.game.scene, {
+            	fog: this.fog,
                 eye: this.game.camera.position,
                 waterNormals: waterNormals,
                 textureWidth:  512, 

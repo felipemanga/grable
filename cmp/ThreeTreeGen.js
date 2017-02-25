@@ -54,7 +54,6 @@ CLAZZ("cmp.ThreeTreeGen", {
     _onGenerate: function( mesh )
     {
         var node = this.asset;
-        console.log( "onGenerate", mesh );
 
         if( this.hidePlaceholder )
             node.visible = true;
@@ -67,9 +66,13 @@ CLAZZ("cmp.ThreeTreeGen", {
 
         var geometry;
         var oldGeometry = node.geometry;
+        
         if( !this.entity ) geometry = node.geometry.clone();
         else geometry = new THREE.BufferGeometry();
-        oldGeometry.dispose();
+
+        if( oldGeometry && oldGeometry.dispose )
+            oldGeometry.dispose();
+            
         geometry.setIndex(null);
         geometry.addAttribute('position', new CustomAttribute( mesh.position, 3 ) );
         geometry.addAttribute('uv', new CustomAttribute( mesh.uv, 2 ) );
@@ -117,16 +120,17 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         var a = 0;
         for( var i=0; i<tree.amount; ++i ){
             var transform = new THREE.Matrix4();
-            if( applyTransform ) transform.elements.set( node.matrixWorld.elements );
-            else transform.identity();
-            var r = i/tree.amount * tree.spread;
+
+            var r = Math.pow(1-i/tree.amount, 2) * tree.spread;
             var cosa = Math.cos(a * Math.PI * 0.2) * r;
             var sina = Math.sin(a * Math.PI * 0.2) * r;
             a += 1.618033;
 
-            transform.elements[12] += sina;
-            // to-do: transform[13] = tree.ground...
-            transform.elements[14] += cosa;            
+            transform.makeTranslation(sina, 0, cosa);
+
+            if( applyTransform ) 
+                transform.multiplyMatrices( node.matrixWorld, transform );
+
             list[i] = transform.elements;
             transfer[i] = transform.elements.buffer;
         }
@@ -146,7 +150,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         var values = keys.map( k => proc[k].bind(proc) );
         keys.unshift( null );
 
-        try{
+        try {
             lsys.source( params.source );
 
             for( var i=0; i<list.length; i++ ){
@@ -162,9 +166,13 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 keys.pop();
             }
             var mesh = proc._build();
-        }catch( ex ){
-            console.log( ex.stack, "\n\n", code );
-            debugger;
+        } catch( ex ) {
+            if( lsys.debug || lsys.log )
+                console.warn( ex.stack );
+
+            if( lsys.debug )
+                (function(){debugger;})();
+
             return null;
         }
 

@@ -4,6 +4,9 @@
 
 var Script = function ( editor ) {
 
+
+    var peekMode = false;
+
 	var signals = editor.signals;
 
 	var container = new UI.Panel();
@@ -39,6 +42,9 @@ var Script = function ( editor ) {
 
 		container.setDisplay( 'none' );
 
+        if( peekMode )
+            togglePeekMode();
+
 	} );
 	header.add( close );
 
@@ -50,6 +56,18 @@ var Script = function ( editor ) {
 		renderer = newRenderer;
 
 	} );
+
+    function togglePeekMode(){
+        peekMode = !peekMode;
+        if( peekMode ){
+            container.setLeft('50%');
+            viewport.setRight('50%');
+        } else {
+            container.setLeft('');
+            viewport.setRight('');
+        }
+        signals.windowResize.dispatch();
+    }
 
 
 	var delay;
@@ -326,6 +344,7 @@ var Script = function ( editor ) {
 	} );
 
 	codemirror.setOption( 'extraKeys', {
+        'Ctrl-P': function(cm) { togglePeekMode(); },
         'Ctrl-Enter': function(cm) { editor.signals.togglePlayer.dispatch(); },
 		'Ctrl-Space': function(cm) { server.complete(cm); },
 		'Ctrl-I': function(cm) { server.showType(cm); },

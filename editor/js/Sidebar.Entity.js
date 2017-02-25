@@ -209,7 +209,7 @@ Sidebar.Entity = function ( editor ) {
         indexSlots( clazz, externalSlotIndex );
 
 		if( !loadQueueSize ){
-            preview( editor.scene, true );
+            preview( editor.scene, true, true );
 			updateUI();
         }
 	}

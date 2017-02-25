@@ -74,6 +74,7 @@ var Editor = function () {
 
 		windowResize: new Signal(),
 
+        previewChanged: new Signal(),
 		showGridChanged: new Signal(),
 		refreshSidebarObject3D: new Signal(),
 		historyChanged: new Signal(),

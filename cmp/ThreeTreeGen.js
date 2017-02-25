@@ -55,12 +55,13 @@ CLAZZ("cmp.ThreeTreeGen", {
         cmp.ThreeTreeGen.Service.generate( this, false );
     },
 
+    '@_onGenerate':{__hidden:true},
     _onGenerate: function( mesh )
     {
         if( !mesh || !mesh.position )
             return;
 
-        var geometry = new THREE.BufferGeometry();
+        var geometry = clone.apply( this.asset.geometry ); // new THREE.BoxBufferGeometry();
 
         var node = this.asset;
 
@@ -70,11 +71,15 @@ CLAZZ("cmp.ThreeTreeGen", {
         geometry.addAttribute('normal', new CustomAttribute( mesh.normal, 3 ) );
         geometry.addAttribute('color', new CustomAttribute( mesh.color, 3 ) );
 
-        if( this.entity ){
-            if( this.hidePlaceholder )
-                this.asset.visible = true;
-            
-            node.geometry = geometry;
+        var oldGeometry = this.asset.geometry;
+        if( oldGeometry && oldGeometry.dispose )
+            oldGeometry.dispose();
+
+        if( this.hidePlaceholder )
+            this.asset.visible = true;
+
+        node.geometry = geometry;
+        if( this.entity ){            
             this.entity.setPosition(0,0,0);
             this.entity.setRotation(0,0,0);
             this.entity.setScale(1,1,1);
@@ -82,19 +87,29 @@ CLAZZ("cmp.ThreeTreeGen", {
             if( this.entity.onGenerate )
                 this.entity.onGenerate();
         } else {
-            if( this.hidePlaceholder )
-                this.asset.visible = false;
+            this.onPreviewComplete();
+        }
 
-            var oldGeometry = this.editorAsset && this.editorAsset.geometry;
-            if( oldGeometry && oldGeometry.dispose )
-                oldGeometry.dispose();
+        function clone(){
+            var parameters = this.parameters;
 
-            if( !this.editorAsset )
-                this.editorAsset = new THREE.Mesh( geometry, node.material );
-            else
-                this.editorAsset.geometry = geometry;
-            
-            this.onPreviewComplete( this.editorAsset );
+            if ( parameters !== undefined ) {
+
+                var values = [];
+
+                for ( var key in parameters ) {
+
+                    values.push( parameters[ key ] );
+
+                }
+
+                var geometry = Object.create( this.constructor.prototype );
+                this.constructor.apply( geometry, values );
+                return geometry;
+
+            }
+
+            return new this.constructor().copy( this );
         }
     }
 });

@@ -60,7 +60,7 @@ Sidebar.Entity = function ( editor ) {
 	// events
 
     signals.objectAdded.add( function ( object ){
-        preview( object, false ); 
+        preview( object, false, true ); 
     } );
 
 	signals.objectSelected.add( function ( object ) {
@@ -269,8 +269,6 @@ Sidebar.Entity = function ( editor ) {
 
         scriptsContainer.setDisplay( 'block' );
 
-        // preview( object, false );
-
         for ( var i = 0; i < scripts.length; i ++ ) {
 
             ( function ( object, script ) {
@@ -339,11 +337,11 @@ Sidebar.Entity = function ( editor ) {
 
 	}
 
-    function preview( object, nest ){
+    function preview( object, nest, immediate ){
 		var scripts = editor.scripts[ object.uuid ];
 
         for( var k in scripts ){
-            showPreview( object, scripts[k] );
+            showPreview( object, scripts[k], null, immediate );
         }
 
         if( nest && object.children ){
@@ -389,9 +387,7 @@ Sidebar.Entity = function ( editor ) {
                 var helper = editor.helpers[ object.id ];
                 inst.preview(helper, function( newHelper ){
                     if( !newHelper ){
-                        if( helper ){
-                            editor.sceneHelpers.remove(helper);
-                        }
+                        editor.signals.previewChanged.dispatch( object );
                         return;
                     }
 
@@ -412,7 +408,7 @@ Sidebar.Entity = function ( editor ) {
                 });
                 
 
-                editor.signals.geometryChanged.dispatch( object );
+                editor.signals.previewChanged.dispatch( object );
             }
     }
 
@@ -509,8 +505,8 @@ Sidebar.Entity = function ( editor ) {
 
                 var src = jsonPrefix + JSON.stringify(data) + jsonPostfix;
                 editor.execute( new SetScriptValueCommand( object, script, 'source', src, {line: 1, ch: 1}, {left:0, top:0, width:0, height:0, clientWidth:0, clientHeight:0} ) );
-
-                showPreview( object, script, data );
+                preview( object, false );
+                // showPreview( object, script, data );
             });
 
             test( desc, data, clazz );

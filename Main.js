@@ -9,6 +9,11 @@ CLAZZ("Main", {
         this.DOM = DOC.index(document.body, null, this);
         this.pool.add(this);
         this.setGameState("boot");
+        window.addEventListener("resize", this._onResize.bind(this));
+    },
+
+    _onResize:function(){
+        this.pool.call("onDOMResize", this.DOM.offsetWidth, this.DOM.offsetHeight );
     },
 
     setGameState:function( strstate ){

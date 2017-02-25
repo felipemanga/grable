@@ -595,6 +595,21 @@ UI.Meta.prototype.factories = {
         if( "min" in obj.meta ) e.min = obj.meta.min;
         if( "max" in obj.meta ) e.max = obj.meta.max;
         if( "step" in obj.meta ) e.step = obj.meta.step;
+        e.dom.addEventListener("keydown", function(evt){
+            if( evt.code == "ArrowUp" ){
+                e.setValue( obj.value += e.step );
+            }else if( evt.code == "ArrowDown" ){
+                e.setValue( obj.value -= e.step );
+            }else if( evt.code == "Space" ){
+                var min = e.min, max = e.max;
+                if( max == Number.POSITIVE_INFINITY )
+                    max = Number.MAX_SAFE_INTEGER;
+                if( min == Number.NEGATIVE_INFINITY )
+                    min = Number.MIN_SAFE_INTEGER;
+                e.setValue( obj.value = (Math.random()*(max-min)-min) );
+            }else return;
+            evt.preventDefault();
+        });
         e.onChange(function(){
             obj.value = (e.getValue());
         });

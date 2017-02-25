@@ -172,6 +172,10 @@ CLAZZ("states.ThreeState", {
         return this.game.camera;
     },
 
+    onDOMResize:function(w, h){
+        this.game.setSize(w,h);
+    },
+
     load:{
         scripts:function( scripts )
         {

@@ -416,6 +416,13 @@ var Viewport = function ( editor ) {
 
 	} );
 
+
+	signals.previewChanged.add( function ( ) {
+
+		render();
+
+	} );    
+
 	signals.objectAdded.add( function ( object ) {
 
 		object.traverse( function ( child ) {

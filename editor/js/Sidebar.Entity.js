@@ -9,7 +9,8 @@ Sidebar.Entity = function ( editor ) {
         editingObject = null, 
         editingComponent = null, 
         externalSlotIndex = {},
-        internalSlotIndex = {};
+        internalSlotIndex = {},
+        nextPreviewHnd = {};
 
 	loadedCompPath = editor.config.getKey('editorComponentPath') || "../cmp";
 	loadCompPath( loadedCompPath );
@@ -59,7 +60,7 @@ Sidebar.Entity = function ( editor ) {
 	// events
 
     signals.objectAdded.add( function ( object ){
-        preview( object, false ); 
+        preview( object, false, true ); 
     } );
 
 	signals.objectSelected.add( function ( object ) {
@@ -268,8 +269,6 @@ Sidebar.Entity = function ( editor ) {
 
         scriptsContainer.setDisplay( 'block' );
 
-        preview( object, false );
-
         for ( var i = 0; i < scripts.length; i ++ ) {
 
             ( function ( object, script ) {
@@ -338,11 +337,11 @@ Sidebar.Entity = function ( editor ) {
 
 	}
 
-    function preview( object, nest ){
+    function preview( object, nest, immediate ){
 		var scripts = editor.scripts[ object.uuid ];
 
         for( var k in scripts ){
-            showPreview( object, scripts[k] );
+            showPreview( object, scripts[k], null, immediate );
         }
 
         if( nest && object.children ){
@@ -355,13 +354,22 @@ Sidebar.Entity = function ( editor ) {
         
     }
 
-    function showPreview( object, script, data ){
+    function showPreview( object, script, data, immediate ){
         if( components 
             && components[script.name] 
             && components[script.name].clazz
             && components[script.name].clazz.CLAZZ
             && typeof components[script.name].clazz.CLAZZ.preview == "function"
             ){
+                if( nextPreviewHnd[script.name] ){
+                    clearTimeout( nextPreviewHnd[script.name] );
+                }
+                if( !immediate ){
+                    nextPreviewHnd[script.name] = setTimeout( showPreview.bind(this, object, script, data, true), 1000 );
+                    return;
+                }
+                delete nextPreviewHnd[script.name];
+                
                 var clazz = components[script.name].clazz;
                 if( !data )
                     data = getScriptData(script);
@@ -376,9 +384,31 @@ Sidebar.Entity = function ( editor ) {
                 data.game   = null;
 
                 var inst = CLAZZ.get( clazz, data );
-                inst.preview();
+                var helper = editor.helpers[ object.id ];
+                inst.preview(helper, function( newHelper ){
+                    if( !newHelper ){
+                        editor.signals.previewChanged.dispatch( object );
+                        return;
+                    }
 
-                editor.signals.geometryChanged.dispatch( object );
+                    if( !helper ){
+                        helper = Object.create( newHelper );
+                        helper.update = function(){
+                            helper.position.copy( object.position );
+                            helper.rotation.copy( object.rotation );
+                            helper.scale.copy( object.scale );
+                        };
+                        editor.helpers[ object.id ] = helper;
+                        editor.sceneHelpers.add( helper );
+                    }
+                    helper.position.copy( object.position );
+                    helper.rotation.copy( object.rotation );
+                    helper.scale.copy( object.scale );
+                    editor.signals.sceneGraphChanged.dispatch();
+                });
+                
+
+                editor.signals.previewChanged.dispatch( object );
             }
     }
 
@@ -475,8 +505,8 @@ Sidebar.Entity = function ( editor ) {
 
                 var src = jsonPrefix + JSON.stringify(data) + jsonPostfix;
                 editor.execute( new SetScriptValueCommand( object, script, 'source', src, {line: 1, ch: 1}, {left:0, top:0, width:0, height:0, clientWidth:0, clientHeight:0} ) );
-
-                showPreview( object, script, data );
+                preview( object, false );
+                // showPreview( object, script, data );
             });
 
             test( desc, data, clazz );
@@ -504,6 +534,8 @@ Sidebar.Entity = function ( editor ) {
         OR,
         EQ,
         NEQ,
+        GT,
+        LT,
         IN,
         NIN,
         INSTANCEOF,
@@ -523,6 +555,24 @@ Sidebar.Entity = function ( editor ) {
         }
         return false;
     }
+
+    function GT( data, clazz, tests ){
+        for( var key in tests ){
+            var value = data[key];
+            if( value === undefined ) value = clazz[key];
+            if( value <= tests[key] ) return false;
+        }
+        return true;
+    }
+
+    function LT( data, clazz, tests ){
+        for( var key in tests ){
+            var value = data[key];
+            if( value === undefined ) value = clazz[key];
+            if( value >= tests[key] ) return false;
+        }
+        return true;
+    }    
 
     function EQ( data, clazz, tests ){
         for( var key in tests ){

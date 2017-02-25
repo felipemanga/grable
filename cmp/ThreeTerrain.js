@@ -36,8 +36,9 @@ CLAZZ("cmp.ThreeTerrain", {
     },
 
     '@preview':{__hidden:true},
-    preview:function(){
+    preview:function( helper, callback ){
         this.generate( false );
+        callback();
     },
 
     '@generate':{__hidden:true},

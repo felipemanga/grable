@@ -47,47 +47,55 @@ CLAZZ("cmp.ThreeTreeGen", {
         cmp.ThreeTreeGen.Service.generate( this, true );
     },
 
-    preview: function(){
+    editorAsset:null,
+    onPreviewComplete:null,
+    preview: function( editorAsset, callback ){
+        this.editorAsset = editorAsset;
+        this.onPreviewComplete = callback;
         cmp.ThreeTreeGen.Service.generate( this, false );
     },
 
     _onGenerate: function( mesh )
     {
-        var node = this.asset;
-
-        if( this.hidePlaceholder )
-            node.visible = true;
-                    
         if( !mesh || !mesh.position )
             return;
 
-        var geometry;
+        var geometry = new THREE.BufferGeometry();
 
+        var node = this.asset;
 
-        var geometry;
-        var oldGeometry = node.geometry;
-        
-        if( !this.entity ) geometry = node.geometry.clone();
-        else geometry = new THREE.BufferGeometry();
-
-        if( oldGeometry && oldGeometry.dispose )
-            oldGeometry.dispose();
-            
         geometry.setIndex(null);
         geometry.addAttribute('position', new CustomAttribute( mesh.position, 3 ) );
         geometry.addAttribute('uv', new CustomAttribute( mesh.uv, 2 ) );
         geometry.addAttribute('normal', new CustomAttribute( mesh.normal, 3 ) );
         geometry.addAttribute('color', new CustomAttribute( mesh.color, 3 ) );
-        node.geometry = geometry;
 
         if( this.entity ){
+            if( this.hidePlaceholder )
+                this.asset.visible = true;
+            
+            node.geometry = geometry;
             this.entity.setPosition(0,0,0);
             this.entity.setRotation(0,0,0);
             this.entity.setScale(1,1,1);
 
             if( this.entity.onGenerate )
                 this.entity.onGenerate();
-        } else editor.signals.geometryChanged.dispatch( node );
+        } else {
+            if( this.hidePlaceholder )
+                this.asset.visible = false;
+
+            var oldGeometry = this.editorAsset && this.editorAsset.geometry;
+            if( oldGeometry && oldGeometry.dispose )
+                oldGeometry.dispose();
+
+            if( !this.editorAsset )
+                this.editorAsset = new THREE.Mesh( geometry, node.material );
+            else
+                this.editorAsset.geometry = geometry;
+            
+            this.onPreviewComplete( this.editorAsset );
+        }
     }
 });
 
@@ -121,7 +129,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         for( var i=0; i<tree.amount; ++i ){
             var transform = new THREE.Matrix4();
 
-            var r = Math.pow(1-i/tree.amount, 2) * tree.spread;
+            var r = Math.pow(1+i/tree.amount, 2) * tree.spread;
             var cosa = Math.cos(a * Math.PI * 0.2) * r;
             var sina = Math.sin(a * Math.PI * 0.2) * r;
             a += 1.618033;

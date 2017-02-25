@@ -269,7 +269,7 @@ Sidebar.Entity = function ( editor ) {
 
         scriptsContainer.setDisplay( 'block' );
 
-        preview( object, false );
+        // preview( object, false );
 
         for ( var i = 0; i < scripts.length; i ++ ) {
 
@@ -386,7 +386,31 @@ Sidebar.Entity = function ( editor ) {
                 data.game   = null;
 
                 var inst = CLAZZ.get( clazz, data );
-                inst.preview();
+                var helper = editor.helpers[ object.id ];
+                inst.preview(helper, function( newHelper ){
+                    if( !newHelper ){
+                        if( helper ){
+                            editor.sceneHelpers.remove(helper);
+                        }
+                        return;
+                    }
+
+                    if( !helper ){
+                        helper = Object.create( newHelper );
+                        helper.update = function(){
+                            helper.position.copy( object.position );
+                            helper.rotation.copy( object.rotation );
+                            helper.scale.copy( object.scale );
+                        };
+                        editor.helpers[ object.id ] = helper;
+                        editor.sceneHelpers.add( helper );
+                    }
+                    helper.position.copy( object.position );
+                    helper.rotation.copy( object.rotation );
+                    helper.scale.copy( object.scale );
+                    editor.signals.sceneGraphChanged.dispatch();
+                });
+                
 
                 editor.signals.geometryChanged.dispatch( object );
             }

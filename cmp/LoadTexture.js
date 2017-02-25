@@ -13,15 +13,24 @@ CLAZZ("cmp.LoadTexture", {
     "@onError":{type:'array', subtype:'slot'},
     onError:null,
 
+    STATIC:{
+        cache:{}
+    },
+
     create:function(){
         var scope = this, texture;
         if( this.texture && this.type ){
-            var tl = new THREE.TextureLoader();
-            texture = tl.load( this.texture, onLoad, undefined, onError );
+            var texture = cmp.LoadTexture.cache[this.texture];
+            if( !texture ){
+                var tl = new THREE.TextureLoader();
+                texture = tl.load( this.texture, onLoad, undefined, onError );
+                cmp.LoadTexture.cache[this.texture] = texture;
+            }
         }
 
         function onLoad(){
             scope.asset.material[scope.type] = texture;
+            scope.asset.material.needsUpdate = true;
             if( scope.onLoad )
                 scope.entity.message(scope.onLoad);
         }

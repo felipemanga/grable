@@ -36,7 +36,7 @@ CLAZZ("cmp.ThreeParticles", {
 });
 
 CLAZZ("cmp.ThreeParticles.Server", {
-    INJECT:['pool', 'scene'],
+    INJECT:['pool', 'scene', 'game'],
 
     index:null,
 
@@ -56,8 +56,8 @@ void main() {
 	#include <color_vertex>
 	#include <begin_vertex>
 	#include <project_vertex>
-
-    gl_PointSize = size * scale / - mvPosition.z;
+    
+    gl_PointSize = size * ( 1080. / - mvPosition.z );
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
@@ -154,17 +154,26 @@ void main() {
         var mat = new THREE.ShaderMaterial({
             fragmentShader: this.fragmentShader,
             vertexShader: this.vertexShader,
+            
+            transparent:true,
+            depthWrite:false,
+            blending: THREE.AdditiveBlending,
+
             uniforms: THREE.UniformsUtils.merge( [
 				THREE.UniformsLib.points,
-				THREE.UniformsLib.fog
-                // ,
-                // {
-                //     time: {value:0}                    
-                // }
+				THREE.UniformsLib.fog,
+                {
+                    time: {value:0}                    
+                }
 			] )
         });
         mat.uniforms.size.value = 20;
-        mat.uniforms.map.value = (new THREE.TextureLoader()).load(texture);
+        var map = mat.uniforms.map.value = (new THREE.TextureLoader()).load(texture);
+
+        var offset = map.offset;
+        var repeat = map.repeat;
+        mat.uniforms.offsetRepeat.value.set( offset.x, offset.y, repeat.x, repeat.y );
+
         return mat;
     },
 
@@ -184,6 +193,8 @@ void main() {
     },
 
     onTick:function(delta){
+        var scale = this.game.height * 0.5;
+
         for( var k in this.index ){
 
             var index = this.index[k];
@@ -191,7 +202,8 @@ void main() {
             var geometry = index.geometry;
             var material = index.material;
             var position = geometry.attributes.position.array;
-            // material.uniforms.time.value += delta;
+            material.uniforms.time.value += delta;
+            material.uniforms.scale.value = scale;
 
             for( var i=0, l=emitters.length; i<l; ++i ){
 
@@ -238,7 +250,8 @@ void main() {
             if( !instance ){
                 instance = CLAZZ.get( cmp.ThreeParticles.Server, {
                     pool:emitter.entity.pool,
-                    scene:emitter.game.scene
+                    scene:emitter.game.scene,
+                    game:emitter.game
                 });
             }
 			

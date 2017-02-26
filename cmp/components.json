@@ -30,6 +30,7 @@
     "cmp.ThreeDirectionalLight":{"threejs":true, "help":"This component lets you configure the DirectionalLight's camera, that seems to have odd defaults."},
     "cmp.ThreeTerrain":{"phaserjs":false, "threejs":true, "help":"Use this on a plane.\nThis component modifies the scene node into a pseudo-random terrain.\nTerrain generation by Felipe Manga\nSimplex noise by Sean McCullough banksean@gmail.com\nMersenne-Twister by Sean McCullough, Makoto Matsumoto and Takuji Nishimura"},
     "cmp.ThreeTreeGen":{ "threejs":true },
+    "cmp.ThreeParticles":{ "threejs":true },
     "cmp.ThreeWater":{"phaserjs":false, "threejs":true, "help":"Use this on a plane.\nThis component replaces the scene node with a water plane of the same size.\n\n* @author jbouny / https://github.com/jbouny\n* Work based on :\n* @author Slayvin / http://slayvin.net : Flat mirror for three.js\n* @author Stemkoski / http://www.adelphi.edu/~stemkoski : An implementation of water shader based on the flat mirror\n* @author Jonas Wagner / http://29a.ch/ && http://29a.ch/slides/2012/webglwater/ : Water shader explanations in WebGL\n\n"},
     "cmp.Mouse":{"phaserjs":"cmp.PhaserMouse", "threejs":"cmp.ThreeMouse"},
     

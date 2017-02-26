@@ -57,7 +57,7 @@ void main() {
 	#include <begin_vertex>
 	#include <project_vertex>
 
-    gl_PointSize = size * ( scale / - mvPosition.z );
+    gl_PointSize = size * scale / - mvPosition.z;
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
@@ -143,19 +143,27 @@ void main() {
     },
 
     getMaterial:function( texture ){
-        // return new THREE.PointsMaterial( { color: Math.random() * 0xffffff, size:20 } );
+        // var mat = new THREE.PointsMaterial( { color:0xffffff, size:20 } );
+        // mat.map = (new THREE.TextureLoader()).load(texture);
+        // mat.transparent = true;
+        // mat.blending = THREE.AdditiveBlending;
+        // mat.depthWrite = false;
+        // mat.transparent = true;
+        // return mat;
+
         var mat = new THREE.ShaderMaterial({
             fragmentShader: this.fragmentShader,
             vertexShader: this.vertexShader,
             uniforms: THREE.UniformsUtils.merge( [
 				THREE.UniformsLib.points,
-				THREE.UniformsLib.fog,
-                {
-                    time: {value:0}                    
-                }
+				THREE.UniformsLib.fog
+                // ,
+                // {
+                //     time: {value:0}                    
+                // }
 			] )
         });
-        mat.uniforms.size.value = 50;
+        mat.uniforms.size.value = 20;
         mat.uniforms.map.value = (new THREE.TextureLoader()).load(texture);
         return mat;
     },
@@ -183,7 +191,7 @@ void main() {
             var geometry = index.geometry;
             var material = index.material;
             var position = geometry.attributes.position.array;
-            material.uniforms.time.value += delta;
+            // material.uniforms.time.value += delta;
 
             for( var i=0, l=emitters.length; i<l; ++i ){
 

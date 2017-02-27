@@ -43,6 +43,7 @@ CLAZZ("cmp.ThreeParticles.Server", {
     vertexShader:`
 uniform float size;
 uniform float scale;
+attribute vec4 particle;
 
 #include <common>
 #include <color_pars_vertex>
@@ -124,17 +125,19 @@ void main() {
         this.pool.add(this);
     },
 
-    getIndex:function( texture, create ){
+    getIndex:function( texture, create, max ){
         var index = this.index[texture];
         if( index ) return index;
         if( create === false ) return null;
 
-        var geometry = this.getGeometry();
+        var geometry = this.getGeometry( max );
         var material = this.getMaterial( texture );
         var mesh = new THREE.Points( geometry, material );
         this.scene.add( mesh );
 
         return this.index[texture] = {
+            next: 0,
+            max: max,
             mesh:mesh,
             geometry:geometry,
             material:material,
@@ -142,15 +145,20 @@ void main() {
         };
     },
 
-    getGeometry:function(){
-        var position = new THREE.Float32BufferAttribute(1000*3, 3);
+    getGeometry:function( max ){
+        var particle = new THREE.Float32BufferAttribute(max*4, 4);
+        particle.setDynamic( true );
+        var position = new THREE.Float32BufferAttribute(max*3, 3);
         position.setDynamic( true );
 
         var geometry = new THREE.BufferGeometry();
         geometry.addAttribute("position", position);
+        geometry.addAttribute("particle", particle);
         geometry.drawRange.count = 0;
 
-        position.array[0] = 500; // Necessary. I don't know why.
+        // Necessary. I don't know why.
+        position.array[0] = 500;
+        particle.array[0] = 500;
 
         return geometry;
     },
@@ -184,11 +192,12 @@ void main() {
 
         mat.blending = THREE.AdditiveBlending;
         mat.transparent = true;
+        mat.depthWrite = false;
         return mat;
     },
 
     add:function( emitter ){
-        var index = this.getIndex( emitter.texture );
+        var index = this.getIndex( emitter.texture, true, 100 );
         index.emitters.push( emitter );
     },
 
@@ -202,20 +211,23 @@ void main() {
         this.emitters.splice( pos, 1 );
     },
 
-    particleCount:0,
+    time:0,
     onTick:function(delta){
     	if( delta < 0 )
     		return;
 
         var scale = this.game.height / this.game.camera.aspect;
+        var time = this.time += delta;
     		
         for( var k in this.index ){
             var dirty = false;
             var index = this.index[k];
+            var max = index.max;
             var emitters = index.emitters;
             var geometry = index.geometry;
             var material = index.material;
             var position = geometry.attributes.position.array;
+            var particle = geometry.attributes.particle.array;
             material.uniforms.time.value += delta;
             material.uniforms.scale.value = scale;
 
@@ -234,10 +246,17 @@ void main() {
                 acc = Math.floor(acc);
 
                 for( var j=0; j<acc; ++j ){
+                    var count = (index.next++) % max;
+                    if( count > geometry.drawRange.count )
+                        geometry.drawRange.count = count;
 
-                    var p = geometry.drawRange.count++;
-                    p *= 3;
+                    var p = count * 4;
+                    particle[p++] = time;
+                    particle[p++] = time;
+                    particle[p++] = time;
+                    particle[p++] = time;
 
+                    p = count * 3;
                     position[p++] = pos.x;
                     position[p++] = pos.y;
                     position[p++] = pos.z;
@@ -246,8 +265,10 @@ void main() {
                 if( acc > 0 )
                     dirty = true;
             }
-            if( dirty )
+            if( dirty ){
+                geometry.attributes.particle.needsUpdate = true;
                 geometry.attributes.position.needsUpdate = true;
+            }
         }
     },
     

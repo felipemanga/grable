@@ -41,6 +41,7 @@ CLAZZ("cmp.ThreeParticles.Server", {
     index:null,
 
     vertexShader:`
+    
 uniform float size;
 uniform float scale;
 attribute vec4 particle;
@@ -70,16 +71,12 @@ void main() {
     `,
 
     fragmentShader:`
-uniform vec3 diffuse;
 uniform float opacity;
 
 #include <common>
 #include <packing>
 #include <color_pars_fragment>
-
-uniform vec4 offsetRepeat;
-uniform sampler2D map;
-// # include <map_particle_pars_fragment>
+#include <map_particle_pars_fragment>
 
 #include <fog_pars_fragment>
 #include <shadowmap_pars_fragment>
@@ -91,16 +88,9 @@ void main() {
 	#include <clipping_planes_fragment>
 
 	vec3 outgoingLight = vec3( 1.0 );
-	vec4 diffuseColor = vec4( diffuse, opacity );
+	vec4 diffuseColor = vec4( 1.0 );
 
 	#include <logdepthbuf_fragment>
-    vec4 mapTexel = texture2D( map, 
-        vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y )
-        * offsetRepeat.zw 
-        + offsetRepeat.xy );
-
-    diffuseColor *= mapTexelToLinear( mapTexel );
-
 	#include <map_particle_fragment>
 	#include <color_fragment>
 	#include <alphatest_fragment>
@@ -148,10 +138,13 @@ void main() {
     getGeometry:function( max ){
         var particle = new THREE.Float32BufferAttribute(max*4, 4);
         particle.setDynamic( true );
+        var color = new THREE.Float32BufferAttribute(max*3, 3);
+        color.setDynamic( true );
         var position = new THREE.Float32BufferAttribute(max*3, 3);
         position.setDynamic( true );
 
         var geometry = new THREE.BufferGeometry();
+        geometry.addAttribute("color", color);
         geometry.addAttribute("position", position);
         geometry.addAttribute("particle", particle);
         geometry.drawRange.count = 0;
@@ -164,16 +157,10 @@ void main() {
     },
 
     getMaterial:function( texture ){
-        // var mat = new THREE.PointsMaterial( { color:0xffffff, size:100, opacity:1 } );
-        // mat.map = (new THREE.TextureLoader()).load(texture);
-        // mat.blending = THREE.AdditiveBlending;
-        // mat.depthWrite = false;
-        // mat.transparent = true;
-        // return mat;
-
         var mat = new THREE.ShaderMaterial({
             fragmentShader: this.fragmentShader,
             vertexShader: this.vertexShader,
+            vertexColors: THREE.VertexColors,
             uniforms: THREE.UniformsUtils.merge( [
 				THREE.UniformsLib.points,
 				THREE.UniformsLib.fog,
@@ -183,13 +170,10 @@ void main() {
 			] )
         });
 
-        mat.uniforms.map.value = (new THREE.TextureLoader()).load(texture);
+
+        mat.map = mat.uniforms.map.value = (new THREE.TextureLoader()).load(texture);
         
         mat.uniforms.size.value = 60;
-        // mat.uniforms.opacity = 1;
-        // mat.uniforms.diffuse.value = new THREE.Color(0xFFFFFF);
-        // mat.uniforms.offsetRepeat.value.set( 0, 0, 1, 1 );
-
         mat.blending = THREE.AdditiveBlending;
         mat.transparent = true;
         mat.depthWrite = false;
@@ -228,6 +212,7 @@ void main() {
             var material = index.material;
             var position = geometry.attributes.position.array;
             var particle = geometry.attributes.particle.array;
+            var color = geometry.attributes.color.array;
             material.uniforms.time.value += delta;
             material.uniforms.scale.value = scale;
 
@@ -257,8 +242,11 @@ void main() {
                     particle[p++] = time;
 
                     p = count * 3;
+                    color[p] = Math.random();
                     position[p++] = pos.x;
+                    color[p] = Math.random();
                     position[p++] = pos.y;
+                    color[p] = Math.random();
                     position[p++] = pos.z;
                 }
 
@@ -268,6 +256,7 @@ void main() {
             if( dirty ){
                 geometry.attributes.particle.needsUpdate = true;
                 geometry.attributes.position.needsUpdate = true;
+                geometry.attributes.color.needsUpdate = true;
             }
         }
     },

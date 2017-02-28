@@ -26,6 +26,13 @@ CLAZZ("cmp.ThreeParticles", {
     '@force':{type:'vec3'},
     force:{x:0,y:0,z:0},
 
+    '@tweenAlpha':{type:''},
+    tweenAlpha:{},
+
+    '@sizes':{type:'vec3'},
+    sizes:{x:0, y:20, z:0},
+
+
     // used by server
     acc:0,
 

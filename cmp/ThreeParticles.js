@@ -1,8 +1,18 @@
 CLAZZ("cmp.ThreeParticles", {
-	INJECT:["entity", "asset", "game", "type", "texture"],
+	INJECT:[
+        "entity", "asset", "game", 
+        "type", "texture", 
+        "life", "gravity"
+    ],
 	
 	'@type':{type:'enum', options:['fountain', 'exhaust']},
 	type:"fountain",
+
+    '@life':{type:'int', min:0},
+    life:1000,
+
+    '@gravity':{type:'float'},
+    gravity:10,
 	
 	'@texture':{type:'texture'},
 	texture:'resources/image/smoke.jpg',
@@ -12,6 +22,9 @@ CLAZZ("cmp.ThreeParticles", {
 
     '@rate':{type:'float', min:0},
     rate:10,
+
+    '@force':{type:'vec3'},
+    force:{x:0,y:0,z:0},
 
     // used by server
     acc:0,
@@ -44,7 +57,8 @@ CLAZZ("cmp.ThreeParticles.Server", {
     
 uniform float size;
 uniform float scale;
-attribute vec4 particle;
+uniform float time;
+
 
 #include <common>
 #include <color_pars_vertex>
@@ -53,10 +67,21 @@ attribute vec4 particle;
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
 
+varying float age;
+attribute vec4 particle;
+attribute vec4 tweenSize;
+attribute vec4 tweenAlpha;
+attribute vec4 force;
+
 void main() {
+
+    age = max(0., min(1., (time - particle.x) / particle.y));
 
 	#include <color_vertex>
 	#include <begin_vertex>
+
+    transformed.y += particle.z * age;
+
 	#include <project_vertex>
 
     gl_PointSize = size * scale / - mvPosition.z;
@@ -83,6 +108,7 @@ uniform float opacity;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
+varying float age;
 void main() {
 
 	#include <clipping_planes_fragment>
@@ -142,11 +168,20 @@ void main() {
         color.setDynamic( true );
         var position = new THREE.Float32BufferAttribute(max*3, 3);
         position.setDynamic( true );
+        var tweenSize = new THREE.Float32BufferAttribute(max*4, 4);
+        tweenSize.setDynamic( true );
+        var tweenAlpha = new THREE.Float32BufferAttribute(max*2, 2);
+        tweenAlpha.setDynamic( true );
+        var force = new THREE.Float32BufferAttribute(max*3, 3);
+        force.setDynamic( true );
 
         var geometry = new THREE.BufferGeometry();
         geometry.addAttribute("color", color);
         geometry.addAttribute("position", position);
         geometry.addAttribute("particle", particle);
+        geometry.addAttribute("tweenSize", tweenSize);
+        geometry.addAttribute("tweenAlpha", tweenAlpha);
+        geometry.addAttribute("force", force);
         geometry.drawRange.count = 0;
 
         // Necessary. I don't know why.
@@ -212,6 +247,9 @@ void main() {
             var material = index.material;
             var position = geometry.attributes.position.array;
             var particle = geometry.attributes.particle.array;
+            var tweenSize = geometry.attributes.tweenSize.array;
+            var tweenAlpha = geometry.attributes.tweenAlpha.array;
+            var force = geometry.attributes.force.array;
             var color = geometry.attributes.color.array;
             material.uniforms.time.value += delta;
             material.uniforms.scale.value = scale;
@@ -236,18 +274,29 @@ void main() {
                         geometry.drawRange.count = count;
 
                     var p = count * 4;
+                    tweenSize[p] = emitter.startSize;
                     particle[p++] = time;
-                    particle[p++] = time;
-                    particle[p++] = time;
-                    particle[p++] = time;
+                    tweenSize[p] = emitter.endSize;
+                    particle[p++] = emitter.life / 1000;
+                    tweenSize[p] = emitter.sizeIn;
+                    particle[p++] = emitter.gravity;
+                    tweenSize[p] = emitter.sizeOut;
+                    particle[p++] = count;
 
                     p = count * 3;
                     color[p] = Math.random();
+                    force[p] = emitter.force.x;
                     position[p++] = pos.x;
                     color[p] = Math.random();
+                    force[p] = emitter.force.y;
                     position[p++] = pos.y;
                     color[p] = Math.random();
+                    force[p] = emitter.force.z;
                     position[p++] = pos.z;
+
+                    p = count * 2;
+                    tweenAlpha[p++] = emitter.alphaIn; 
+                    tweenAlpha[p] = emitter.alphaOut;
                 }
 
                 if( acc > 0 )

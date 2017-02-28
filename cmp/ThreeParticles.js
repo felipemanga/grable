@@ -90,8 +90,8 @@ void main() {
     transformed.y += particle.z * age;
 
 	#include <project_vertex>
-
-    gl_PointSize = size * scale / - mvPosition.z;
+    
+    gl_PointSize = size * ( 1080. / - mvPosition.z );
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>

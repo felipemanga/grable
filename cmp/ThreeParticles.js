@@ -227,6 +227,7 @@ void main() {
         var geometry = this.getGeometry( particle );
         var material = this.getMaterial( texture );
         var mesh = new THREE.Points( geometry, material );
+        mesh.frustumCulled = false;
         this.scene.add( mesh );
 
         return this.index[texture] = {

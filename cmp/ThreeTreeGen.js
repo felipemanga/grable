@@ -163,7 +163,163 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
     },
 
     _generate:function( params, list ){
+        // debugger;
+        
+        var treeCtx = {
+            treeCfg:{
+                scale:3,
+                tree:null
+            },
+
+            PUSH:function(){
+                this.treeCfg.tree.push("rotX", "rotY", "rotZ");
+            },
+
+            POP:function(){
+                this.treeCfg.tree.pop();
+            },
+
+            RX:function( min, max ){
+                var tmp = this.procgeom.rnd(min,max);
+                this.treeCfg.tree.rotateX( tmp )
+                this.treeCfg.tree.data.rotX += tmp;
+            },
+
+            RY:function( min, max ){
+                var tmp = this.procgeom.rnd(min,max);
+                this.treeCfg.tree.rotateY( tmp )
+                this.treeCfg.tree.data.rotY += tmp;
+            },
+
+            RZ:function( min, max ){
+                var tmp = this.procgeom.rnd(min,max);
+                this.treeCfg.tree.rotateZ( tmp )
+                this.treeCfg.tree.data.rotZ += tmp;
+            },
+
+            RGB:function(r,g,b){
+	            this.treeCfg.tree.color(r,g,b);
+            },            
+
+            BEGINTREE:function( cfg ){
+                var def = {
+                    scale:1,
+                    trunkSegments:3,
+                    trunkLength:20,
+                    trunkWidth:2,
+                    trunkRound:1,
+                    trunkTwist:this.procgeom.rnd(-20,20),
+                    trunkTile:1,
+
+                    leafLength:7,
+                    leafWidth:7,
+                    leafShape:0,
+                    leafColorR:1,
+                    leafColorG:1,
+                    leafColorB:1,
+                    leafDetailMin:3,
+                    leafDetailMax:10,
+                    leafRoundMin:0.0005,
+                    leafRoundMax:0.004,
+                    leafTile:2
+                };
+
+                cfg = Object.assign(this.treeCfg, def, cfg);
+
+                this.treeCfg.tree = this.procgeom.pointSet({ width:this.treeCfg.scale*(this.treeCfg.trunkWidth), ring:1, data:{ 
+                    length:this.treeCfg.scale*this.treeCfg.trunkLength,
+                    seg:this.treeCfg.trunkSegments,
+                    rotX:0,
+                    rotY:0,
+                    rotZ:0,
+                    twist:this.treeCfg.trunkTwist
+                } })
+                .setId( this.treeCfg.trunkTile )
+                .rotateY(this.procgeom.rnd(0, 360))
+            },
+
+            LEAF:function( leafCfg ){
+                var cfg = Object.assign({}, this.treeCfg, leafCfg);
+                var length = cfg.leafLength * cfg.scale;
+
+                var tree = this.treeCfg.tree;
+                var detail = (1-this.procgeom.lod) * (cfg.leafDetailMax - cfg.leafDetailMin) + cfg.leafDetailMin;
+
+                tree
+                    .rotateZ(-tree.data.rotZ)
+                    .rotateY( (tree.data.rotX+tree.data.rotZ>0?180-tree.data.rotX:-90))
+                    .rotateX(-30)
+                    .setDetail( cfg.leafDetailMin, cfg.leafDetailMax)
+                    .setWidth(0);
+
+                var ring = this.procgeom.rnd( cfg.leafRoundMin, cfg.leafRoundMax );
+
+                for( var i=0; i<detail; ++i ){
+                    var it = (i+1) / (detail);
+
+                    switch( cfg.leafShape ){
+                    case 0: // round
+                        tree = tree.pointSet()
+                            .color( cfg.leafColorR, cfg.leafColorG, cfg.leafColorB )
+                            .setWidth( Math.sin(it*Math.PI) * cfg.leafWidth * cfg.scale )
+                            .setRing( ring )
+                            .setId( cfg.leafTile + 0.999 - it*0.998 )
+                            .translate( 0, length / (detail - 1), 0 );                        
+
+                    break;
+
+                    default:
+
+                    }
+
+                }
+
+            },
+
+            TRUNK: function(){
+                var tree = this.treeCfg.tree;
+                var width = this.procgeom.rnd(0.7, 0.9);
+                if( !tree.data.seg )
+                    tree.data.seg = 1;
+                var base = tree, seg = tree.data.seg;
+                var len = base.data.length * this.procgeom.rnd(0.4, 0.6);
+                var uv = Math.floor(base.uvId), z=this.procgeom.rnd(-10,10), x=this.procgeom.rnd(-10,10);
+                for( var i=0; i<seg; ++i ){
+                    tree = tree
+                        .pointSet()
+                        .mulWidth( width )
+                        .setId( uv + i/seg )
+                        .translate(0, len / seg, 0)
+                        .rotateX(x)
+                        .rotateY(base.data.twist)
+                        .rotateZ(z)
+                        .setDetail( undefined, 3+tree.width*5 )
+                        .set("length", len)
+                        .set("base", base);
+                    tree.data.rotY += base.data.twist;
+                    tree.data.rotZ += z;
+                    tree.data.rotX += x;
+                }
+                tree.setId(uv);
+                this.treeCfg.tree = tree;
+            },
+
+            ENDTRUNK: function(){
+                this.treeCfg.tree = this.treeCfg.tree.data.base;
+            }
+        };
+
         var lsys = new lib.LSystem();
+
+        lsys.source("tree",`
+        [ -> PUSH();
+
+        ] -> POP();
+
+        { -> TRUNK();
+
+        } -> ENDTRUNK();
+        `);
 
         var MT = new MersenneTwister( params.seed );
         lsys.random = MT.random.bind(MT);
@@ -171,6 +327,17 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         var proc = new lib.ProcGeom( params.lod, params.tiles, lsys.random );
         var keys = Object.keys( lib.ProcGeom.methods );
         var values = keys.map( k => proc[k].bind(proc) );
+        var ctxkeys = Object.keys( treeCtx );
+        values = values.concat( ctxkeys.map( 
+            k => 
+            typeof treeCtx[k] == "function" ? 
+                treeCtx[k].bind(treeCtx) :
+                treeCtx[k]
+        ));
+        treeCtx.procgeom = proc;
+
+        keys = keys.concat(ctxkeys);
+
         keys.unshift( null );
 
         try {

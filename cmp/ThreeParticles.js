@@ -2,7 +2,7 @@ CLAZZ("cmp.ThreeParticles", {
 	INJECT:[
         "entity", "asset", "game", 
         "texture", "enabled", "rate",
-        "sizeVariance",
+        "sizeVariance", "randomRotation",
         "color", "life", "gravity", "force", "opacities", "sizes", "inTime", "outTime"
     ],
 	
@@ -42,6 +42,9 @@ CLAZZ("cmp.ThreeParticles", {
     '@sizeVariance':{type:'vec2f'},
     sizeVariance:{x:0.5, y:1.5},
 
+    '@randomRotation':{type:'bool'},
+    randomRotation:true,
+
     // used by server
     acc:0,
     position:null,
@@ -78,6 +81,7 @@ CLAZZ("cmp.ThreeParticles.Server", {
             + 1 // gravity
             + 3 // start size, live size, die size
             + 3 // start opactiy, live opacity, die opacity
+            + 1 // rotation
             ,
 
     index:null,
@@ -98,19 +102,21 @@ attribute vec4 timeline;
 attribute float gravity;
 attribute vec3 sizes;
 attribute vec3 opacities;
+attribute float rotation;
 
-varying float age;
 varying vec4 vColor;
+varying vec2 RSC;
 
 void main() {
     float lifeTime = time - timeline.x;
 
-    age = max(0., min(1., lifeTime / timeline.w));
+    float age = max(0., min(1., lifeTime / timeline.w));
     
 	#include <begin_vertex>
 
-    transformed.xyz += force * lifeTime;
+    RSC = vec2( sin(rotation), cos(rotation) );
 
+    transformed.xyz += force * lifeTime;
     transformed.y += gravity * lifeTime * lifeTime;
 
 	#include <project_vertex>
@@ -161,8 +167,8 @@ uniform float opacity;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
-varying float age;
 varying vec4 vColor;
+varying vec2 RSC;
 
 void main() {
 
@@ -172,7 +178,22 @@ void main() {
 	vec4 diffuseColor = vColor;
 
 	#include <logdepthbuf_fragment>
-	#include <map_particle_fragment>
+
+
+    vec2 ftc = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );
+    vec2 ttc = ftc - 0.5;
+
+    ftc.x = ttc.x*RSC.x - ttc.y*RSC.y;
+    ftc.y = ttc.x*RSC.y + ttc.y*RSC.x;
+
+    ftc += 0.5;
+
+    // ftc = ftc * offsetRepeat.zw + offsetRepeat.xy;
+
+	vec4 mapTexel = texture2D( map, ftc );
+	diffuseColor *= mapTexelToLinear( mapTexel );
+
+
 	#include <alphatest_fragment>
 
 	outgoingLight = diffuseColor.rgb;
@@ -252,6 +273,9 @@ void main() {
         var opacities = new THREE.InterleavedBufferAttribute( particle, 3, 17 );
         geometry.addAttribute("opacities", opacities);
 
+        var rotation = new THREE.InterleavedBufferAttribute( particle, 1, 20 );
+        geometry.addAttribute("rotation", rotation);
+
         geometry.drawRange.count = 0;
 
         // Necessary. I don't know why.
@@ -278,7 +302,7 @@ void main() {
         mat.map = mat.uniforms.map.value = (new THREE.TextureLoader()).load(texture);
         
         mat.uniforms.size.value = 60;
-        mat.blending = THREE.AdditiveBlending;
+        // mat.blending = THREE.AdditiveBlending;
         mat.transparent = true;
         mat.depthWrite = false;
         return mat;
@@ -338,7 +362,7 @@ void main() {
                 acc = Math.floor(acc);
 
                 if( emitter.force.x != 0 || emitter.force.y != 0 || emitter.force.z != 0 ){
-                    
+
                     force.copy( emitter.force );
                     var forceLength = force.length();
 
@@ -403,7 +427,9 @@ void main() {
                     // + 3 // start opactiy, live opacity, die opacity
                     emitter.opacities.x,
                     emitter.opacities.y,
-                    emitter.opacities.z
+                    emitter.opacities.z,
+
+                    emitter.randomRotation ? Math.random()*Math.PI*2 : 0
                     ], p);
                 }
 

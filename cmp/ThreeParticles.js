@@ -1,12 +1,10 @@
 CLAZZ("cmp.ThreeParticles", {
 	INJECT:[
         "entity", "asset", "game", 
-        "type", "texture", "enabled", "rate",
+        "texture", "enabled", "rate",
+        "sizeVariance",
         "color", "life", "gravity", "force", "opacities", "sizes", "inTime", "outTime"
     ],
-	
-	'@type':{type:'enum', options:['fountain', 'exhaust']},
-	type:"fountain",
 	
     '@enabled':{type:'bool'},
     enabled:true,
@@ -41,12 +39,12 @@ CLAZZ("cmp.ThreeParticles", {
     '@sizes':{type:'vec3f'},
     sizes:{x:0, y:20, z:0},
 
+    '@sizeVariance':{type:'vec2f'},
+    sizeVariance:{x:0.5, y:1.5},
+
     // used by server
     acc:0,
-
-    CONSTRUCTOR:function(){
-        this.color = new THREE.Color( this.color );
-    },
+    position:null,
 
     setParticlesEnabled:function( enabled ){
 
@@ -56,6 +54,8 @@ CLAZZ("cmp.ThreeParticles", {
 
 	onReady:function(){
 		
+        this.position = (new THREE.Vector3()).copy(this.entity.position);
+        this.color = new THREE.Color( this.color );
 		cmp.ThreeParticles.Server.add(this);
 		
 	},
@@ -108,6 +108,8 @@ void main() {
     age = max(0., min(1., lifeTime / timeline.w));
     
 	#include <begin_vertex>
+
+    transformed.xyz += force * lifeTime;
 
     transformed.y += gravity * lifeTime * lifeTime;
 
@@ -207,6 +209,7 @@ void main() {
         this.scene.add( mesh );
 
         return this.index[texture] = {
+            position: new THREE.Vector3(),
             next: 0,
             max: max,
             mesh:mesh,
@@ -297,10 +300,17 @@ void main() {
     },
 
     time:0,
+
+    force:new THREE.Vector3(),
+    pos:new THREE.Vector3(),
+    tm4:new THREE.Matrix4(),
+
     onTick:function(delta){
     	if( delta < 0 )
     		return;
 
+        var force = this.force;
+        var pos = this.pos;
         var scale = this.game.height / this.game.camera.aspect;
         var time = this.time += delta;
     		
@@ -322,14 +332,39 @@ void main() {
                 if( !emitter.enabled || !emitter.rate )
                     cotinue;
 
-                var pos = emitter.asset.position;
-                
                 var acc = emitter.acc;
                 acc += delta * emitter.rate;
                 emitter.acc = acc - Math.floor(acc);
                 acc = Math.floor(acc);
 
+                if( emitter.force.x != 0 || emitter.force.y != 0 || emitter.force.z != 0 ){
+                    
+                    force.copy( emitter.force );
+                    var forceLength = force.length();
+
+                    var tm4 = this.tm4.identity();
+                    tm4.elements[12] = emitter.force.x;
+                    tm4.elements[13] = emitter.force.y;
+                    tm4.elements[14] = emitter.force.z;
+                    tm4.multiplyMatrices( emitter.asset.matrixWorld, tm4 );
+
+                    force.x = tm4.elements[12] - emitter.asset.matrixWorld.elements[12];
+                    force.y = tm4.elements[13] - emitter.asset.matrixWorld.elements[13];
+                    force.z = tm4.elements[14] - emitter.asset.matrixWorld.elements[14];
+
+                    force.setLength( forceLength );
+
+                }else{
+
+                    force.x = 0;
+                    force.y = 0;
+                    force.z = 0;
+
+                }
+
                 for( var j=0; j<acc; ++j ){
+                    pos.lerpVectors( emitter.position, emitter.asset.position, j/acc );
+
                     var count = (index.next++) % max;
                     if( count >= geometry.drawRange.count )
                         geometry.drawRange.count = count+1;
@@ -347,9 +382,9 @@ void main() {
                     emitter.color.b,
 
                     // + 3 // force.xyz
-                    emitter.force.x,
-                    emitter.force.y,
-                    emitter.force.z,
+                    force.x,
+                    force.y,
+                    force.z,
 
                     // + 4 // start time, tween in, tween out, die time
                     time,
@@ -361,9 +396,9 @@ void main() {
                     emitter.gravity,
 
                     // + 3 // start size, live size, die size
-                    emitter.sizes.x,
-                    emitter.sizes.y,
-                    emitter.sizes.z,
+                    emitter.sizes.x * (Math.random()*(emitter.sizeVariance.y - emitter.sizeVariance.x) + emitter.sizeVariance.x),
+                    emitter.sizes.y * (Math.random()*(emitter.sizeVariance.y - emitter.sizeVariance.x) + emitter.sizeVariance.x),
+                    emitter.sizes.z * (Math.random()*(emitter.sizeVariance.y - emitter.sizeVariance.x) + emitter.sizeVariance.x),
 
                     // + 3 // start opactiy, live opacity, die opacity
                     emitter.opacities.x,
@@ -371,6 +406,8 @@ void main() {
                     emitter.opacities.z
                     ], p);
                 }
+
+                emitter.position.copy( emitter.asset.position );
 
                 if( acc > 0 )
                     dirty = true;

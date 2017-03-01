@@ -193,6 +193,16 @@ CLAZZ("cmp.PhysiJS", {
         this.node.setAngularVelocity(velocity);
     },
 
+    viscosity:0,
+    '@setMediumViscosity':{ v:{type:'float'} },
+    setMediumViscosity:function(v){
+        v = Math.max(0, Math.min( 1, v||0 ) );
+        if( v === this.viscosity )
+            return;
+        this.viscosity = v;
+        this.node.setDamping( Math.max(this.linearDamping, v), Math.max(this.angularDamping, v) );
+    },
+
     '@applyTorque':{ torque:{type:'vec3f'} },
     applyTorque:function( torque ){
         if( arguments.length == 3 || !torque )

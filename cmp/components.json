@@ -8,6 +8,7 @@
     "cmp.FlyAI":{"phaserjs":true, "threejs":true, "help":"Randomly moves the node around, attempting to stay within the defined bounds."},
     "cmp.FollowCamera":{"phaserjs":true},
     "cmp.Force":{"phaserjs":true, "threejs":true, "help":"Add a pre-determined amount of force to the object every frame.\nUse with cmp.Inertia or cmp.PhysiJS."},
+    "cmp.Float":{"phaserjs":true, "threejs":true, "help":"Adds strength amount of upwards force if the object falls below height."},
     
     "cmp.ImgDiff":{"phaserjs":true},
     "cmp.Inertia":{"phaserjs":true, "threejs":true},

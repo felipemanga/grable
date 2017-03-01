@@ -12,7 +12,7 @@ CustomAttribute.prototype = THREE.Float32BufferAttribute.prototype;
 
 CLAZZ("cmp.ThreeTreeGen", {
 
-    INJECT:['entity', 'asset', 'seed', 'iterations', 'source', 'tiles', 'amount', 'ground', 'spread'],
+    INJECT:['entity', 'game', 'asset', 'seed', 'iterations', 'source', 'tiles', 'amount', 'ground', 'spread'],
 
     '@hidePlaceholder':{type:'bool'},
     hidePlaceholder:true,
@@ -132,6 +132,33 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
 
     generate:function( tree, applyTransform ){
         var node = tree.asset || tree.entity.getNode();
+        var ground, groundGeometry, raycaster, groundBox, raycasterNormal, groundSide, scene;
+
+        if( tree.game ){
+            scene = tree.game.scene;
+        }else if( self.editor ){
+            scene = self.editor.scene;
+        }
+
+        if( tree.ground ){
+            ground = scene.getObjectByProperty( 'uuid', tree.ground );
+            if( ground ){
+                if( ground.getHeightAtXZ ){
+                    // nop
+                }else if( ground.geometry ){
+                    groundGeometry = ground.geometry;
+                    if( !groundGeometry.boundingBox )
+                        groundGeometry.computeBoundingBox();
+                    groundBox = groundGeometry.boundingBox;
+                    raycaster = new THREE.Raycaster();
+                    raycasterNormal = new THREE.Vector3(0,1,0);
+                    groundSide = ground.material.side;
+                    ground.material.side = THREE.DoubleSide;
+                }else 
+                    ground = null;
+            }
+        }
+
         var transfer = [], list = [], params = {
             iterations: tree.iterations, 
             source: tree.source, 
@@ -140,7 +167,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             tiles: tree.tiles
         };
 
-        var a = 0;
+        var a = 0, worldTransform = new THREE.Matrix4();
         for( var i=0; i<tree.amount; ++i ){
             var transform = new THREE.Matrix4();
 
@@ -151,11 +178,41 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
 
             transform.makeTranslation(sina, 0, cosa);
 
-            if( applyTransform ) 
+            if( applyTransform ){
                 transform.multiplyMatrices( node.matrixWorld, transform );
+                worldTransform.copy( transform );
+            }else{
+                worldTransform.multiplyMatrices( node.matrixWorld, transform );
+            }
+            
+            if( ground ){
+                var y;
+                if( groundGeometry ){
+                    raycaster.set( new THREE.Vector3(
+                        worldTransform.elements[12],
+                        groundBox.min.y * ground.scale.y + ground.position.y,
+                        worldTransform.elements[14]
+                    ), raycasterNormal );
+
+                    var intersects = raycaster.intersectObject( ground );
+                    if( intersects && intersects.length ){
+                        y = intersects[0].point.y;
+                    }else{
+                        y = worldTransform.elements[13];
+                    }
+                    
+                }else if( ground ){
+                    y = ground.getHeightAtXZ( worldTransform[12], worldTransform[14] );
+                }
+                transform.elements[13] = y;
+            }
 
             list[i] = transform.elements;
             transfer[i] = transform.elements.buffer;
+        }
+
+        if( groundGeometry ){
+            ground.material.side = groundSide;
         }
 
         

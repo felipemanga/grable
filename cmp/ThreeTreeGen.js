@@ -204,7 +204,11 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 }else if( ground ){
                     y = ground.getHeightAtXZ( worldTransform[12], worldTransform[14] );
                 }
-                transform.elements[13] = y;
+                
+                if( !applyTransform )
+                    y -= node.position.y;
+
+                transform.elements[13] = y / node.scale.y;
             }
 
             list[i] = transform.elements;

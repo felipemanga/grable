@@ -1,40 +1,52 @@
 CLAZZ("cmp.ThreeParticles", {
 	INJECT:[
         "entity", "asset", "game", 
-        "type", "texture", 
-        "life", "gravity"
+        "type", "texture", "enabled", "rate",
+        "color", "life", "gravity", "force", "opacities", "sizes", "inTime", "outTime"
     ],
 	
 	'@type':{type:'enum', options:['fountain', 'exhaust']},
 	type:"fountain",
-
-    '@life':{type:'int', min:0},
-    life:1000,
-
-    '@gravity':{type:'float'},
-    gravity:10,
 	
-	'@texture':{type:'texture'},
-	texture:'resources/image/smoke.jpg',
-
     '@enabled':{type:'bool'},
     enabled:true,
 
     '@rate':{type:'float', min:0},
     rate:10,
 
-    '@force':{type:'vec3'},
+	'@texture':{type:'texture'},
+	texture:'resources/image/smoke.jpg',
+
+    '@color':{type:'color'},
+    color:"#FFFFFF",
+
+    '@inTime':{type:'int', min:0},
+    inTime:1000,
+
+    '@outTime':{type:'int', min:0},
+    outTime:1000,
+
+    '@life':{type:'int', min:0},
+    life:3000,
+
+    '@gravity':{type:'float'},
+    gravity:10,
+
+    '@force':{type:'vec3f'},
     force:{x:0,y:0,z:0},
 
-    '@tweenAlpha':{type:''},
-    tweenAlpha:{},
+    '@opacities':{type:'vec3f'},
+    opacities:{x:0, y:1, z:0},
 
-    '@sizes':{type:'vec3'},
+    '@sizes':{type:'vec3f'},
     sizes:{x:0, y:20, z:0},
-
 
     // used by server
     acc:0,
+
+    CONSTRUCTOR:function(){
+        this.color = new THREE.Color( this.color );
+    },
 
     setParticlesEnabled:function( enabled ){
 
@@ -58,40 +70,73 @@ CLAZZ("cmp.ThreeParticles", {
 CLAZZ("cmp.ThreeParticles.Server", {
     INJECT:['pool', 'scene', 'game'],
 
+    vertexSize:
+            3   // position
+            + 3 // color
+            + 3 // force.xyz
+            + 4 // start time, tween in, tween out, die time
+            + 1 // gravity
+            + 3 // start size, live size, die size
+            + 3 // start opactiy, live opacity, die opacity
+            ,
+
     index:null,
 
     vertexShader:`
-    
-uniform float size;
-uniform float scale;
 uniform float time;
+uniform float scale;
 
 
 #include <common>
-#include <color_pars_vertex>
 #include <fog_pars_vertex>
 #include <shadowmap_pars_vertex>
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
 
+attribute vec3 force;
+attribute vec4 timeline;
+attribute float gravity;
+attribute vec3 sizes;
+attribute vec3 opacities;
+
 varying float age;
-attribute vec4 particle;
-attribute vec4 tweenSize;
-attribute vec4 tweenAlpha;
-attribute vec4 force;
+varying vec4 vColor;
 
 void main() {
+    float lifeTime = time - timeline.x;
 
-    age = max(0., min(1., (time - particle.x) / particle.y));
-
-	#include <color_vertex>
+    age = max(0., min(1., lifeTime / timeline.w));
+    
 	#include <begin_vertex>
 
-    transformed.y += particle.z * age;
+    transformed.y += gravity * lifeTime * lifeTime;
 
 	#include <project_vertex>
     
-    gl_PointSize = size * ( 1080. / - mvPosition.z );
+    float size, sizeA, sizeB, W;
+    float opacity, opacityA, opacityB;
+    if( age < timeline.y ){
+        sizeA = sizes.x;
+        sizeB = sizes.y;
+        opacityA = opacities.x;
+        opacityB = opacities.y;
+        W = age / timeline.y;
+    }else if( age > timeline.z ){
+        sizeA = sizes.y;
+        sizeB = sizes.z;
+        opacityA = opacities.y;
+        opacityB = opacities.z;
+        W = (age - timeline.z) / ( 1. - timeline.z );
+    }else{
+        sizeB = sizeA = sizes.y;
+        opacityB = opacityA = opacities.y;
+        W = 1.;
+    }
+    size = sizeA * (1.-W) + sizeB * W;
+    opacity = opacityA * (1.-W) + opacityB * W;
+
+    vColor = vec4( color, opacity );
+    gl_PointSize = size * ( scale / - mvPosition.z );
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
@@ -107,7 +152,6 @@ uniform float opacity;
 
 #include <common>
 #include <packing>
-#include <color_pars_fragment>
 #include <map_particle_pars_fragment>
 
 #include <fog_pars_fragment>
@@ -116,16 +160,17 @@ uniform float opacity;
 #include <clipping_planes_pars_fragment>
 
 varying float age;
+varying vec4 vColor;
+
 void main() {
 
 	#include <clipping_planes_fragment>
 
 	vec3 outgoingLight = vec3( 1.0 );
-	vec4 diffuseColor = vec4( 1.0 );
+	vec4 diffuseColor = vColor;
 
 	#include <logdepthbuf_fragment>
 	#include <map_particle_fragment>
-	#include <color_fragment>
 	#include <alphatest_fragment>
 
 	outgoingLight = diffuseColor.rgb;
@@ -153,7 +198,10 @@ void main() {
         if( index ) return index;
         if( create === false ) return null;
 
-        var geometry = this.getGeometry( max );
+        var particle = new THREE.InterleavedBuffer( new Float32Array(max*this.vertexSize), this.vertexSize );
+        particle.setDynamic( true );
+
+        var geometry = this.getGeometry( particle );
         var material = this.getMaterial( texture );
         var mesh = new THREE.Points( geometry, material );
         this.scene.add( mesh );
@@ -162,37 +210,48 @@ void main() {
             next: 0,
             max: max,
             mesh:mesh,
+            particle:particle,
             geometry:geometry,
             material:material,
             emitters:[]
         };
     },
 
-    getGeometry:function( max ){
-        var particle = new THREE.Float32BufferAttribute(max*4, 4);
-        particle.setDynamic( true );
-        var color = new THREE.Float32BufferAttribute(max*3, 3);
-        color.setDynamic( true );
-        var position = new THREE.Float32BufferAttribute(max*3, 3);
-        position.setDynamic( true );
-        var tweenSize = new THREE.Float32BufferAttribute(max*4, 4);
-        tweenSize.setDynamic( true );
-        var tweenAlpha = new THREE.Float32BufferAttribute(max*2, 2);
-        tweenAlpha.setDynamic( true );
-        var force = new THREE.Float32BufferAttribute(max*3, 3);
-        force.setDynamic( true );
+    getGeometry:function( particle ){
 
         var geometry = new THREE.BufferGeometry();
-        geometry.addAttribute("color", color);
+
+            // 3   // position
+        var position = new THREE.InterleavedBufferAttribute( particle, 3, 0 );
         geometry.addAttribute("position", position);
-        geometry.addAttribute("particle", particle);
-        geometry.addAttribute("tweenSize", tweenSize);
-        geometry.addAttribute("tweenAlpha", tweenAlpha);
+
+            // + 3 // color
+        var color = new THREE.InterleavedBufferAttribute( particle, 3, 3 );
+        geometry.addAttribute("color", color);
+
+            // + 3 // force.xyz
+        var force = new THREE.InterleavedBufferAttribute( particle, 3, 6 );
         geometry.addAttribute("force", force);
+
+            // + 4 // start time, tween in, tween out, die time
+        var timeline = new THREE.InterleavedBufferAttribute( particle, 4, 9 );
+        geometry.addAttribute("timeline", timeline);
+
+            // + 1 // gravity
+        var gravity = new THREE.InterleavedBufferAttribute( particle, 1, 13 );
+        geometry.addAttribute("gravity", gravity);
+
+            // + 3 // start size, live size, die size
+        var sizes = new THREE.InterleavedBufferAttribute( particle, 3, 14 );
+        geometry.addAttribute("sizes", sizes);
+
+            // + 3 // start opactiy, live opacity, die opacity
+        var opacities = new THREE.InterleavedBufferAttribute( particle, 3, 17 );
+        geometry.addAttribute("opacities", opacities);
+
         geometry.drawRange.count = 0;
 
         // Necessary. I don't know why.
-        position.array[0] = 500;
         particle.array[0] = 500;
 
         return geometry;
@@ -223,18 +282,18 @@ void main() {
     },
 
     add:function( emitter ){
-        var index = this.getIndex( emitter.texture, true, 100 );
+        var index = this.getIndex( emitter.texture, true, 100000 );
         index.emitters.push( emitter );
     },
 
     remove:function( emitter ){
-        var index = this.getIndex(emitter, false);
+        var index = this.getIndex(emitter.texture, false);
         if( !index ) return;
 
         var pos = index.emitters.indexOf( emitter );
         if( pos == -1 ) return;
 
-        this.emitters.splice( pos, 1 );
+        index.emitters.splice( pos, 1 );
     },
 
     time:0,
@@ -252,12 +311,7 @@ void main() {
             var emitters = index.emitters;
             var geometry = index.geometry;
             var material = index.material;
-            var position = geometry.attributes.position.array;
-            var particle = geometry.attributes.particle.array;
-            var tweenSize = geometry.attributes.tweenSize.array;
-            var tweenAlpha = geometry.attributes.tweenAlpha.array;
-            var force = geometry.attributes.force.array;
-            var color = geometry.attributes.color.array;
+            var particle = index.particle.array;
             material.uniforms.time.value += delta;
             material.uniforms.scale.value = scale;
 
@@ -277,43 +331,53 @@ void main() {
 
                 for( var j=0; j<acc; ++j ){
                     var count = (index.next++) % max;
-                    if( count > geometry.drawRange.count )
-                        geometry.drawRange.count = count;
+                    if( count >= geometry.drawRange.count )
+                        geometry.drawRange.count = count+1;
 
-                    var p = count * 4;
-                    tweenSize[p] = emitter.startSize;
-                    particle[p++] = time;
-                    tweenSize[p] = emitter.endSize;
-                    particle[p++] = emitter.life / 1000;
-                    tweenSize[p] = emitter.sizeIn;
-                    particle[p++] = emitter.gravity;
-                    tweenSize[p] = emitter.sizeOut;
-                    particle[p++] = count;
+                    var p = count * this.vertexSize;
+                    particle.set([
+                    // 3   // position
+                    pos.x,
+                    pos.y,
+                    pos.z,
 
-                    p = count * 3;
-                    color[p] = Math.random();
-                    force[p] = emitter.force.x;
-                    position[p++] = pos.x;
-                    color[p] = Math.random();
-                    force[p] = emitter.force.y;
-                    position[p++] = pos.y;
-                    color[p] = Math.random();
-                    force[p] = emitter.force.z;
-                    position[p++] = pos.z;
+                    // + 3 // color
+                    emitter.color.r,
+                    emitter.color.g,
+                    emitter.color.b,
 
-                    p = count * 2;
-                    tweenAlpha[p++] = emitter.alphaIn; 
-                    tweenAlpha[p] = emitter.alphaOut;
+                    // + 3 // force.xyz
+                    emitter.force.x,
+                    emitter.force.y,
+                    emitter.force.z,
+
+                    // + 4 // start time, tween in, tween out, die time
+                    time,
+                    emitter.inTime / emitter.life,
+                    (emitter.life - emitter.outTime) / emitter.life,
+                    emitter.life / 1000,
+
+                    // + 1 // gravity
+                    emitter.gravity,
+
+                    // + 3 // start size, live size, die size
+                    emitter.sizes.x,
+                    emitter.sizes.y,
+                    emitter.sizes.z,
+
+                    // + 3 // start opactiy, live opacity, die opacity
+                    emitter.opacities.x,
+                    emitter.opacities.y,
+                    emitter.opacities.z
+                    ], p);
                 }
 
                 if( acc > 0 )
                     dirty = true;
             }
-            if( dirty ){
-                geometry.attributes.particle.needsUpdate = true;
-                geometry.attributes.position.needsUpdate = true;
-                geometry.attributes.color.needsUpdate = true;
-            }
+
+            if( dirty )
+                index.particle.needsUpdate = true;
         }
     },
     
@@ -344,7 +408,8 @@ void main() {
         remove:function( emitter ){
 			var instances = cmp.ThreeParticles.Server.instances;
             var instance = instances[ emitter.game.scene.id ];
-            instance.remove( emitter );
+            if( instance )
+            	instance.remove( emitter );
         }
 	}
 	

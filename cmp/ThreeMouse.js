@@ -40,6 +40,7 @@ CLAZZ("cmp.ThreeMouse.Service", {
     onMouseUpListeners:null,
     onMouseDownListeners:null,
 
+    game:null,
     pool:null,
     pos:0,
 
@@ -55,7 +56,8 @@ CLAZZ("cmp.ThreeMouse.Service", {
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
-
+        
+        this.game = game;
         this.camera = game.camera;
         var dom = game.renderer.domElement;
         this.dom = dom;
@@ -70,7 +72,7 @@ CLAZZ("cmp.ThreeMouse.Service", {
     destroy:function(){
         this.dom.removeEventListener( 'click', this._click );
         this.pool.remove(this);
-        cmp.ThreeMouse.Service.instance = null;
+        cmp.ThreeMouse.Service.instances[ this.game.scene.id ] = null;
     },
 
     _raise:function( name, list, event ){

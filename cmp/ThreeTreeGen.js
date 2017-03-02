@@ -176,8 +176,8 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             var transform = new THREE.Matrix4();
 
             var r = Math.pow(1+i/tree.amount, 2) * tree.spread;
-            var cosa = Math.cos(a * Math.PI * 0.2) * r;
-            var sina = Math.sin(a * Math.PI * 0.2) * r;
+            var cosa = Math.cos(a * Math.PI * 2) * r;
+            var sina = Math.sin(a * Math.PI * 2) * r;
             a += 1.618033;
 
             transform.makeTranslation(sina, 0, cosa);

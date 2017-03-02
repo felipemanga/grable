@@ -143,8 +143,8 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         if( tree.ground ){
             ground = scene.getObjectByProperty( 'uuid', tree.ground );
             if( ground ){
-                if( ground.getHeightAtXZ ){
-                    // nop
+                if( ground && ground.entity && ground.entity.getHeightAtXZ ){
+                    ground = ground.entity;
                 }else if( ground.geometry ){
                     groundGeometry = ground.geometry;
                     if( !groundGeometry.boundingBox )
@@ -201,14 +201,16 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                         y = worldTransform.elements[13];
                     }
                     
-                }else if( ground ){
-                    y = ground.getHeightAtXZ( worldTransform[12], worldTransform[14] );
+                }else{
+                    y = ground.getHeightAtXZ( worldTransform.elements[12], worldTransform.elements[14] );
                 }
                 
-                if( !applyTransform )
+                if( !applyTransform ){
                     y -= node.position.y;
+                    // y /= node.scale.y;
+                }
 
-                transform.elements[13] = y / node.scale.y;
+                transform.elements[13] = y;
             }
 
             list[i] = transform.elements;
@@ -224,8 +226,6 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
     },
 
     _generate:function( params, list ){
-        // debugger;
-        
         var treeCtx = {
             treeCfg:{
                 scale:3,

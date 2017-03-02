@@ -4,8 +4,11 @@ CLAZZ("cmp.LoadTexture", {
     "@texture":{type:"texture"},
     texture:null,
 
-    "@type":{ type:"enum", fromKeys:'material', filter:'[Mm]ap$' },
+    "@type":{ type:"enum", fromKeys:'material', filter:'[Mm]ap$', test:{ neq:{'material.isShaderMaterial':true}} },
     type:null,
+
+    "@uniform":{ type:"enum", fromKeys:'material.uniforms', test:{ eq:{'material.isShaderMaterial':true} } },
+    uniform:null,
 
     "@onLoad":{type:'array', subtype:'slot'},
     onLoad:null,

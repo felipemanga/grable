@@ -29,6 +29,8 @@ CLAZZ("cmp.ThreeTerrain", {
     "@discardBelow":{type:"float"},
     discardBelow:0,
 
+    heightmap:null,
+
     
     '@create':{__hidden:true},
     create:function(){
@@ -51,7 +53,8 @@ CLAZZ("cmp.ThreeTerrain", {
             island = this.island,
             height = this.height, 
             sizes = this.sizes,
-            sizesLength = this.sizes.length;
+            sizesLength = this.sizes.length,
+            heightmap;
 
         if( geometry.parameters.width != geometry.parameters.height ){
             console.warn("Terrain not square!");
@@ -59,6 +62,8 @@ CLAZZ("cmp.ThreeTerrain", {
         }
 
         var size = geometry.parameters.width / 2;
+
+
         
         if( !noise ){
             ctx = new SimplexNoise( new MersenneTwister( this.seed ) );
@@ -78,6 +83,15 @@ CLAZZ("cmp.ThreeTerrain", {
             var vertices = posatt.array, indices = geometry.getIndex().array;
 
             var min = 10, max = -10, offsetY = this.asset.position.y;
+
+            var widthSegments = geometry.parameters.widthSegments;
+            var heightSegments = geometry.parameters.heightSegments;
+            var scaleW = widthSegments / geometry.parameters.width,
+                scaleH = (geometry.parameters.heightSegments+1) / geometry.parameters.height;
+            var offsetW = geometry.parameters.width/2,
+                offsetH = geometry.parameters.height/2;
+
+            heightmap = this.heightmap = new Float32Array( (widthSegments+1)*(heightSegments+1) );
 
             for ( var i = 0; i < vertices.length; i += 3 ) {
 
@@ -122,7 +136,10 @@ CLAZZ("cmp.ThreeTerrain", {
                 vz *= height;
 
                 vertices[i+2] = vz;
+
+                heightmap[i/3] = vz;
             }
+
 
             this.asset.geometry.computeFaceNormals();
             this.asset.geometry.computeVertexNormals();
@@ -204,6 +221,38 @@ CLAZZ("cmp.ThreeTerrain", {
             this.asset.geometry.computeVertexNormals();
 
         }
+    },
+
+    getHeightAtXZ:function(x, z){
+        var asset = this.entity.asset;
+        if( !asset.geometry.boundingBox )
+            asset.geometry.computeBoundingBox();
+
+        var param = this.asset.geometry.parameters;
+
+        if( arguments.length == 1 ){
+            z = x.z;
+            x = x.z;
+        }
+
+        var box = asset.geometry.boundingBox;
+        var w = box.max.x - box.min.x,
+            h = box.max.y - box.min.y;
+
+        x -= asset.position.x + box.min.x;
+        z -= asset.position.z + box.min.y;
+        x /= w;
+        z /= h;
+        if( x<0 || x>1 || z<0 || z>1 )
+            return -1;
+
+		// z = 1 - z;
+        x *= param.widthSegments + 1;
+        z *= param.heightSegments + 1;
+
+        var y = this.heightmap[ Math.round( z ) * (param.widthSegments+1) + Math.round( x ) ];
+
+        return y * asset.scale.z + asset.position.y;
     }
 });
 

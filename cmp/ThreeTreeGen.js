@@ -29,6 +29,9 @@ CLAZZ("cmp.ThreeTreeGen", {
     "@seed":{type:"int"},
     seed:0xDEADBEEF,
 
+    "@variants":{type:"int", min:1},
+    variants:4,
+
     '@iterations':{ type:'int', min:1, max:20 },
     iterations:5,
 
@@ -160,6 +163,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         }
 
         var transfer = [], list = [], params = {
+            variants: tree.variants,
             iterations: tree.iterations, 
             source: tree.source, 
             seed: tree.seed,
@@ -401,22 +405,43 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
 
         keys.unshift( null );
 
+        // var T = performance.now();
+
+        // function TIME(cmd){
+        //     var T2 = performance.now();
+        //     console.log( cmd, T2 - T );
+        //     T = T2;
+        // }
+
         try {
+            
             lsys.source( params.source );
 
-            for( var i=0; i<list.length; i++ ){
+            // TIME("SOURCE");
+
+            var variants = [];
+            for( var i=0; i<params.variants; ++i ){
                 var code = lsys.generate( params.iterations );
-                keys.push( code );
+                variants[i] = new (Function.bind.apply( Function, keys.concat(code) ));
+            }
+
+            // TIME("VARIANTS");
+
+            for( var i=0; i<list.length; i++ ){
+                var func = variants[ Math.floor(lsys.random() * variants.length) ];
+                // lsys.generate( params.iterations );
                 
                 proc.transform.elements.set( list[i] );
-                func = new (Function.bind.apply( Function, keys ));
                 var ret = func.apply( null, values );
                 if( ret !== undefined )
                     console.log( ret );
                 
-                keys.pop();
             }
+
+            // TIME("APPLY");
+
             var mesh = proc._build();
+            // TIME("BUILD");
         } catch( ex ) {
             if( lsys.debug || lsys.log )
                 console.warn( ex.stack );

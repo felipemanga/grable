@@ -280,8 +280,12 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                     trunkLength:20,
                     trunkWidth:2,
                     trunkRound:1,
-                    trunkTwist:this.procgeom.rnd(-20,20),
+                    trunkTwistXZ:this.procgeom.rnd(-20,20),
+                    trunkTwistY:this.procgeom.rnd(-20,20),
                     trunkTile:1,
+                    trunkColorR:1,
+                    trunkColorG:1,
+                    trunkColorB:1,
 
                     leafLength:7,
                     leafWidth:7,
@@ -303,10 +307,10 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                     seg:this.treeCfg.trunkSegments,
                     rotX:0,
                     rotY:0,
-                    rotZ:0,
-                    twist:this.treeCfg.trunkTwist
+                    rotZ:0
                 } })
                 .setId( this.treeCfg.trunkTile )
+                .color( this.treeCfg.trunkColorR, this.treeCfg.trunkColorG, this.treeCfg.trunkColorB )
                 .rotateY(this.procgeom.rnd(0, 360))
             },
 
@@ -353,22 +357,27 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 var width = this.procgeom.rnd(0.7, 0.9);
                 if( !tree.data.seg )
                     tree.data.seg = 1;
+
                 var base = tree, seg = tree.data.seg;
                 var len = base.data.length * this.procgeom.rnd(0.4, 0.6);
-                var uv = Math.floor(base.uvId), z=this.procgeom.rnd(-10,10), x=this.procgeom.rnd(-10,10);
+                var uv = Math.floor(base.uvId), 
+                    z=this.procgeom.rnd(-this.treeCfg.trunkTwistXZ,this.treeCfg.trunkTwistXZ), 
+                    x=this.procgeom.rnd(-this.treeCfg.trunkTwistXZ,this.treeCfg.trunkTwistXZ);
+
                 for( var i=0; i<seg; ++i ){
                     tree = tree
                         .pointSet()
+                        .color( this.treeCfg.trunkColorR, this.treeCfg.trunkColorG, this.treeCfg.trunkColorB )
                         .mulWidth( width )
                         .setId( uv + i/seg )
                         .translate(0, len / seg, 0)
                         .rotateX(x)
-                        .rotateY(base.data.twist)
+                        .rotateY(this.treeCfg.trunkTwistY)
                         .rotateZ(z)
                         .setDetail( undefined, 3+tree.width*5 )
                         .set("length", len)
                         .set("base", base);
-                    tree.data.rotY += base.data.twist;
+                    tree.data.rotY += this.treeCfg.trunkTwistY;
                     tree.data.rotZ += z;
                     tree.data.rotX += x;
                 }

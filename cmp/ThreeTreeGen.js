@@ -211,7 +211,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 
                 if( !applyTransform ){
                     y -= node.position.y;
-                    // y /= node.scale.y;
+                    y /= node.scale.y;
                 }
 
                 transform.elements[13] = y;

@@ -109,7 +109,13 @@ var ThreeGame = CLAZZ({
 	__animate: function ( time ) {
 		this.request = requestAnimationFrame( this.__animateBound );
 
-        var delta = (time - this.prevTime)/1000;
+        if( !this.gameState.sceneLoaded )
+            return;
+
+        var delta = (time - this.prevTime) / 1000;
+        if( delta < 0 ) delta = 1/30;
+        else if( delta > 1 ) delta = 1;
+
         this.pool.call("onTick", delta );
         this.pool.call("onPostTick", delta );
 

@@ -5,7 +5,7 @@ CLAZZ("cmp.FlyAI",{
     targetZ:0,
     error:20,
     _timeout:0,
-    timeout:100,
+    timeout:1,
 
     "@enabled":{type:"bool"},
     enabled:true,
@@ -61,7 +61,7 @@ CLAZZ("cmp.FlyAI",{
 
     onTick:function( delta ){
         if( this.enabled ){
-            this._timeout++;
+            this._timeout += delta;
 
             if( this._timeout >= this.timeout )
                 this.pickRandomTarget();

@@ -264,11 +264,6 @@ CLAZZ("cmp.PhysiJS.Service", {
             
             instance.add( l );
 
-            l.pool.silence('onPhysicsUpdate')
-            l.scene.add('update', function(){
-                l.pool.call('onPhysicsUpdate');
-            });
-
             return instance;
         },
 

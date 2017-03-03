@@ -75,7 +75,7 @@ CLAZZ("cmp.ThreeTerrain", {
 				THREE.UniformsLib.lights,
 				{
 					emissive: { value: new THREE.Color( 0x000000 ) },
-                    heightRange: { value: new THREE.Vector2(this.discardBelow, this.height) }
+                    heightRange: { value: new THREE.Vector2( this.discardBelow, this.height + this.asset.position.y ) }
 				}
 			] )
 
@@ -83,7 +83,11 @@ CLAZZ("cmp.ThreeTerrain", {
 
         var shader = new THREE.ShaderMaterial(opts);
 
-        shader.uniforms.map.value = srcmat.map;
+        var texture = shader.uniforms.map.value = srcmat.map;
+        if( srcmat.map ){
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;            
+        }
         shader.uniforms.offsetRepeat.value.set( 0, 0, 1/this.inclineSegments.x, 1/this.inclineSegments.y );
 
         this.asset.material = shader;
@@ -139,22 +143,30 @@ CLAZZ("cmp.ThreeTerrain", {
 
             heightmap = this.heightmap = new Float32Array( (widthSegments+1)*(heightSegments+1) );
 
+            var weights = [1], weight = 1;
+            for( j=1; j<sizesLength; ++j ){
+                weights[j] = weights[j-1] * 0.61803398874989;
+                weight += weights[j];
+            }
+            for( j=0; j<sizesLength; ++j )
+                weights[j] /= weight;
+
             for ( var i = 0; i < vertices.length; i += 3 ) {
 
                 var vx = vertices[i  ];
                 var vy = vertices[i+1];
                 var vz = 0;
 
-                var contrast = 0, weight = 0.5;
+                var contrast = 0;
 
                 for( var j=0; j<sizesLength; ++j ){
                     var scale = sizes[j];
+                    weight = weights[j];
                     if( scale ){
                         vz += (0.5+0.5*noise.call( ctx, vx / scale, vy / scale )) * weight;
                         if( noise2 )
                             contrast += (0.5+0.5*noise2.call( ctx2, vx / scale / 2, vy / scale / 2 )) * weight;
                     }
-                    weight *= 0.5;
                 }
 
                 if( vz > max )
@@ -176,7 +188,9 @@ CLAZZ("cmp.ThreeTerrain", {
                     if( f < 0.5 ) f = Math.pow( f * 2, island ) / 2;
                     else if( f > 0.5 ) f = 1 - Math.pow( (1-f) * 2, island ) / 2;
 
-                    vz *= f;
+                    if( f < 0.1 ) vz -= 0.2;
+
+                    vz = (vz*f-0.5)*2;
                 }
 
                 vz *= height;
@@ -603,7 +617,7 @@ void main() {
 	// # include <map_fragment>
 
     vec2 uva = vUv * offsetRepeat.zw;
-    vec2 uvb = vUv * offsetRepeat.zw + offsetRepeat.zw * 0.5;
+    vec2 uvb = vUv * 50.; // offsetRepeat.zw + offsetRepeat.zw * 0.5;
 
 	vec4 texelColorA = texture2D( map, uva );
 	vec4 texelColorB = texture2D( map, uvb );
@@ -611,7 +625,7 @@ void main() {
 	texelColorA = mapTexelToLinear( texelColorA );
 	texelColorB = mapTexelToLinear( texelColorB );
 
-	diffuseColor *= mix( texelColorA, texelColorB, 0.5 );
+	diffuseColor *= mix( texelColorA, texelColorB, height );
 
 	#include <color_fragment>
 	#include <alphamap_fragment>

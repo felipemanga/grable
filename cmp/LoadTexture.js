@@ -42,14 +42,25 @@ CLAZZ("cmp.LoadTexture", {
         }
 
         function onLoad(){
-            var key = scope.type || scope.uniform;
+            var key = scope.type || scope.uniform,
+                material = scope.asset.material;
 
-            if( key in scope.asset.material )
-                scope.asset.material[ key ] = texture;
-            else if( key in scope.asset.material.uniforms )
-                scope.asset.material.uniforms[ key ].value = texture;
+            var oldTexture;
 
-            scope.asset.material.needsUpdate = true;
+            if( material.uniforms && key in material.uniforms ){
+                oldTexture = material.uniforms[ key ].value;
+                material.uniforms[ key ].value = texture;
+            } else if( key in material ) {
+                oldTexture = material[key];
+                material[ key ] = texture;
+            }
+
+            if( oldTexture ){
+                texture.wrapS = oldTexture.wrapS;
+                texture.wrapT = oldTexture.wrapT;
+            }
+
+            material.needsUpdate = true;
 
             if( scope.onLoad )
                 scope.entity.message(scope.onLoad);

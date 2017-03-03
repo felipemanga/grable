@@ -44,6 +44,7 @@ CLAZZ("cmp.ThreeTreeGen", {
     asset:null,
 
     create: function(){
+        this.entity.call("onLoadingAsyncStart");
         if( this.hidePlaceholder )
             this.asset.visible = false;
 
@@ -62,6 +63,9 @@ CLAZZ("cmp.ThreeTreeGen", {
     '@_onGenerate':{__hidden:true},
     _onGenerate: function( mesh )
     {
+        if( this.entity )
+            this.entity.call("onLoadingAsyncEnd");
+
         if( !mesh || !mesh.position )
             return;
 
@@ -150,14 +154,18 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 if( ground && ground.entity && ground.entity.getHeightAtXZ ){
                     ground = ground.entity;
                 }else if( ground.geometry ){
-                    groundGeometry = ground.geometry;
-                    if( !groundGeometry.boundingBox )
-                        groundGeometry.computeBoundingBox();
-                    groundBox = groundGeometry.boundingBox;
-                    raycaster = new THREE.Raycaster();
-                    raycasterNormal = new THREE.Vector3(0,1,0);
-                    groundSide = ground.material.side;
-                    ground.material.side = THREE.DoubleSide;
+                    if( !applyTransform && tree.amount > 10 )
+                        ground = null;
+                    else{
+                        groundGeometry = ground.geometry;
+                        if( !groundGeometry.boundingBox )
+                            groundGeometry.computeBoundingBox();
+                        groundBox = groundGeometry.boundingBox;
+                        raycaster = new THREE.Raycaster();
+                        raycasterNormal = new THREE.Vector3(0,1,0);
+                        groundSide = ground.material.side;
+                        ground.material.side = THREE.DoubleSide;
+                    }
                 }else 
                     ground = null;
             }
@@ -175,17 +183,10 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
         var a = 0, worldTransform = new THREE.Matrix4();
         for( var i=0; i<tree.amount; ++i ){
             var transform = new THREE.Matrix4();
-
-            if( i ){
-                var r = Math.pow(1+i/tree.amount, 2) * tree.spread;
-                var cosa = Math.cos(a * Math.PI * 2) * r;
-                var sina = Math.sin(a * Math.PI * 2) * r;
-                a += 1.618033;
-            } else {
-                cosa = 0;
-                sina = 0;
-            }
-
+            var r = Math.sqrt(i/tree.amount) * tree.spread;
+            var cosa = Math.cos(a * Math.PI * 2) * r;
+            var sina = Math.sin(a * Math.PI * 2) * r;
+            a += 1.618033;
 
             transform.makeTranslation(sina, 0, cosa);
 

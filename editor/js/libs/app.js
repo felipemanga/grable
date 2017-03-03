@@ -7,7 +7,7 @@ var APP = {
 	Player: function () {
 
 		var loader = new THREE.ObjectLoader();
-		var camera, scene, renderer, pool;
+		var camera, scene, renderer, pool, scope = this;
 
 		var controls, effect, cameraVR, isVR;
 
@@ -52,6 +52,7 @@ var APP = {
 			this.setCamera( loader.parse( json.camera ) );
 
 			pool = this.pool = self.POOL = new DOC.Pool();
+            pool.add(this);
 
 			events = {
 				init: [],
@@ -107,10 +108,24 @@ var APP = {
                 });
 			}
 
-            this.sceneLoaded = true;
-			pool.call("onReady", arguments);
-
+            if( !this.loadingAsync ){
+                this.sceneLoaded = true;
+                pool.call("onReady");
+            }
 		};
+
+        this.loadingAsync = 0;
+        this.onLoadingAsyncStart = function(){
+            this.loadingAsync++;
+        };
+
+        this.onLoadingAsyncEnd = function(){
+            this.loadingAsync--;
+            if( !this.loadingAsync && !this.sceneLoaded ){
+                this.sceneLoaded = true;
+                pool.call("onReady");
+            }
+        };
 		
 	    this.addEntity = function(name, inject){
 			var e = CLAZZ.get("Entity", DOC.mergeTo({
@@ -201,10 +216,17 @@ var APP = {
 
 			request = requestAnimationFrame( animate );
 
+            if( !scope.sceneLoaded )
+                return;
+
+            var delta = (time - prevTime) / 1000;
+            if( delta < 0 ) delta = 1/30;
+            else if( delta > 1 ) delta = 1;
+
 			try {
 
-				pool.call( "onTick", (time - prevTime) / 1000 );
-				pool.call( "onPostTick", (time - prevTime) / 1000 );
+				pool.call( "onTick", delta );
+				pool.call( "onPostTick", delta );
 
 			} catch ( e ) {
 

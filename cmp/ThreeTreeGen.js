@@ -12,7 +12,7 @@ CustomAttribute.prototype = THREE.Float32BufferAttribute.prototype;
 
 CLAZZ("cmp.ThreeTreeGen", {
 
-    INJECT:['entity', 'game', 'asset', 'seed', 'iterations', 'source', 'tiles', 'amount', 'ground', 'spread'],
+    INJECT:['entity', 'game', 'asset', 'seed', 'iterations', 'source', 'tiles', 'amount', 'ground', 'spread', 'variants'],
 
     '@hidePlaceholder':{type:'bool'},
     hidePlaceholder:true,
@@ -271,7 +271,11 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
 
             RGB:function(r,g,b){
 	            this.treeCfg.tree.color(r,g,b);
-            },            
+            },
+
+            CFG:function( cfg ){
+                Object.assign( this.treeCfg.tree.data, cfg );
+            },
 
             BEGINTREE:function( cfg ){
                 var def = {
@@ -282,10 +286,15 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                     trunkRound:1,
                     trunkTwistXZ:this.procgeom.rnd(-20,20),
                     trunkTwistY:this.procgeom.rnd(-20,20),
+                    trunkDetail:1,
                     trunkTile:1,
                     trunkColorR:1,
                     trunkColorG:1,
                     trunkColorB:1,
+                    trunkWidthMin:0.7,
+                    trunkWidthMax:0.9,
+                    trunkLengthMin:0.4,
+                    trunkLengthMax:0.6,
 
                     leafLength:7,
                     leafWidth:7,
@@ -315,7 +324,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             },
 
             LEAF:function( leafCfg ){
-                var cfg = Object.assign({}, this.treeCfg, leafCfg);
+                var cfg = Object.assign( {}, this.treeCfg, this.treeCfg.tree.data, leafCfg );
                 var length = cfg.leafLength * cfg.scale;
 
                 var tree = this.treeCfg.tree;
@@ -333,17 +342,23 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 for( var i=0; i<detail; ++i ){
                     var it = (i+1) / (detail);
 
+                    tree = tree.pointSet()
+                        .color( cfg.leafColorR, cfg.leafColorG, cfg.leafColorB )
+                        .setRing( ring )
+                        .setId( cfg.leafTile + 0.999 - it*0.998 )
+
                     switch( cfg.leafShape ){
                     case 0: // round
-                        tree = tree.pointSet()
-                            .color( cfg.leafColorR, cfg.leafColorG, cfg.leafColorB )
+                        tree
                             .setWidth( Math.sin(it*Math.PI) * cfg.leafWidth * cfg.scale )
-                            .setRing( ring )
-                            .setId( cfg.leafTile + 0.999 - it*0.998 )
                             .translate( 0, length / (detail - 1), 0 );                        
 
                     break;
 
+                    case 1: // square
+                        tree
+                            .setWidth( cfg.leafWidth * cfg.scale )
+                            .translate( 0, length / (detail - 1), 0 );
                     default:
 
                     }
@@ -354,30 +369,31 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
 
             TRUNK: function(){
                 var tree = this.treeCfg.tree;
-                var width = this.procgeom.rnd(0.7, 0.9);
+                var cfg = tree.data;
+                var width = this.procgeom.rnd( cfg.trunkWidthMin, cfg.trunkWidthMax);
                 if( !tree.data.seg )
                     tree.data.seg = 1;
 
-                var base = tree, seg = tree.data.seg;
-                var len = base.data.length * this.procgeom.rnd(0.4, 0.6);
+                var base = tree, seg = Math.ceil( tree.data.seg * cfg.trunkDetail * (1-this.procgeom.lod));
+                var len = base.data.length * this.procgeom.rnd( cfg.trunkLengthMin, cfg.trunkLengthMax );
                 var uv = Math.floor(base.uvId), 
-                    z=this.procgeom.rnd(-this.treeCfg.trunkTwistXZ,this.treeCfg.trunkTwistXZ), 
-                    x=this.procgeom.rnd(-this.treeCfg.trunkTwistXZ,this.treeCfg.trunkTwistXZ);
+                    z=this.procgeom.rnd( -cfg.trunkTwistXZ, cfg.trunkTwistXZ ), 
+                    x=this.procgeom.rnd( -cfg.trunkTwistXZ, cfg.trunkTwistXZ );
 
                 for( var i=0; i<seg; ++i ){
                     tree = tree
                         .pointSet()
-                        .color( this.treeCfg.trunkColorR, this.treeCfg.trunkColorG, this.treeCfg.trunkColorB )
+                        .color(  cfg.trunkColorR,  cfg.trunkColorG,  cfg.trunkColorB )
                         .mulWidth( width )
                         .setId( uv + i/seg )
                         .translate(0, len / seg, 0)
                         .rotateX(x)
-                        .rotateY(this.treeCfg.trunkTwistY)
+                        .rotateY( cfg.trunkTwistY / seg)
                         .rotateZ(z)
-                        .setDetail( undefined, 3+tree.width*5 )
+                        .setDetail( undefined, 4+tree.width*cfg.trunkDetail )
                         .set("length", len)
                         .set("base", base);
-                    tree.data.rotY += this.treeCfg.trunkTwistY;
+                    tree.data.rotY +=  cfg.trunkTwistY;
                     tree.data.rotZ += z;
                     tree.data.rotX += x;
                 }
@@ -416,6 +432,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 treeCtx[k]
         ));
         treeCtx.procgeom = proc;
+        lib.ProcGeom.Node.dataPrototype = treeCtx.treeCfg;
 
         keys = keys.concat(ctxkeys);
 

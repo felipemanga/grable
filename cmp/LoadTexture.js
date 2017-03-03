@@ -42,8 +42,15 @@ CLAZZ("cmp.LoadTexture", {
         }
 
         function onLoad(){
-            scope.asset.material[scope.type] = texture;
+            var key = scope.type || scope.uniform;
+
+            if( key in scope.asset.material )
+                scope.asset.material[ key ] = texture;
+            else if( key in scope.asset.material.uniforms )
+                scope.asset.material.uniforms[ key ].value = texture;
+
             scope.asset.material.needsUpdate = true;
+
             if( scope.onLoad )
                 scope.entity.message(scope.onLoad);
         }

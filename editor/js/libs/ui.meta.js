@@ -498,10 +498,10 @@ UI.Meta.prototype.factories = {
     },
 
     vec2i:function( obj ){
-        var x = new UI.Integer( obj.value && obj.value.x || 0 ).setWidth( '50px' );
-        var y = new UI.Integer( obj.value && obj.value.y || 0 ).setWidth( '50px' );
-        obj.row.add( x );
+        var x = new UI.Integer( obj.value && obj.value.x || 0 ).setWidth( '50px' ).setStyle('float', ['right']);
+        var y = new UI.Integer( obj.value && obj.value.y || 0 ).setWidth( '50px' ).setStyle('float', ['right']);
         obj.row.add( y );
+        obj.row.add( x );
 
         if( "min" in obj.meta ) x.min = y.min = obj.meta.min;
         if( "max" in obj.meta ) x.max = y.max = obj.meta.max;

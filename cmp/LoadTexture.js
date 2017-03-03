@@ -4,8 +4,11 @@ CLAZZ("cmp.LoadTexture", {
     "@texture":{type:"texture"},
     texture:null,
 
-    "@type":{ type:"enum", fromKeys:'material', filter:'[Mm]ap$' },
+    "@type":{ type:"enum", fromKeys:'material', filter:'[Mm]ap$', test:{ neq:{'material.isShaderMaterial':true}} },
     type:null,
+
+    "@uniform":{ type:"enum", fromKeys:'material.uniforms', test:{ eq:{'material.isShaderMaterial':true} } },
+    uniform:null,
 
     "@onLoad":{type:'array', subtype:'slot'},
     onLoad:null,
@@ -39,8 +42,26 @@ CLAZZ("cmp.LoadTexture", {
         }
 
         function onLoad(){
-            scope.asset.material[scope.type] = texture;
-            scope.asset.material.needsUpdate = true;
+            var key = scope.type || scope.uniform,
+                material = scope.asset.material;
+
+            var oldTexture;
+
+            if( material.uniforms && key in material.uniforms ){
+                oldTexture = material.uniforms[ key ].value;
+                material.uniforms[ key ].value = texture;
+            } else if( key in material ) {
+                oldTexture = material[key];
+                material[ key ] = texture;
+            }
+
+            if( oldTexture ){
+                texture.wrapS = oldTexture.wrapS;
+                texture.wrapT = oldTexture.wrapT;
+            }
+
+            material.needsUpdate = true;
+
             if( scope.onLoad )
                 scope.entity.message(scope.onLoad);
         }

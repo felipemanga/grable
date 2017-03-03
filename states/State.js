@@ -3,6 +3,7 @@ CLAZZ("states.State", {
     entities:null,
     entityDefinitions:null,
     sceneLoaded:false,
+    loadingAsync:0,
 
     STATIC:{
         activeState:null,
@@ -64,8 +65,22 @@ CLAZZ("states.State", {
                 this.addEntity.apply(this, dlist[i]);
         }
 
-        this.sceneLoaded = true;
-        this.pool.call( "onReady", true );
+        if( !this.loadingAsync ){
+            this.sceneLoaded = true;
+            this.pool.call( "onReady", true );
+        }
+    },
+
+    onLoadingAsyncStart: function(){
+        this.loadingAsync++;
+    },
+
+    onLoadingAsyncEnd: function(){
+        this.loadingAsync--;
+        if( !this.loadingAsync && !this.sceneLoaded ){
+            this.sceneLoaded = true;
+            this.pool.call("onReady", true);
+        }
     },
 
     addEntity:function(name, inject){

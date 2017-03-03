@@ -26,9 +26,9 @@ CLAZZ("cmp.SnapToGround", {
         var position = this.entity.position;
         var y = 0;
 
-        if( ground.getHeightAtXZ ){
+        if( ground.entity && ground.entity.getHeightAtXZ ){
 
-            y = ground.getHeightAtXZ( position );
+            y = ground.entity.getHeightAtXZ( position );
 
         }else if( ground.geometry ){
             var geometry = ground.geometry;

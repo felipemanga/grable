@@ -558,8 +558,10 @@ Sidebar.Entity = function ( editor ) {
 
     function GT( data, clazz, tests ){
         for( var key in tests ){
-            var value = data[key];
-            if( value === undefined ) value = clazz[key];
+            var value
+            if( key in data ) value = data[key];
+            else if( key in clazz ) value = clazz[key];
+            else value = DOC.resolve(key, editor.selected);
             if( value <= tests[key] ) return false;
         }
         return true;
@@ -567,8 +569,10 @@ Sidebar.Entity = function ( editor ) {
 
     function LT( data, clazz, tests ){
         for( var key in tests ){
-            var value = data[key];
-            if( value === undefined ) value = clazz[key];
+            var value
+            if( key in data ) value = data[key];
+            else if( key in clazz ) value = clazz[key];
+            else value = DOC.resolve(key, editor.selected);
             if( value >= tests[key] ) return false;
         }
         return true;
@@ -576,8 +580,10 @@ Sidebar.Entity = function ( editor ) {
 
     function EQ( data, clazz, tests ){
         for( var key in tests ){
-            var value = data[key];
-            if( value === undefined ) value = clazz[key];
+            var value
+            if( key in data ) value = data[key];
+            else if( key in clazz ) value = clazz[key];
+            else value = DOC.resolve(key, editor.selected);
             if( value != tests[key] ) return false;
         }
         return true;
@@ -585,8 +591,10 @@ Sidebar.Entity = function ( editor ) {
 
     function NEQ( data, clazz, tests ){
         for( var key in tests ){
-            var value = data[key];
-            if( value === undefined ) value = clazz[key];
+            var value
+            if( key in data ) value = data[key];
+            else if( key in clazz ) value = clazz[key];
+            else value = DOC.resolve(key, editor.selected);
             if( value == tests[key] ) return false;
         }
         return true;
@@ -594,8 +602,10 @@ Sidebar.Entity = function ( editor ) {
 
     function IN( data, clazz, tests ){
         for( var key in tests ){
-            var value = data[key];
-            if( value === undefined ) value = clazz[key];
+            var value
+            if( key in data ) value = data[key];
+            else if( key in clazz ) value = clazz[key];
+            else value = DOC.resolve(key, editor.selected);
             if( tests[key].indexOf(value) == -1 ) return false;
         }
         return true;
@@ -603,8 +613,10 @@ Sidebar.Entity = function ( editor ) {
 
     function NIN( data, clazz, tests ){
         for( var key in tests ){
-            var value = data[key];
-            if( value === undefined ) value = clazz[key];
+            var value
+            if( key in data ) value = data[key];
+            else if( key in clazz ) value = clazz[key];
+            else value = DOC.resolve(key, editor.selected);
             if( tests[key].indexOf(value) != -1 ) return false;
         }
         return true;

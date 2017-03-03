@@ -170,6 +170,7 @@ CLAZZ("cmp.ThreeNode", {
         entity.rotation = asset.rotation;
         entity.scale    = asset.scale;
         asset.entity = this.entity;
+        // asset.userData.entity = this.entity; // breaks editor
     },
 
     '@getNode':{ __hidden:true },

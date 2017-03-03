@@ -8,7 +8,7 @@ function (){
 'use strict';
 
 CLAZZ("cmp.ThreeTerrain", {
-    INJECT:["entity", "asset", "height", "sizes", "island", "seed", "varyContrast", "discardBelow"],
+    INJECT:["entity", "asset", "height", "sizes", "island", "seed", "varyContrast", "discardBelow", "inclineMap", "inclineSegments"],
 
     "@varyContrast":{type:"bool"},
     varyContrast:true,
@@ -29,16 +29,68 @@ CLAZZ("cmp.ThreeTerrain", {
     "@discardBelow":{type:"float"},
     discardBelow:0,
 
+    "@inclineMap":{type:"texture"},
+    inclineMap:"resources/image/groundLayers.jpg",
+
+    "@inclineSegments":{type:"vec2i"},
+    inclineSegments:{x:2,y:2},
+
+    heightmap:null,
+
     
     '@create':{__hidden:true},
     create:function(){
         this.generate( true );
+        this.changeMaterial();
     },
 
     '@preview':{__hidden:true},
     preview:function( helper, callback ){
         this.generate( false );
         callback();
+    },
+
+    changeMaterial:function(){
+        var srcmat = this.asset.material;
+
+        var defines = {
+            USE_MAP: ""
+        };
+
+        var opts = {
+            fog:true,
+            lights:true,
+
+            defines: defines,
+
+            fragmentShader: fragsrc,
+            vertexShader: vertsrc,
+
+            uniforms: THREE.UniformsUtils.merge( [
+				THREE.UniformsLib.common,
+				THREE.UniformsLib.aomap,
+				THREE.UniformsLib.lightmap,
+				THREE.UniformsLib.emissivemap,
+				THREE.UniformsLib.fog,
+				THREE.UniformsLib.lights,
+				{
+					emissive: { value: new THREE.Color( 0x000000 ) },
+                    heightRange: { value: new THREE.Vector2( this.discardBelow, this.height + this.asset.position.y ) }
+				}
+			] )
+
+        };
+
+        var shader = new THREE.ShaderMaterial(opts);
+
+        var texture = shader.uniforms.map.value = srcmat.map;
+        if( srcmat.map ){
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;            
+        }
+        shader.uniforms.offsetRepeat.value.set( 0, 0, 1/this.inclineSegments.x, 1/this.inclineSegments.y );
+
+        this.asset.material = shader;
     },
 
     '@generate':{__hidden:true},
@@ -51,7 +103,8 @@ CLAZZ("cmp.ThreeTerrain", {
             island = this.island,
             height = this.height, 
             sizes = this.sizes,
-            sizesLength = this.sizes.length;
+            sizesLength = this.sizes.length,
+            heightmap;
 
         if( geometry.parameters.width != geometry.parameters.height ){
             console.warn("Terrain not square!");
@@ -59,6 +112,8 @@ CLAZZ("cmp.ThreeTerrain", {
         }
 
         var size = geometry.parameters.width / 2;
+
+
         
         if( !noise ){
             ctx = new SimplexNoise( new MersenneTwister( this.seed ) );
@@ -79,22 +134,39 @@ CLAZZ("cmp.ThreeTerrain", {
 
             var min = 10, max = -10, offsetY = this.asset.position.y;
 
+            var widthSegments = geometry.parameters.widthSegments;
+            var heightSegments = geometry.parameters.heightSegments;
+            var scaleW = widthSegments / geometry.parameters.width,
+                scaleH = (geometry.parameters.heightSegments+1) / geometry.parameters.height;
+            var offsetW = geometry.parameters.width/2,
+                offsetH = geometry.parameters.height/2;
+
+            heightmap = this.heightmap = new Float32Array( (widthSegments+1)*(heightSegments+1) );
+
+            var weights = [1], weight = 1;
+            for( j=1; j<sizesLength; ++j ){
+                weights[j] = weights[j-1] * 0.61803398874989;
+                weight += weights[j];
+            }
+            for( j=0; j<sizesLength; ++j )
+                weights[j] /= weight;
+
             for ( var i = 0; i < vertices.length; i += 3 ) {
 
                 var vx = vertices[i  ];
                 var vy = vertices[i+1];
                 var vz = 0;
 
-                var contrast = 0, weight = 0.5;
+                var contrast = 0;
 
                 for( var j=0; j<sizesLength; ++j ){
                     var scale = sizes[j];
+                    weight = weights[j];
                     if( scale ){
                         vz += (0.5+0.5*noise.call( ctx, vx / scale, vy / scale )) * weight;
                         if( noise2 )
                             contrast += (0.5+0.5*noise2.call( ctx2, vx / scale / 2, vy / scale / 2 )) * weight;
                     }
-                    weight *= 0.5;
                 }
 
                 if( vz > max )
@@ -116,13 +188,18 @@ CLAZZ("cmp.ThreeTerrain", {
                     if( f < 0.5 ) f = Math.pow( f * 2, island ) / 2;
                     else if( f > 0.5 ) f = 1 - Math.pow( (1-f) * 2, island ) / 2;
 
-                    vz *= f;
+                    if( f < 0.1 ) vz -= 0.2;
+
+                    vz = (vz*f-0.5)*2;
                 }
 
                 vz *= height;
 
                 vertices[i+2] = vz;
+
+                heightmap[i/3] = vz;
             }
+
 
             this.asset.geometry.computeFaceNormals();
             this.asset.geometry.computeVertexNormals();
@@ -204,6 +281,38 @@ CLAZZ("cmp.ThreeTerrain", {
             this.asset.geometry.computeVertexNormals();
 
         }
+    },
+
+    getHeightAtXZ:function(x, z){
+        var asset = this.entity.asset;
+        if( !asset.geometry.boundingBox )
+            asset.geometry.computeBoundingBox();
+
+        var param = this.asset.geometry.parameters;
+
+        if( arguments.length == 1 ){
+            z = x.z;
+            x = x.z;
+        }
+
+        var box = asset.geometry.boundingBox;
+        var w = box.max.x - box.min.x,
+            h = box.max.y - box.min.y;
+
+        x -= asset.position.x + box.min.x;
+        z -= asset.position.z + box.min.y;
+        x /= w;
+        z /= h;
+        if( x<0 || x>1 || z<0 || z>1 )
+            return -1;
+
+		// z = 1 - z;
+        x *= param.widthSegments + 1;
+        z *= param.heightSegments + 1;
+
+        var y = this.heightmap[ Math.round( z ) * (param.widthSegments+1) + Math.round( x ) ];
+
+        return y * asset.scale.z + asset.position.y;
     }
 });
 
@@ -390,5 +499,178 @@ var SimplexNoise = (function() {
 	
 	return SimplexNoise;
 })();
+
+var vertsrc = `
+
+#define LAMBERT
+
+uniform vec2 heightRange;
+
+varying vec3 vLightFront;
+varying float height;
+
+#ifdef DOUBLE_SIDED
+
+	varying vec3 vLightBack;
+
+#endif
+
+#include <common>
+#include <uv_pars_vertex>
+#include <uv2_pars_vertex>
+#include <envmap_pars_vertex>
+#include <bsdfs>
+#include <lights_pars>
+#include <color_pars_vertex>
+#include <fog_pars_vertex>
+#include <morphtarget_pars_vertex>
+#include <skinning_pars_vertex>
+#include <shadowmap_pars_vertex>
+#include <logdepthbuf_pars_vertex>
+#include <clipping_planes_pars_vertex>
+
+void main() {
+
+	// # include <uv_vertex>
+    vUv = uv;
+
+	#include <uv2_vertex>
+	#include <color_vertex>
+
+	#include <beginnormal_vertex>
+	#include <morphnormal_vertex>
+	#include <skinbase_vertex>
+	#include <skinnormal_vertex>
+	#include <defaultnormal_vertex>
+
+	#include <begin_vertex>
+	#include <morphtarget_vertex>
+	#include <skinning_vertex>
+	
+    // # include <project_vertex>
+    vec4 mPosition = modelMatrix * vec4( transformed, 1.0 );
+    vec4 mvPosition = viewMatrix * mPosition;
+
+    gl_Position = projectionMatrix * mvPosition;
+
+	#include <logdepthbuf_vertex>
+	#include <clipping_planes_vertex>
+
+    height = (mPosition.y - heightRange.x) / (heightRange.y - heightRange.x);
+
+	#include <worldpos_vertex>
+	#include <envmap_vertex>
+	#include <lights_lambert_vertex>
+	#include <shadowmap_vertex>
+	#include <fog_vertex>
+
+}
+
+
+`;
+
+var fragsrc = `
+
+uniform vec3 diffuse;
+uniform vec3 emissive;
+uniform float opacity;
+uniform vec4 offsetRepeat;
+
+varying vec3 vLightFront;
+varying float height;
+
+#ifdef DOUBLE_SIDED
+
+	varying vec3 vLightBack;
+
+#endif
+
+#include <common>
+#include <packing>
+#include <color_pars_fragment>
+#include <uv_pars_fragment>
+#include <uv2_pars_fragment>
+#include <map_pars_fragment>
+#include <alphamap_pars_fragment>
+#include <aomap_pars_fragment>
+#include <lightmap_pars_fragment>
+#include <emissivemap_pars_fragment>
+#include <envmap_pars_fragment>
+#include <bsdfs>
+#include <lights_pars>
+#include <fog_pars_fragment>
+#include <shadowmap_pars_fragment>
+#include <shadowmask_pars_fragment>
+#include <specularmap_pars_fragment>
+#include <logdepthbuf_pars_fragment>
+#include <clipping_planes_pars_fragment>
+
+void main() {
+
+	#include <clipping_planes_fragment>
+
+	vec4 diffuseColor = vec4( diffuse, opacity );
+	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+	vec3 totalEmissiveRadiance = emissive;
+
+	#include <logdepthbuf_fragment>
+	// # include <map_fragment>
+
+    vec2 uva = vUv * offsetRepeat.zw;
+    vec2 uvb = vUv * 50.; // offsetRepeat.zw + offsetRepeat.zw * 0.5;
+
+	vec4 texelColorA = texture2D( map, uva );
+	vec4 texelColorB = texture2D( map, uvb );
+
+	texelColorA = mapTexelToLinear( texelColorA );
+	texelColorB = mapTexelToLinear( texelColorB );
+
+	diffuseColor *= mix( texelColorA, texelColorB, height );
+
+	#include <color_fragment>
+	#include <alphamap_fragment>
+	#include <alphatest_fragment>
+	#include <specularmap_fragment>
+	#include <emissivemap_fragment>
+
+	// accumulation
+	reflectedLight.indirectDiffuse = getAmbientLightIrradiance( ambientLightColor );
+
+	#include <lightmap_fragment>
+
+	reflectedLight.indirectDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb );
+
+	#ifdef DOUBLE_SIDED
+
+		reflectedLight.directDiffuse = ( gl_FrontFacing ) ? vLightFront : vLightBack;
+
+	#else
+
+		reflectedLight.directDiffuse = vLightFront;
+
+	#endif
+
+	reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask();
+
+	// modulation
+	#include <aomap_fragment>
+
+	vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;
+
+	#include <normal_flip>
+	#include <envmap_fragment>
+
+	gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+    // gl_FragColor = vec4( vec3(max(0., min(1., height) ) ), 1. );
+
+	#include <premultiplied_alpha_fragment>
+	#include <tonemapping_fragment>
+	#include <encodings_fragment>
+	#include <fog_fragment>
+
+}
+
+
+`;
 
 });

@@ -25,6 +25,7 @@ Viewport.Info = function ( editor ) {
 	signals.objectAdded.add( update );
 	signals.objectRemoved.add( update );
 	signals.geometryChanged.add( update );
+    signals.previewChanged.add( update );
 
 	//
 

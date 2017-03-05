@@ -9,7 +9,7 @@ INJECT:["entity", "height", "enabled", "strength", "waterViscosity"],
     height:0,
 
     '@strength':{type:'float'},
-    strength:10,
+    strength:50,
 
     '@waterViscosity':{type:'float', min:0, max:1},
     waterViscosity:0.98,
@@ -22,7 +22,7 @@ INJECT:["entity", "height", "enabled", "strength", "waterViscosity"],
             this.entity.setMediumViscosity( Math.max(0, Math.min( this.waterViscosity, depth * 0.25 ) ) );
 
         if( depth > 0 )
-            this.entity.addForce(0, this.strength * depth, 0);
+            this.entity.addForce(0, this.strength * depth * delta * 10, 0);
     }
 
 });

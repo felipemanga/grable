@@ -114,6 +114,66 @@ var APP = {
             }
 		};
 
+        var CACHE = {};
+
+        this.loadImage = function( path, onLoad ){
+            var cache = CACHE[path], texture;
+            if( !cache ){
+                cache = CACHE[path] = {texture:texture, listeners:[onLoad]};
+                var tl = new THREE.TextureLoader();
+                texture = cache.texture = tl.load( path, function(){
+                    while( cache.listeners.length )
+                        cache.listeners.pop()( texture );
+                    cache.listeners = null;
+                }, undefined, onError );
+            } else {
+                texture = cache.texture;
+                if( cache.listeners )
+                    cache.listeners.push(onLoad);
+                else
+                    onLoad( texture );
+            }
+            return texture;
+
+            function onError(){
+                console.warn("Error loading image ", path);
+            }
+        };
+        
+
+        this.loadJSON = function( path, onLoad ){
+            var cache = CACHE[path], json, scope = this;
+            if( !cache ){
+
+                cache = CACHE[path] = {json:json, listeners:[onLoad]};
+                scope.pool.call("onLoadingAsyncStart");
+
+                DOC.getURL( path, function( src ){
+
+                    scope.pool.call("onLoadingAsyncEnd");
+
+                    try{
+                        cache.json = json = JSON.parse(src);
+                    }catch(e){
+                        json = undefined;
+                        console.warn(e);
+                    }
+
+                    while( cache.listeners.length )
+                        cache.listeners.pop()( json );
+                    cache.listeners = null;
+                    
+                }, {anystate:true});
+
+            } else {
+                json = cache.json;
+                if( cache.listeners )
+                    cache.listeners.push(onLoad);
+                else
+                    onLoad( json );
+            }
+        };     
+
         this.loadingAsync = 0;
         this.onLoadingAsyncStart = function(){
             this.loadingAsync++;

@@ -16,32 +16,13 @@ CLAZZ("cmp.LoadTexture", {
     "@onError":{type:'array', subtype:'slot'},
     onError:null,
 
-    STATIC:{
-        cache:{}
-    },
-
     create:function(){
         var scope = this, texture;
-        if( this.texture && this.type ){
-            var cache = cmp.LoadTexture.cache[this.texture];
-            if( !cache ){
-                cache = cmp.LoadTexture.cache[this.texture] = {texture:texture, listeners:[onLoad]};
-                var tl = new THREE.TextureLoader();
-                texture = cache.texture = tl.load( this.texture, function(){
-                    while( cache.listeners.length )
-                        cache.listeners.pop()();
-                    cache.listeners = null;
-                }, undefined, onError );
-            } else {
-                var texture = cache.texture;
-                if( cache.listeners )
-                    cache.listeners.push(onLoad);
-                else
-                    onLoad();
-            }
-        }
 
-        function onLoad(){
+        if( this.texture )
+            this.entity.call( "loadImage", this.texture, onLoad );
+
+        function onLoad( texture ){
             var key = scope.type || scope.uniform,
                 material = scope.asset.material;
 

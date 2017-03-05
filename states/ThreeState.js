@@ -114,7 +114,7 @@ var ThreeGame = CLAZZ({
 
         var delta = (time - this.prevTime) / 1000;
         if( delta < 0 ) delta = 1/30;
-        else if( delta > 1 ) delta = 1;
+        else if( delta > 0.25 ) delta = 0.25;
 
         this.pool.call("onTick", delta );
         this.pool.call("onPostTick", delta );
@@ -180,6 +180,30 @@ CLAZZ("states.ThreeState", {
 
     onDOMResize:function(w, h){
         this.game.setSize(w,h);
+    },
+
+    loadImage:function( path, onLoad ){
+        var cache = states.State.cache[path], texture;
+        if( !cache ){
+            cache = states.State.cache[path] = {texture:texture, listeners:[onLoad]};
+            var tl = new THREE.TextureLoader();
+            texture = cache.texture = tl.load( path, function(){
+                while( cache.listeners.length )
+                    cache.listeners.pop()( texture );
+                cache.listeners = null;
+            }, undefined, onError );
+        } else {
+            texture = cache.texture;
+            if( cache.listeners )
+                cache.listeners.push(onLoad);
+            else
+                onLoad( texture );
+        }
+        return texture;
+
+        function onError(){
+            console.warn("Error loading image ", path);
+        }
     },
 
     load:{

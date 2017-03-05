@@ -1,4 +1,7 @@
 CLAZZ("cmp.ThreeParticles", {
+    PROVIDES:{
+        "cmp.Particles":"implements"
+    },
 	INJECT:[
         "entity", "asset", "game", 
         "texture", "enabled", "rate",
@@ -310,7 +313,7 @@ void main() {
     },
 
     add:function( emitter ){
-        var index = this.getIndex( emitter.texture, true, 100000 );
+        var index = this.getIndex( emitter.texture, true, 1000 );
         index.emitters.push( emitter );
     },
 

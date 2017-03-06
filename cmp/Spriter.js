@@ -86,7 +86,7 @@ CLAZZ("cmp.Spriter", {
 		
 		if( !this.enabled || !this.scon ) return;
 
-        var scale = this.game.height * 0.25 / this.game.camera.aspect;
+        var scale = this.game.height * 0.5 / this.game.camera.aspect;
 
         if( this.asset.material.type == 'ShaderMaterial' )
             this.asset.material.uniforms.scale.value = scale;
@@ -123,10 +123,10 @@ CLAZZ("cmp.Spriter", {
 			if( "angle" in obj ) geometry[p++] = obj.angle / 180 * Math.PI + Math.PI*0.5;
             else p++;
 
-            geometry[p++] = meta.fit.x / textureSize;
-            geometry[p++] = meta.fit.y / textureSize;
-            geometry[p++] = meta.fit.w / textureSize;
-            geometry[p++] = meta.fit.h / textureSize;
+            geometry[p++] = meta.x;
+            geometry[p++] = meta.y;
+            geometry[p++] = meta.w;
+            geometry[p++] = meta.h;
 		});
 
         this.asset.geometry.drawRange.count = count;
@@ -228,6 +228,10 @@ CLAZZ("cmp.Spriter.Server", {
 
             var file = files[i];
             if (file.fit) {
+                file.x = file.fit.x / size;
+                file.y = file.fit.y / size;
+                file.w = file.w / size;
+                file.h = file.h / size;
                 ctx.drawImage( file.image, file.fit.x, file.fit.y );
             } else {
                 console.warn("NO FIT: ", file)
@@ -343,15 +347,17 @@ varying vec4 vColor;
 varying vec4 vTex;
 varying float aspect;
 varying vec2 RSC;
+varying vec2 vBoneScale;
 
 void main() {
 	#include <begin_vertex>
 
-    float pointSize = max( tex.z * boneScale.x, tex.w * boneScale.y );
+    float pointSize = max( abs(tex.z * boneScale.x), abs(tex.w * boneScale.y) );
     aspect = tex.z / tex.w;
 
     RSC = vec2( sin(rotation), cos(rotation) );
     vColor = vec4(1.);
+    vBoneScale = boneScale;
 
 	#include <project_vertex>
 
@@ -382,6 +388,7 @@ void main() {
 varying vec4 vTex;
 varying vec4 vColor;
 varying vec2 RSC;
+varying vec2 vBoneScale;
 varying float aspect;
 
 void main() {
@@ -393,34 +400,34 @@ void main() {
 
 	#include <logdepthbuf_fragment>
 
+    vec4 bounds = vec4( vTex.x, vTex.x+vTex.z, vTex.y, vTex.y+vTex.w );
+
     vec2 ftc = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );
+
+    // if( vBoneScale.x < 0. ) ftc.x = 1. - ftc.x;
+    // if( vBoneScale.y < 0. ) ftc.y = 1. - ftc.y;
     
+    ftc = ftc.xy * vTex.zw + vTex.xy;
 
-    vec2 ttc = ftc - 0.5;
+    // vec2 ttc = ftc - (vTex.xy + vTex.zw * 0.5);
 
-    ftc.x = ttc.x*RSC.x - ttc.y*RSC.y;
-    ftc.y = ttc.x*RSC.y + ttc.y*RSC.x;
+    // ftc.x = ttc.x*RSC.x - ttc.y*RSC.y;
+    // ftc.y = ttc.x*RSC.y + ttc.y*RSC.x;
 
-    ftc += 0.5;
+    // ftc += (vTex.xy + vTex.zw * 0.5);
 
-    vec4 bounds = vec4(0.,1.,0.,1.);
 
-    if( aspect > 1. ){ // wider than tall
-        ftc.y = ftc.y * aspect - (aspect - 1.) * 0.5;
-        bounds.z = 0.5 / aspect;
-        bounds.w = 1. - bounds.z;
-    } else {
-        float iaspect = 1. / aspect;
-        ftc.x = ftc.x * iaspect - (iaspect - 1.) * 0.5;
-        bounds.x = 0.5 / iaspect;
-        bounds.y = 1. - bounds.x;
-    }
+    // if( aspect > 1. ){ // wider than tall
+    //     ftc.y = ftc.y * aspect - (aspect - 1.) * 0.5;
+    // } else {
+    //     float iaspect = 1. / aspect;
+    //     ftc.x = ftc.x * iaspect - (iaspect - 1.) * 0.5;
+    // }
     
     if( ftc.x <= bounds.x || ftc.x >= bounds.y || ftc.y <= bounds.z || ftc.y >= bounds.w ){
-        // diffuseColor = vec4(1.,0.,0.,1.);
-        discard;
+        diffuseColor = vec4(1.,0.,0.,1.);
+     // discard;
     }else{
-        ftc = ftc.xy * vTex.zw + vTex.xy;
 
         vec4 mapTexel = texture2D( map, ftc );
         diffuseColor *= mapTexelToLinear( mapTexel );

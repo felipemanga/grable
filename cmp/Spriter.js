@@ -114,17 +114,17 @@ CLAZZ("cmp.Spriter", {
 			if( "scale_x" in obj  ) geometry[p++] = obj.scale_x;
             else geometry[p++] = 1; // p++;
             
-			if( "scale_y" in obj  ) geometry[p++] = obj.scale_y;
-            else geometry[p++] = 1; // p++;
+			if( "scale_y" in obj  ) geometry[p++] = -obj.scale_y;
+            else geometry[p++] = -1; // p++;
 
             geometry[p++] = meta.pivot_x;
             geometry[p++] = meta.pivot_y;
 
-			if( "angle" in obj ) geometry[p++] = obj.angle / 180 * Math.PI + Math.PI*0.5;
+			if( "angle" in obj ) geometry[p++] = - obj.angle / 180 * Math.PI - Math.PI*0.5;
             else p++;
 
             geometry[p++] = meta.x;
-            geometry[p++] = 1 - meta.y;
+            geometry[p++] = meta.y;
             geometry[p++] = meta.w;
             geometry[p++] = meta.h;
 		});
@@ -359,9 +359,13 @@ void main() {
     vColor = vec4(1.);
     vBoneScale = boneScale;
 
+    vec4 origin = modelViewMatrix * vec4( 0, 0, 0, 1. );
+
+    transformed.xy = transformed.xy * ( scale / - origin.z );
+
 	#include <project_vertex>
 
-    float size = pointSize * textureSize * ( scale / - mvPosition.z );
+    float size = pointSize * textureSize * ( scale / - origin.z );
 
     vTex = tex;
     gl_PointSize = size;
@@ -402,7 +406,7 @@ void main() {
 
     vec4 bounds = vec4( vTex.x, vTex.x+vTex.z, vTex.y, vTex.y+vTex.w );
 
-    vec2 ftc = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );
+    vec2 ftc = vec2( gl_PointCoord.x, gl_PointCoord.y );
 
     if( aspect > 1. ){ // wider than tall
         ftc.y = ftc.y * aspect - (1.-aspect) * 0.5;
@@ -426,11 +430,11 @@ void main() {
 
 
     if( ftc.x <= bounds.x || ftc.x >= bounds.y || ftc.y <= bounds.z || ftc.y >= bounds.w ){
-        diffuseColor = vec4(1.,0.,0.,1.);
-     // discard;
+        // diffuseColor = vec4(1.,0.,0.,1.);
+        discard;
     }else{
 
-        vec4 mapTexel = texture2D( map, ftc );
+        vec4 mapTexel = texture2D( map, vec2( ftc.x, 1.0 - ftc.y ) );
         diffuseColor *= mapTexelToLinear( mapTexel );
     }
 

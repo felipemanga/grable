@@ -124,7 +124,7 @@ CLAZZ("cmp.Spriter", {
             else p++;
 
             geometry[p++] = meta.x;
-            geometry[p++] = meta.y;
+            geometry[p++] = 1 - meta.y;
             geometry[p++] = meta.w;
             geometry[p++] = meta.h;
 		});
@@ -404,26 +404,27 @@ void main() {
 
     vec2 ftc = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );
 
-    // if( vBoneScale.x < 0. ) ftc.x = 1. - ftc.x;
-    // if( vBoneScale.y < 0. ) ftc.y = 1. - ftc.y;
+    if( aspect > 1. ){ // wider than tall
+        ftc.y = ftc.y * aspect - (1.-aspect) * 0.5;
+    } else {
+        float iaspect = 1. / aspect;
+        ftc.x = ftc.x * iaspect - (1.-iaspect) * 0.5;
+    }
+    
+
+    if( vBoneScale.x < 0. ) ftc.x = 1. - ftc.x;
+    if( vBoneScale.y < 0. ) ftc.y = 1. - ftc.y;
     
     ftc = ftc.xy * vTex.zw + vTex.xy;
 
-    // vec2 ttc = ftc - (vTex.xy + vTex.zw * 0.5);
+    vec2 ttc = ftc - (vTex.xy + vTex.zw * 0.5);
 
-    // ftc.x = ttc.x*RSC.x - ttc.y*RSC.y;
-    // ftc.y = ttc.x*RSC.y + ttc.y*RSC.x;
+    ftc.x = ttc.x*RSC.x - ttc.y*RSC.y;
+    ftc.y = ttc.x*RSC.y + ttc.y*RSC.x;
 
-    // ftc += (vTex.xy + vTex.zw * 0.5);
+    ftc += (vTex.xy + vTex.zw * 0.5);
 
 
-    // if( aspect > 1. ){ // wider than tall
-    //     ftc.y = ftc.y * aspect - (aspect - 1.) * 0.5;
-    // } else {
-    //     float iaspect = 1. / aspect;
-    //     ftc.x = ftc.x * iaspect - (iaspect - 1.) * 0.5;
-    // }
-    
     if( ftc.x <= bounds.x || ftc.x >= bounds.y || ftc.y <= bounds.z || ftc.y >= bounds.w ){
         diffuseColor = vec4(1.,0.,0.,1.);
      // discard;

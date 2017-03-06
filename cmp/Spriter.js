@@ -86,18 +86,22 @@ CLAZZ("cmp.Spriter", {
 		
 		if( !this.enabled || !this.scon ) return;
 
-        // var scale = this.game.height / this.game.camera.aspect;
-        // this.asset.material.uniforms.scale = scale;
+        var scale = this.game.height * 0.25 / this.game.camera.aspect;
+
+        if( this.asset.material.type == 'ShaderMaterial' )
+            this.asset.material.uniforms.scale.value = scale;
 		
 		var scon = this.scon;
 		var folder = scon.folder;
 		var entityId = scon.getEntityId( this.skeleton );
 		var animId   = scon.getAnimationId(entityId, this.animation);
-        var geometry = this.buffer.array, z = 0;
+        var geometry = this.buffer.array, z = 0, p = 0, count = 0;
+        
+        var textureSize = this.asset.material.map.image.width;
 
 		scon.setCurrentTime( this.time, {}, entityId, animId || 0, function( obj ) {
+            count++;
 			var meta = folder[ obj.folder ].file[ obj.file ];
-            var p = meta.geometryIndex;
 
             if( "x" in obj ) geometry[p++] = obj.x;
             else p++;
@@ -105,19 +109,27 @@ CLAZZ("cmp.Spriter", {
             if( "y" in obj ) geometry[p++] = obj.y;
             else p++;
             
-            geometry[p++] = z++;
+            geometry[p++] = z--;
 
 			if( "scale_x" in obj  ) geometry[p++] = obj.scale_x;
-            else p++;
+            else geometry[p++] = 1; // p++;
             
 			if( "scale_y" in obj  ) geometry[p++] = obj.scale_y;
+            else geometry[p++] = 1; // p++;
+
+            geometry[p++] = meta.pivot_x;
+            geometry[p++] = meta.pivot_y;
+
+			if( "angle" in obj ) geometry[p++] = obj.angle / 180 * Math.PI + Math.PI*0.5;
             else p++;
 
-            p++; p++; // pivot
-
-			if( "angle" in obj ) geometry[p++] = obj.angle / 180 * Math.PI;
+            geometry[p++] = meta.fit.x / textureSize;
+            geometry[p++] = meta.fit.y / textureSize;
+            geometry[p++] = meta.fit.w / textureSize;
+            geometry[p++] = meta.fit.h / textureSize;
 		});
-        
+
+        this.asset.geometry.drawRange.count = count;
         this.buffer.needsUpdate = true;
 	}
 });
@@ -155,7 +167,7 @@ CLAZZ("cmp.Spriter.Server", {
 
     _loadImages:function( imagePath, scon, cb ){
         if( scon.atlas && imagePath in scon.atlas )
-            cb( scon.atlas[ imagePath ] );
+            return cb( scon.atlas[ imagePath ] );
 
         var files = [], queueSize = 1, scope = this;
 
@@ -234,40 +246,15 @@ CLAZZ("cmp.Spriter.Server", {
         if( scon.geometry )
             return scon.geometry;
 
-        var points = [], p=0;
+        var points = 0;
         var folder = scon.folder;
         for( var i=0, l=folder.length; i<l; ++i ){
             var files = folder[i].file;
-            for( var j=0, fl=files.length; j<fl; ++j ){
-                var file = files[j];
-                file.geometryIndex = p;
-
-                // 3 // position
-                points[p++] = 0;
-                points[p++] = 0;
-                points[p++] = 0;
-
-                // + 2 // scale
-                points[p++] = 0;
-                points[p++] = 0;
-
-                // + 2 // pivot
-                points[p++] = file.pivot_x;
-                points[p++] = 1-file.pivot_y;
-
-                // + 1 // rotation
-                points[p++] = 0;
-
-                // + 4 // uv
-                points[p++] = file.fit.x / textureSize;
-                points[p++] = file.fit.y / textureSize;
-                points[p++] = file.fit.w / textureSize;
-                points[p++] = file.fit.h / textureSize;
-            }
+            points += files.length * this.vertexSize;
         }
 
-        var arr = new Float32Array( points.length );
-        arr.set(points);
+        var arr = new Float32Array( points );
+        arr.fill(0xFF);
 
         var ibuff = new THREE.InterleavedBuffer( arr, this.vertexSize );
         ibuff.setDynamic( true );
@@ -290,6 +277,8 @@ CLAZZ("cmp.Spriter.Server", {
         var tex = new THREE.InterleavedBufferAttribute( ibuff, 4, p );
         geometry.addAttribute("tex", tex); p += 4;
 
+        geometry.drawRange.count = 0;
+
         scon.geometry = geometry;
         scon.buffer = ibuff;
 
@@ -297,9 +286,9 @@ CLAZZ("cmp.Spriter.Server", {
     },
 
     _createMaterial:function( texture ){
-        var mat = new THREE.PointsMaterial({size:30});
-        mat.map = texture;
-        return mat;
+        // var mat = new THREE.PointsMaterial({size:30});
+        // mat.map = texture;
+        // return mat;
 
         var mat = new THREE.ShaderMaterial({
             fragmentShader: this.fragmentShader,
@@ -314,6 +303,8 @@ CLAZZ("cmp.Spriter.Server", {
         });
 
         mat.map = mat.uniforms.map.value = texture;
+        mat.alphaTest = 0.5;
+        
         return mat;
     },
 
@@ -350,16 +341,24 @@ attribute float rotation;
 
 varying vec4 vColor;
 varying vec4 vTex;
+varying float aspect;
 varying vec2 RSC;
 
 void main() {
 	#include <begin_vertex>
 
+    float pointSize = max( tex.z * boneScale.x, tex.w * boneScale.y );
+    aspect = tex.z / tex.w;
+
     RSC = vec2( sin(rotation), cos(rotation) );
+    vColor = vec4(1.);
 
 	#include <project_vertex>
 
-    gl_PointSize = max(boneScale.x, boneScale.y) * ( scale / - mvPosition.z );
+    float size = pointSize * textureSize * ( scale / - mvPosition.z );
+
+    vTex = tex;
+    gl_PointSize = size;
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
@@ -383,6 +382,7 @@ void main() {
 varying vec4 vTex;
 varying vec4 vColor;
 varying vec2 RSC;
+varying float aspect;
 
 void main() {
 
@@ -393,8 +393,9 @@ void main() {
 
 	#include <logdepthbuf_fragment>
 
-
     vec2 ftc = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );
+    
+
     vec2 ttc = ftc - 0.5;
 
     ftc.x = ttc.x*RSC.x - ttc.y*RSC.y;
@@ -402,12 +403,28 @@ void main() {
 
     ftc += 0.5;
 
-    ftc = ftc * (vTex.zw - vTex.xy) + vTex.xy;
-    if( ftc.x < vTex.x || ftc.x > vTex.z || ftc.y < vTex.y || ftc.y > vTex.w )
-        discard;
+    vec4 bounds = vec4(0.,1.,0.,1.);
 
-	vec4 mapTexel = texture2D( map, ftc );
-	diffuseColor *= mapTexelToLinear( mapTexel );
+    if( aspect > 1. ){ // wider than tall
+        ftc.y = ftc.y * aspect - (aspect - 1.) * 0.5;
+        bounds.z = 0.5 / aspect;
+        bounds.w = 1. - bounds.z;
+    } else {
+        float iaspect = 1. / aspect;
+        ftc.x = ftc.x * iaspect - (iaspect - 1.) * 0.5;
+        bounds.x = 0.5 / iaspect;
+        bounds.y = 1. - bounds.x;
+    }
+    
+    if( ftc.x <= bounds.x || ftc.x >= bounds.y || ftc.y <= bounds.z || ftc.y >= bounds.w ){
+        // diffuseColor = vec4(1.,0.,0.,1.);
+        discard;
+    }else{
+        ftc = ftc.xy * vTex.zw + vTex.xy;
+
+        vec4 mapTexel = texture2D( map, ftc );
+        diffuseColor *= mapTexelToLinear( mapTexel );
+    }
 
 	#include <alphatest_fragment>
 

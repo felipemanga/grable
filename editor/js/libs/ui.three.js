@@ -264,6 +264,7 @@ UI.Outliner.prototype.invokeFinder = function(){
 
     this.finder.dom.style.display = "";
     this.finder.dom.focus();
+    this.finder.dom.select();
 
     return;
 

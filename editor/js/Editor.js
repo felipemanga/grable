@@ -33,6 +33,7 @@ var Editor = function () {
 		// actions
 
 		showModal: new Signal(),
+		invokeFinder: new Signal(),
 
 		// notifications
 

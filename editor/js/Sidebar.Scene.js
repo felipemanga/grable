@@ -236,6 +236,8 @@ Sidebar.Scene = function ( editor ) {
 	refreshUI();
 
 	// events
+    
+    signals.invokeFinder.add( outliner.invokeFinder.bind(outliner) );
 
 	signals.editorCleared.add( refreshUI );
 

@@ -54,6 +54,8 @@ CLAZZ("states.State", {
                 while( cache.listeners.length )
                     cache.listeners.pop()( json );
                 cache.listeners = null;
+
+                scope.pool.call("onLoadingAsyncEnd");
                 
             }, {anystate:true});
 

@@ -175,10 +175,12 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             variants: tree.variants,
             iterations: tree.iterations, 
             source: tree.source, 
-            seed: tree.seed,
+            seed: +tree.seed,
             lod:0,
             tiles: tree.tiles
         };
+
+        var MT = new MersenneTwister( params.seed );
 
         var a = 0, worldTransform = new THREE.Matrix4();
         for( var i=0; i<tree.amount; ++i ){
@@ -186,7 +188,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
             var r = Math.sqrt(i/tree.amount) * tree.spread;
             var cosa = Math.cos(a * Math.PI * 2) * r;
             var sina = Math.sin(a * Math.PI * 2) * r;
-            a += 1.618033;
+            a += 1.618033 + (MT.random()*0.01-0.005) * tree.spread / tree.amount;
 
             transform.makeTranslation(sina, 0, cosa);
 

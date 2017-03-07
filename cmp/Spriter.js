@@ -86,7 +86,7 @@ CLAZZ("cmp.Spriter", {
 		
 		if( !this.enabled || !this.scon ) return;
 
-        var scale = this.game.height * 0.5 / this.game.camera.aspect;
+        var scale = this.game.height * 0.5; // / this.game.camera.aspect;
 
         if( this.asset.material.type == 'ShaderMaterial' )
             this.asset.material.uniforms.scale.value = scale;
@@ -361,7 +361,7 @@ void main() {
 
     vec4 origin = modelViewMatrix * vec4( 0, 0, 0, 1. );
 
-    vec2 offset = (vec2(0.5) - pivot) * tex.zw * boneScale * textureSize * 0.5;
+    vec2 offset = (pivot - vec2(0.5)) * tex.zw * boneScale * textureSize;
 
 
     transformed.xy = (transformed.xy - offset ) * ( scale / - origin.z );

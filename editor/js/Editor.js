@@ -34,6 +34,7 @@ var Editor = function () {
 
 		showModal: new Signal(),
 		invokeFinder: new Signal(),
+        showProperty: new Signal(),
 
 		// notifications
 

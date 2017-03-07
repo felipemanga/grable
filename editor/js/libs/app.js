@@ -150,8 +150,6 @@ var APP = {
 
                 DOC.getURL( path, function( src ){
 
-                    scope.pool.call("onLoadingAsyncEnd");
-
                     try{
                         cache.json = json = JSON.parse(src);
                     }catch(e){
@@ -163,6 +161,8 @@ var APP = {
                         cache.listeners.pop()( json );
                     cache.listeners = null;
                     
+                    scope.pool.call("onLoadingAsyncEnd");
+
                 }, {anystate:true});
 
             } else {

@@ -361,7 +361,10 @@ void main() {
 
     vec4 origin = modelViewMatrix * vec4( 0, 0, 0, 1. );
 
-    transformed.xy = transformed.xy * ( scale / - origin.z );
+    vec2 offset = (vec2(0.5) - pivot) * tex.zw * boneScale * textureSize * 0.5;
+
+
+    transformed.xy = (transformed.xy - offset ) * ( scale / - origin.z );
 
 	#include <project_vertex>
 

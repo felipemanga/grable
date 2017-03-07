@@ -313,7 +313,7 @@ void main() {
     },
 
     add:function( emitter ){
-        var index = this.getIndex( emitter.texture, true, 1000 );
+        var index = this.getIndex( emitter.texture, true, 2000 );
         index.emitters.push( emitter );
     },
 

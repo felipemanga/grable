@@ -1,0 +1,17 @@
+p_head_angry.png
+p_head_back.png
+p_head_blink_0.png
+p_head_blink_1.png
+p_head_concern_blink_0.png
+p_head_concern_blink_1.png
+p_head_concern.png
+p_head_die.png
+p_head_fatigued_0.png
+p_head_front.png
+p_head_hurt.png
+p_head_idle_blink_0.png
+p_head_idle_blink_1.png
+p_head_idle.png
+p_head_push.png
+p_head_turn_0.png
+p_head_walk.png

@@ -3,7 +3,7 @@
 
 CLAZZ("cmp.Spriter", {
 
-    INJECT:["entity", "game", "sconURL", "imagePath", "enabled", "skeleton"],
+    INJECT:["entity", "game", "sconURL", "imagePath", "enabled", "skeleton", "animation"],
 
     "@enabled":{type:"bool"},
 	enabled:true,
@@ -17,13 +17,15 @@ CLAZZ("cmp.Spriter", {
     "@skeleton":{type:"enum", async:"getSkeletonList"},
 	skeleton:"",
 
+    "@animation":{type:"enum", async:"getAnimationList"},
+	animation:"",
+
     sconJSON:null,
     scon:null,
     asset:null,
     buffer:null,
 
 	time:0,
-	animation:"",
 	_prevAnim:null,
 
 	create:function(){
@@ -31,34 +33,70 @@ CLAZZ("cmp.Spriter", {
         this.entity.call( "loadJSON", this.sconURL, this._onGotSCON.bind(this) );
 	},
 
-
-    getSkeletonList:function( cb ){
+    _editorGetSCON:function( arg, cb ){
         var scon = this.scon;
         if( !scon ){
+
             DOC.getURL( this.sconURL, function( scon ){
 
+                var ret = null;
                 try{
-                    getEntities( JSON.parse(scon) );
+                    ret = cb( JSON.parse(scon) );
                 }catch(ex){
-                    return cb(ret);
+                    console.log(ex);
                 }
 
-            }, {anystate:true});
-        }
-        else return getEntities(scon);
+                if( arg )
+                    arg( ret );
 
-        function getEntities( scon )
-        {
+            }, {anystate:true} );
+
+        } else {
+
+            var ret = cb( null );
+
+            if( arg )
+                arg( ret );
+
+            return ret;
+        }
+    },
+
+    getAnimationList:function( cb ){
+        var skeleton = this.skeleton;
+        return this._editorGetSCON(cb, function( scon ){
+            var names = [];
+            if( !scon ) return names;
+            var entities = scon.entity;
+            
+            for( var i=0, l=entities.length; i<l; ++i ){
+
+                if( entities[i].name == skeleton ){
+
+                    var animations = entities[i].animation;
+                    for( var j=0, al=animations.length; j<al; ++j ){
+                        names[names.length] = animations[j].name;
+                    }
+                    return names;
+                }
+
+            }
+
+            return names;
+        });
+    },
+
+    getSkeletonList:function( cb ){
+        return this._editorGetSCON( cb, function( scon ){
+
             var ret = [], entities = scon.entity;
 
             for( var i=0, l=entities.length; i<l; ++i )
                 ret.push(entities[i].name);
-
-            if( cb )
-                cb( ret );
-
+                
             return ret;
-        }
+
+        });
     },
 
     _onGotSCON:function( scon ){
@@ -86,7 +124,7 @@ CLAZZ("cmp.Spriter", {
 		
 		if( !this.enabled || !this.scon ) return;
 
-        var scale = this.game.height * 0.5; // / this.game.camera.aspect;
+        var scale = this.game.height * 0.25; // / this.game.camera.aspect;
 
         if( this.asset.material.type == 'ShaderMaterial' )
             this.asset.material.uniforms.scale.value = scale;
@@ -109,7 +147,7 @@ CLAZZ("cmp.Spriter", {
             if( "y" in obj ) geometry[p++] = obj.y;
             else p++;
             
-            geometry[p++] = z--;
+            geometry[p++] = z-=10;
 
 			if( "scale_x" in obj  ) geometry[p++] = obj.scale_x;
             else geometry[p++] = 1; // p++;
@@ -117,7 +155,12 @@ CLAZZ("cmp.Spriter", {
 			if( "scale_y" in obj  ) geometry[p++] = -obj.scale_y;
             else geometry[p++] = -1; // p++;
 
+            if( !isNaN(obj.pivot_x) ) geometry[p++] = obj.pivot_x;
+            else 
             geometry[p++] = meta.pivot_x;
+
+            if( !isNaN(obj.pivot_y ) ) geometry[p++] = obj.pivot_y;
+            else 
             geometry[p++] = meta.pivot_y;
 
 			if( "angle" in obj ) geometry[p++] = - obj.angle / 180 * Math.PI - Math.PI*0.5;
@@ -352,26 +395,39 @@ varying vec2 vBoneScale;
 void main() {
 	#include <begin_vertex>
 
-    float pointSize = max( abs(tex.z * boneScale.x), abs(tex.w * boneScale.y) );
+    vec2 absSize = vec2( abs(tex.z * boneScale.x), abs(tex.w * boneScale.y) );
+    float pointSize = max( absSize.x, absSize.y );
     aspect = tex.z / tex.w;
 
-    RSC = vec2( sin(rotation), cos(rotation) );
+    float adjrotation = rotation;
+
+    if( boneScale.x * boneScale.y < 0. )
+        adjrotation = adjrotation;
+
+    RSC = vec2( sin(adjrotation), cos(adjrotation) );
     vColor = vec4(1.);
     vBoneScale = boneScale;
 
     vec4 origin = modelViewMatrix * vec4( 0, 0, 0, 1. );
+    float size = textureSize * ( scale / - origin.z );
 
-    vec2 offset = (pivot - vec2(0.5)) * tex.zw * boneScale * textureSize;
+    vec2 offset = (pivot - vec2(0.5)) * size * absSize;
+    vec2 rotOffset;
+    
+    rotOffset.x = offset.x*RSC.x - offset.y*RSC.y;
+    rotOffset.y = offset.x*RSC.y + offset.y*RSC.x;
 
+    transformed.xy = transformed.xy + rotOffset;
 
-    transformed.xy = (transformed.xy - offset ) * ( scale / - origin.z );
+    float z = transformed.z;
+    transformed.z = 0.;
 
 	#include <project_vertex>
 
-    float size = pointSize * textureSize * ( scale / - origin.z );
+    gl_Position.z = (projectionMatrix * (modelViewMatrix * vec4(0., 0., z, 1.))).z;
 
     vTex = tex;
-    gl_PointSize = size;
+    gl_PointSize = pointSize * size * 3.; // 3.5??? WHY?!
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
@@ -412,10 +468,10 @@ void main() {
     vec2 ftc = vec2( gl_PointCoord.x, gl_PointCoord.y );
 
     if( aspect > 1. ){ // wider than tall
-        ftc.y = ftc.y * aspect - (1.-aspect) * 0.5;
+        ftc.y = ftc.y * aspect + (1.-aspect) * 0.5;
     } else {
         float iaspect = 1. / aspect;
-        ftc.x = ftc.x * iaspect - (1.-iaspect) * 0.5;
+        ftc.x = ftc.x * iaspect + (1.-iaspect) * 0.5;
     }
     
 
@@ -433,7 +489,7 @@ void main() {
 
 
     if( ftc.x <= bounds.x || ftc.x >= bounds.y || ftc.y <= bounds.z || ftc.y >= bounds.w ){
-        // diffuseColor = vec4(1.,0.,0.,1.);
+        // diffuseColor = vec4(1.,0.,0.,0.5);
         discard;
     }else{
 
@@ -582,14 +638,18 @@ void main() {
 	var cAngle = pos.angle;
 	if( pScaleX*pScaleY < 0 ) cAngle = 360 - cAngle;
 	
-	var s = {x       : x, 
+	var s = {
+         x       : x, 
 		 y       : y,
+         pivot_x : pos.pivot_x,
+         pivot_y : pos.pivot_y,
 		 angle   : cAngle + pAngle,
 		 scale_x : pos.scale_x * pScaleX,
 		 scale_y : pos.scale_y * pScaleY,
 		 pos     : pos.a * (parent.a || 1.0),
-                 file    : pos.file,
-                 folder  : pos.folder};
+         file    : pos.file,
+         folder  : pos.folder
+        };
 
 	return s;
     };
@@ -603,8 +663,8 @@ void main() {
                  a       : lerp( ao.a || 1.0, bo.a || 1.0, t),
                  scale_x : lerp( ao.scale_x || 1.0, bo.scale_x || 1.0, t),
                  scale_y : lerp( ao.scale_y || 1.0, bo.scale_y || 1.0, t),
-                 pivot_x : lerp( ao.pivot_x || 0.0, bo.pivot_x || 0.0, t),
-                 pivot_y : lerp( ao.pivot_y || 0.0, bo.pivot_y || 0.0, t),
+                 pivot_x : lerp( ao.pivot_x, bo.pivot_x, t),
+                 pivot_y : lerp( ao.pivot_y, bo.pivot_y, t),
                  file    : ao.file,
                  folder  : ao.folder};
     };

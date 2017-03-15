@@ -12,7 +12,7 @@ CustomAttribute.prototype = THREE.Float32BufferAttribute.prototype;
 
 CLAZZ("cmp.ThreeTreeGen", {
 
-    INJECT:['entity', 'game', 'asset', 'seed', 'iterations', 'source', 'tiles', 'amount', 'ground', 'spread', 'variants'],
+    INJECT:['entity', 'game', 'asset', 'seed', 'iterations', 'source', 'tiles', 'amount', 'ground', 'spread', 'variants', 'previewMode'],
 
     '@hidePlaceholder':{type:'bool'},
     hidePlaceholder:true,
@@ -41,6 +41,9 @@ CLAZZ("cmp.ThreeTreeGen", {
     '@tiles':{ type:'vec2i', min:1 },
     tiles:{x:1, y:1},
 
+    '@previewMode':{ type:'enum', options:['full', 'quick', 'none']},
+    previewMode:'full',
+
     asset:null,
 
     create: function(){
@@ -54,6 +57,9 @@ CLAZZ("cmp.ThreeTreeGen", {
     editorAsset:null,
     onPreviewComplete:null,
     preview: function( editorAsset, callback ){
+        if( this.previewMode == "none" )
+            return;
+
         this.editorAsset = editorAsset;
         this.asset.updateMatrixWorld();
         this.onPreviewComplete = callback;
@@ -154,7 +160,7 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 if( ground && ground.entity && ground.entity.getHeightAtXZ ){
                     ground = ground.entity;
                 }else if( ground.geometry ){
-                    if( !applyTransform && tree.amount > 10 )
+                    if( !applyTransform && tree.previewMode == "quick" )
                         ground = null;
                     else{
                         groundGeometry = ground.geometry;
@@ -199,8 +205,9 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                 worldTransform.multiplyMatrices( node.matrixWorld, transform );
             }
             
+            var y = 0;
+            
             if( ground ){
-                var y;
                 if( groundGeometry ){
                     raycaster.set( new THREE.Vector3(
                         worldTransform.elements[12],
@@ -219,13 +226,14 @@ CLAZZ("cmp.ThreeTreeGen.Service", {
                     y = ground.getHeightAtXZ( worldTransform.elements[12], worldTransform.elements[14] );
                 }
                 
-                if( !applyTransform ){
-                    y -= node.position.y;
-                    y /= node.scale.y;
-                }
-
-                transform.elements[13] = y;
             }
+
+            if( !applyTransform ){
+                y -= node.position.y;
+                y /= node.scale.y;
+            }
+
+            transform.elements[13] = y;
 
             list[i] = transform.elements;
             transfer[i] = transform.elements.buffer;

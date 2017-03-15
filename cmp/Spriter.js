@@ -140,31 +140,31 @@ CLAZZ("cmp.Spriter", {
 		scon.setCurrentTime( this.time, {}, entityId, animId || 0, function( obj ) {
             count++;
 			var meta = folder[ obj.folder ].file[ obj.file ];
+            var angle = 0;
+			if( "angle" in obj ) angle = obj.angle;
 
             if( "x" in obj ) geometry[p++] = obj.x;
-            else p++;
+            else geometry[p++] = 0;
 
             if( "y" in obj ) geometry[p++] = obj.y;
-            else p++;
+            else geometry[p++] = 0;
             
-            geometry[p++] = z-=10;
+            geometry[p++] = z-=15;
 
-			if( "scale_x" in obj  ) geometry[p++] = obj.scale_x;
-            else geometry[p++] = 1; // p++;
+            if( "scale_x" in obj  ) geometry[p++] = obj.scale_x;
+            else geometry[p++] = 1;
+			
+            if( "scale_y" in obj  ) geometry[p++] = obj.scale_y;
+            else geometry[p++] = 1;
             
-			if( "scale_y" in obj  ) geometry[p++] = -obj.scale_y;
-            else geometry[p++] = -1; // p++;
-
             if( !isNaN(obj.pivot_x) ) geometry[p++] = obj.pivot_x;
-            else 
-            geometry[p++] = meta.pivot_x;
+            else geometry[p++] = meta.pivot_x;
 
             if( !isNaN(obj.pivot_y ) ) geometry[p++] = obj.pivot_y;
-            else 
-            geometry[p++] = meta.pivot_y;
+            else geometry[p++] = meta.pivot_y;
 
-			if( "angle" in obj ) geometry[p++] = - obj.angle / 180 * Math.PI - Math.PI*0.5;
-            else p++;
+            
+            geometry[p++] = - angle / 180 * Math.PI - Math.PI*0.5;
 
             geometry[p++] = meta.x;
             geometry[p++] = meta.y;
@@ -417,7 +417,7 @@ void main() {
     rotOffset.x = offset.x*RSC.x - offset.y*RSC.y;
     rotOffset.y = offset.x*RSC.y + offset.y*RSC.x;
 
-    transformed.xy = transformed.xy + rotOffset;
+    transformed.xy = (transformed.xy + rotOffset) / 3.0;
 
     float z = transformed.z;
     transformed.z = 0.;
@@ -427,7 +427,7 @@ void main() {
     gl_Position.z = (projectionMatrix * (modelViewMatrix * vec4(0., 0., z, 1.))).z;
 
     vTex = tex;
-    gl_PointSize = pointSize * size * 3.; // 3.5??? WHY?!
+    gl_PointSize = pointSize * size;
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
@@ -465,7 +465,7 @@ void main() {
 
     vec4 bounds = vec4( vTex.x, vTex.x+vTex.z, vTex.y, vTex.y+vTex.w );
 
-    vec2 ftc = vec2( gl_PointCoord.x, gl_PointCoord.y );
+    vec2 ftc = vec2( gl_PointCoord.x, 1. - gl_PointCoord.y );
 
     if( aspect > 1. ){ // wider than tall
         ftc.y = ftc.y * aspect + (1.-aspect) * 0.5;

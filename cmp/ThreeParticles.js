@@ -339,7 +339,7 @@ void main() {
 
         var force = this.force;
         var pos = this.pos;
-        var scale = this.game.height / this.game.camera.aspect;
+        var scale = this.game.height * 0.25; // / this.game.camera.aspect;
         var time = this.time += delta;
     		
         for( var k in this.index ){

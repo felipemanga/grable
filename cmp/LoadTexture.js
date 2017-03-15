@@ -18,21 +18,36 @@ CLAZZ("cmp.LoadTexture", {
 
     create:function(){
         var scope = this, texture;
+        var key = this.type || this.uniform,
+            material = this.asset.material,
+            oldTexture;
 
-        if( this.texture )
-            this.entity.call( "loadImage", this.texture, onLoad );
+        if( material.uniforms && key in material.uniforms ){
+            oldTexture = material.uniforms[ key ].value;
+        } else if( key in material ) {
+            oldTexture = material[key];
+        }
+
+        if( this.texture ){
+            var newTexture = this.entity.call( "loadImage", this.texture, onLoad );
+            if( !oldTexture )
+                applyTexture( newTexture );
+        }
 
         function onLoad( texture ){
-            var key = scope.type || scope.uniform,
-                material = scope.asset.material;
 
-            var oldTexture;
+            applyTexture( texture );
 
+            material.needsUpdate = true;
+
+            if( scope.onLoad )
+                scope.entity.message(scope.onLoad);
+        }
+
+        function applyTexture( texture ){
             if( material.uniforms && key in material.uniforms ){
-                oldTexture = material.uniforms[ key ].value;
                 material.uniforms[ key ].value = texture;
             } else if( key in material ) {
-                oldTexture = material[key];
                 material[ key ] = texture;
             }
 
@@ -40,11 +55,6 @@ CLAZZ("cmp.LoadTexture", {
                 texture.wrapS = oldTexture.wrapS;
                 texture.wrapT = oldTexture.wrapT;
             }
-
-            material.needsUpdate = true;
-
-            if( scope.onLoad )
-                scope.entity.message(scope.onLoad);
         }
 
         function onError(){

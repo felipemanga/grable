@@ -692,12 +692,6 @@ Sidebar.Material = function ( editor ) {
 
 					}
 
-					if ( material.displacementScale !== materialDisplacementScale.getValue() ) {
-
-						editor.execute( new SetMaterialValueCommand( currentObject, 'displacementScale', materialDisplacementScale.getValue() ) );
-
-					}
-
 				} else {
 
 					if ( displacementMapEnabled ) textureWarning = true;
@@ -705,6 +699,12 @@ Sidebar.Material = function ( editor ) {
 				}
 
 			}
+
+            if ( material.displacementScale !== materialDisplacementScale.getValue() ) {
+
+                editor.execute( new SetMaterialValueCommand( currentObject, 'displacementScale', materialDisplacementScale.getValue() ) );
+
+            }
 
 			if ( material.roughnessMap !== undefined ) {
 
@@ -829,12 +829,6 @@ Sidebar.Material = function ( editor ) {
 
 					}
 
-					if ( material.aoMapIntensity !== materialAOScale.getValue() ) {
-
-						editor.execute( new SetMaterialValueCommand( currentObject, 'aoMapIntensity', materialAOScale.getValue() ) );
-
-					}
-
 				} else {
 
 					if ( aoMapEnabled ) textureWarning = true;
@@ -842,6 +836,12 @@ Sidebar.Material = function ( editor ) {
 				}
 
 			}
+
+            if ( material.aoMapIntensity !== materialAOScale.getValue() ) {
+
+                editor.execute( new SetMaterialValueCommand( currentObject, 'aoMapIntensity', materialAOScale.getValue() ) );
+
+            }
 
 			if ( material.emissiveMap !== undefined ) {
 
@@ -1129,9 +1129,9 @@ Sidebar.Material = function ( editor ) {
 
 			}
 
-			materialDisplacementScale.setValue( material.displacementScale );
-
 		}
+
+        materialDisplacementScale.setValue( material.displacementScale );
 
 		if ( material.roughnessMap !== undefined ) {
 
@@ -1209,9 +1209,9 @@ Sidebar.Material = function ( editor ) {
 
 			}
 
-			materialAOScale.setValue( material.aoMapIntensity );
-
 		}
+
+        materialAOScale.setValue( material.aoMapIntensity );
 
 		if ( material.emissiveMap !== undefined ) {
 

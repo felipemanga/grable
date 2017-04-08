@@ -8,7 +8,7 @@ function (){
 'use strict';
 
 CLAZZ("cmp.ThreeTerrain", {
-    INJECT:["entity", "asset", "height", "sizes", "island", "seed", "varyContrast", "discardBelow", "inclineMap", "inclineSegments"],
+    INJECT:["entity", "asset", "height", "sizes", "island", "seed", "varyContrast", "discardBelow", "texturing", "inclineMap", "inclineSegments"],
 
     "@varyContrast":{type:"bool"},
     varyContrast:true,
@@ -29,10 +29,13 @@ CLAZZ("cmp.ThreeTerrain", {
     "@discardBelow":{type:"float"},
     discardBelow:0,
 
-    "@inclineMap":{type:"texture"},
+    "@texturing":{type:"enum", options:["map only", "inclineMap"]},
+    texturing:"inclineMap",
+
+    "@inclineMap":{type:"texture", test:{ eq:{ texturing:"inclineMap"} } },
     inclineMap:"resources/image/groundLayers.jpg",
 
-    "@inclineSegments":{type:"vec2i"},
+    "@inclineSegments":{type:"vec2i", test:{ eq:{ texturing:"inclineMap"} } },
     inclineSegments:{x:2,y:2},
 
     heightmap:null,
@@ -51,6 +54,9 @@ CLAZZ("cmp.ThreeTerrain", {
     },
 
     changeMaterial:function(){
+        if( this.texturing != "inclineMap" )
+            return;
+            
         var srcmat = this.asset.material;
 
         var defines = {

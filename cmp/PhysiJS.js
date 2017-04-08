@@ -197,7 +197,7 @@ CLAZZ("cmp.PhysiJS", {
     '@setMediumViscosity':{ v:{type:'float'} },
     setMediumViscosity:function(v){
         v = Math.max(0, Math.min( 1, v||0 ) );
-        if( v === this.viscosity )
+        if( Math.abs(v - this.viscosity) < v*0.01 )
             return;
         this.viscosity = v;
         this.node.setDamping( Math.max(this.linearDamping, v), Math.max(this.angularDamping, v) );

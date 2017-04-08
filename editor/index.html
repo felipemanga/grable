@@ -351,6 +351,42 @@
 
 						break;
 
+                    case 70: // Register F for finder
+
+                        if( event.ctrlKey ){
+
+                            editor.signals.invokeFinder.dispatch();
+                            
+                            event.preventDefault(); // prevent browser search
+
+                        }
+
+                        break;
+
+                    case 49:
+
+                        editor.signals.showProperty.dispatch( 'object' );
+
+                        break;
+
+                    case 50:
+
+                        editor.signals.showProperty.dispatch( 'geometry' );
+                        
+                        break;
+
+                    case 51:
+
+                        editor.signals.showProperty.dispatch( 'material' );
+                        
+                        break;
+
+                    case 52:
+
+                        editor.signals.showProperty.dispatch( 'entity' );
+                        
+                        break;
+
 					case 87: // Register W for translation transform mode
 
 						editor.signals.transformModeChanged.dispatch( 'translate' );

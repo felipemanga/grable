@@ -39,6 +39,8 @@ Sidebar.Properties = function ( editor ) {
 
 	select( defaultMenu );
 
+    signals.showProperty.add( select );
+
 	return container;
 
 };

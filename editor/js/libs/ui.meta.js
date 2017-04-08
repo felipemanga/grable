@@ -17,6 +17,7 @@ UI.Meta = function( srcObject ){
     var value;
 
     var scope = this, desc = {
+
         row: this,
         meta: {type:'unknown'},
         header: null,
@@ -142,6 +143,8 @@ UI.Meta.prototype.factories = {
             e.clear();
             for( var i in arr ){
                 var sub = {
+                    context: obj.context,
+
                     meta:  meta.meta || {type:meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype},
                     key: i,
                     
@@ -219,6 +222,8 @@ UI.Meta.prototype.factories = {
                 e.add(new UI.Break());
                 
                 var sub = {
+                    context: obj.context,
+
                     meta:  meta.meta || {type:meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype},
                     index: i,
                     
@@ -293,7 +298,8 @@ UI.Meta.prototype.factories = {
 
     enum:function( obj ){
         var e = new UI.Select().setWidth( '180px' ).setFontSize( '12px' ).setStyle('float', ['right']);
-        var opts = {};
+        obj.row.add( e );
+
         var options;
         if( 'options' in obj.meta ) options = obj.meta.options;
         else if( 'fromKeys' in obj.meta ){
@@ -309,21 +315,30 @@ UI.Meta.prototype.factories = {
                 
             }
             
+        }else if( 'async' in obj.meta ){
+            var method = obj.context[ obj.meta.async ];
+            if( method )
+                method.call( obj.context, loadOptions );
+            return;
         }
 
-        if( !options ) options = [];
-        
-        if( Array.isArray(options) ){
-            options.forEach((o) => opts[o] = o);
-        }else options = o;
+        loadOptions( options );
+        return;
 
-        e.setOptions( opts )
-            .setValue( obj.value )
-            .onChange(function(){
-            obj.value = (e.getValue());
-        });
+        function loadOptions( options ){
+            var opts = {};
+            if( !options ) options = [];
+            
+            if( Array.isArray(options) ){
+                options.forEach((o) => opts[o] = o);
+            }else options = o;
 
-        obj.row.add( e );
+            e.setOptions( opts )
+                .setValue( obj.value )
+                .onChange(function(){
+                obj.value = (e.getValue());
+            });
+        }
     },
 
     slot:function( obj ){
@@ -449,6 +464,7 @@ UI.Meta.prototype.factories = {
             }
 
             var argDesc = {
+                context: obj.context,
                 meta:  { type:'array', subtype:'json', subtypes:subtypes, labels:labels },
                 get value(){ return args },
                 set value( newArgs ){ args = newArgs; obj.value = [callScope, callName, args]; },

@@ -16,42 +16,38 @@ CLAZZ("cmp.LoadTexture", {
     "@onError":{type:'array', subtype:'slot'},
     onError:null,
 
-    STATIC:{
-        cache:{}
-    },
-
     create:function(){
         var scope = this, texture;
-        if( this.texture && this.type ){
-            var cache = cmp.LoadTexture.cache[this.texture];
-            if( !cache ){
-                cache = cmp.LoadTexture.cache[this.texture] = {texture:texture, listeners:[onLoad]};
-                var tl = new THREE.TextureLoader();
-                texture = cache.texture = tl.load( this.texture, function(){
-                    while( cache.listeners.length )
-                        cache.listeners.pop()();
-                    cache.listeners = null;
-                }, undefined, onError );
-            } else {
-                var texture = cache.texture;
-                if( cache.listeners )
-                    cache.listeners.push(onLoad);
-                else
-                    onLoad();
-            }
+        var key = this.type || this.uniform,
+            material = this.asset.material,
+            oldTexture;
+
+        if( material.uniforms && key in material.uniforms ){
+            oldTexture = material.uniforms[ key ].value;
+        } else if( key in material ) {
+            oldTexture = material[key];
         }
 
-        function onLoad(){
-            var key = scope.type || scope.uniform,
-                material = scope.asset.material;
+        if( this.texture ){
+            var newTexture = this.entity.call( "loadImage", this.texture, onLoad );
+            if( !oldTexture )
+                applyTexture( newTexture );
+        }
 
-            var oldTexture;
+        function onLoad( texture ){
 
+            applyTexture( texture );
+
+            material.needsUpdate = true;
+
+            if( scope.onLoad )
+                scope.entity.message(scope.onLoad);
+        }
+
+        function applyTexture( texture ){
             if( material.uniforms && key in material.uniforms ){
-                oldTexture = material.uniforms[ key ].value;
                 material.uniforms[ key ].value = texture;
             } else if( key in material ) {
-                oldTexture = material[key];
                 material[ key ] = texture;
             }
 
@@ -59,11 +55,6 @@ CLAZZ("cmp.LoadTexture", {
                 texture.wrapS = oldTexture.wrapS;
                 texture.wrapT = oldTexture.wrapT;
             }
-
-            material.needsUpdate = true;
-
-            if( scope.onLoad )
-                scope.entity.message(scope.onLoad);
         }
 
         function onError(){

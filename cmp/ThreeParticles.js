@@ -1,4 +1,7 @@
 CLAZZ("cmp.ThreeParticles", {
+    PROVIDES:{
+        "cmp.Particles":"implements"
+    },
 	INJECT:[
         "entity", "asset", "game", 
         "texture", "enabled", "rate",
@@ -310,7 +313,7 @@ void main() {
     },
 
     add:function( emitter ){
-        var index = this.getIndex( emitter.texture, true, 100000 );
+        var index = this.getIndex( emitter.texture, true, 2000 );
         index.emitters.push( emitter );
     },
 
@@ -336,7 +339,7 @@ void main() {
 
         var force = this.force;
         var pos = this.pos;
-        var scale = this.game.height / this.game.camera.aspect;
+        var scale = this.game.height * 0.25; // / this.game.camera.aspect;
         var time = this.time += delta;
     		
         for( var k in this.index ){

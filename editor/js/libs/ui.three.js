@@ -177,6 +177,7 @@ UI.Outliner = function ( editor ) {
 	var scope = this;
 
 	var dom = document.createElement( 'div' );
+    dom.style.position = "relative";
 	dom.className = 'Outliner';
 	dom.tabIndex = 0;	// keyup event is ignored without setting tabIndex
 
@@ -198,19 +199,34 @@ UI.Outliner = function ( editor ) {
 
 	// Keybindings to support arrow navigation
 	dom.addEventListener( 'keyup', function ( event ) {
-
+        
+        var sign = 0;
 		switch ( event.keyCode ) {
 			case 38: // up
-				scope.selectIndex( scope.selectedIndex - 1 );
+                sign = -1;
 				break;
 			case 40: // down
-				scope.selectIndex( scope.selectedIndex + 1 );
+				sign = 1;
 				break;
 		}
+
+        var start = scope.selectedIndex;
+        for( var i=start + sign; i !== start; i += sign ){
+
+            i = i % scope.options.length;
+            if( i < 0 ) i = scope.options.length - 1;            
+
+            if( scope.options[i].style.display == "none" ) continue;
+
+            scope.selectIndex( i );
+            break;
+
+        }
 
 	}, false );
 
 	this.dom = dom;
+    this.finder = null;
 
 	this.options = [];
 	this.selectedIndex = - 1;
@@ -222,6 +238,82 @@ UI.Outliner = function ( editor ) {
 
 UI.Outliner.prototype = Object.create( UI.Element.prototype );
 UI.Outliner.prototype.constructor = UI.Outliner;
+
+UI.Outliner.prototype.invokeFinder = function(){
+
+    if( !this.finder ){
+
+        var scope = this;
+        this.finder = new UI.Input("");
+        this.finder.dom.addEventListener("blur", showAll);
+        this.finder.dom.addEventListener("keyup", filter);
+
+        Object.assign( this.finder.dom.style, {
+            position: "absolute",
+            bottom:0,
+            right:0,
+            border:"1px solid #777",
+            borderRadius:"3px"
+        });
+
+    }
+
+    if( !this.finder.dom.parentElement ){
+        this.dom.appendChild( this.finder.dom );
+    }
+
+    this.finder.dom.style.display = "";
+    this.finder.dom.focus();
+    this.finder.dom.select();
+
+    return;
+
+    function showAll( hideFinder ){
+
+        scope.options.forEach( function(opt){
+            opt.style.display = "";
+        });
+
+        if( hideFinder !== false )
+            scope.finder.dom.style.display = 'none';
+
+    }
+
+    function filter( evt ){
+        if( evt.keyCode == 13 || evt.keyCode == 27 ){
+            scope.finder.dom.blur();
+            return;
+        }
+
+        if( evt.keyCode == 40 || evt.keyCode == 38 ) // ignore down / up
+            return;
+
+        var text = scope.finder.dom.value;
+        if( !text.length )
+            return showAll( false );
+        
+        text = text.trim().toUpperCase();
+
+        var first = true;
+
+        scope.options.forEach( function( opt, i ){
+
+            var match = (opt.textContent.toUpperCase()).indexOf( text ) !== -1;
+            if( match ){
+
+                opt.style.display = "";
+                if( first ){
+
+                    first = false;
+                    scope.selectIndex( i );
+
+                }
+
+            }else opt.style.display = "none";
+
+        } );
+    }
+};
 
 UI.Outliner.prototype.selectIndex = function ( index ) {
 

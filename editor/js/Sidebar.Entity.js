@@ -467,6 +467,8 @@ Sidebar.Entity = function ( editor ) {
 
         var disableSave = false;
 
+        var context = Object.assign({}, clazz.CLAZZ, data);
+
 		for( var k in clazz.meta ){
             if( k in clazz.methods ) 
                 continue;
@@ -477,6 +479,7 @@ Sidebar.Entity = function ( editor ) {
 				priority: meta.priority || 0,
 				default: clazz.CLAZZ[k],
 				key:k,
+                context: context,
                 header: new UI.Text( meta.label || k ).setWidth( '90px' )
 			};
 

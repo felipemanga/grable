@@ -7,6 +7,7 @@ CLAZZ("states.State", {
 
     STATIC:{
         activeState:null,
+        cache:{}
     },
 
     initState:function(){
@@ -34,6 +35,38 @@ CLAZZ("states.State", {
         this.pool.remove(this);
     },
 
+    loadJSON:function( path, onLoad ){
+        var cache = states.State.cache[path], json, scope = this;
+        if( !cache ){
+
+            cache = states.State.cache[path] = {json:json, listeners:[onLoad]};
+            scope.pool.call("onLoadingAsyncStart");
+
+            DOC.getURL( path, function( src ){
+
+                try{
+                    json = JSON.parse(src);
+                }catch(e){
+                    json = undefined;
+                    console.warn(e);
+                }
+
+                while( cache.listeners.length )
+                    cache.listeners.pop()( json );
+                cache.listeners = null;
+
+                scope.pool.call("onLoadingAsyncEnd");
+                
+            }, {anystate:true});
+
+        } else {
+            json = cache.json;
+            if( cache.listeners )
+                cache.listeners.push(onLoad);
+            else
+                onLoad( json );
+        }
+    },
 
     initResources:function(){
         for( var method in this.resources ){

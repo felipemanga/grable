@@ -103,32 +103,58 @@ CLAZZ("cmp.PhysiJS", {
     },
 
     onReady:function(){
-        var entity = this.entity, asset = this.entity.getNode(), node, scope = this;
+        this.__init( this.entity.getNode() );
+    },
 
-        if( this.node == this.scene )
+    setNode:function( asset, opts ){
+        if( !this.node ) return;
+        
+        opts = opts || {};
+        opts.setEntityRotation = false;
+        opts.setEntityPosition = false;
+        opts.setEntityScale = false;
+        this.__init( asset );
+    },
+
+    __init:function( asset ){
+
+        var entity = this.entity, node, scope = this;
+
+        if( this.node == this.scene || ( this.node && Object.getPrototypeOf(this.node) == asset ) )
             return;
         
-        var type = this.mesh + "Mesh";
-        node = this.node = Physijs[ type ]( null, null, this.mass, asset );
+        if( !this.node ){
 
-        node.entity = this.entity;
-        node.friction = this.friction;
-        node.restitution = this.bounciness;
+            var type = this.mesh + "Mesh";
+            node = this.node = Physijs[ type ]( null, null, this.mass, asset );
 
-        node.setDamping( this.linearDamping, this.angularDamping );
+            node.entity = this.entity;
+            node.friction = this.friction;
+            node.restitution = this.bounciness;
 
-        if( this.name )
-            node.addEventListener('collision', function(other, linear, angular){
-                if( !entity.isAlive || !other.entity.isAlive )
-                    return;
+            node.setDamping( this.linearDamping, this.angularDamping );
 
-                var cb = entity["onHit" + other.entity.physiJS.name];
-                if( scope.node && other.entity.physiJS.node && cb )
-                    cb.call(entity, other.entity, linear, angular);
-            });
+            if( this.name )
+                node.addEventListener('collision', function(other, linear, angular){
+                    if( !entity.isAlive || !other.entity.isAlive )
+                        return;
 
-        if( this.scene )
-            this.scene.add( this.node );
+                    var cb = entity["onHit" + other.entity.physiJS.name];
+                    if( scope.node && other.entity.physiJS.node && cb )
+                        cb.call(entity, other.entity, linear, angular);
+                });
+
+            if( this.scene )
+                this.scene.add( this.node );
+
+        } else {
+
+            node = this.node;
+            Object.setPrototypeOf( node, asset );
+
+        }
+
+
 
         entity.position = Object.create(null, {
             x:{
@@ -158,7 +184,7 @@ CLAZZ("cmp.PhysiJS", {
                 get:function(){ return asset.rotation.z; },
                 set:function(v){ if( v != asset.rotation.z ){ asset.rotation.z = v||0; node.__dirtyRotation = true; } }
             }
-        });        
+        });  
     },
 
     destroy:function(){

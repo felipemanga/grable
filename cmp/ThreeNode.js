@@ -144,6 +144,9 @@ CLAZZ("cmp.ThreeNode", {
             keepPosition:true,
             keepRotation:true,
             keepScale:true,
+            setEntityPosition:true,
+            setEntityRotation:true,
+            setEntityScale:true,
             parent:true,
             remove:true,
             dispose:true
@@ -166,9 +169,9 @@ CLAZZ("cmp.ThreeNode", {
             if( opts.dispose && oldAsset.dispose ) oldAsset.dispose();
         }
 
-        entity.position = asset.position;
-        entity.rotation = asset.rotation;
-        entity.scale    = asset.scale;
+        if( opts.setEntityPosition ) entity.position = asset.position;
+        if( opts.setEntityRotation ) entity.rotation = asset.rotation;
+        if( opts.setEntityScale ) entity.scale    = asset.scale;
         asset.entity = this.entity;
         // asset.userData.entity = this.entity; // breaks editor
     },

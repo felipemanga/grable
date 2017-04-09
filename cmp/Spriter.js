@@ -29,6 +29,8 @@ CLAZZ("cmp.Spriter", {
 	_prevAnim:null,
 
 	create:function(){
+        if( !this.enabled ) return;
+
         this.entity.pool.call("onLoadingAsyncStart");
         var ldr = new THREE.SconLoader();
         ldr.setTexturePath( this.imagePath );
@@ -109,12 +111,19 @@ CLAZZ("cmp.Spriter", {
     _onGotSCON:function( scon ){
         var node = new THREE.SconSprite( scon );
         this.asset = node;
+
+        var placeholder = this.entity.getNode();
+        if( !placeholder.geometry.boundingBox )
+            placeholder.geometry.computeBoundingBox();
+
+        node.geometry.boundingBox = placeholder.geometry.boundingBox;
+        node.setPositionOffset( 0, node.geometry.boundingBox.min.y, 0 );
         
         this.asset.setSkeleton( this.skeleton );
         this.asset.setAnimation( this.animation );
         this.asset.play();
 
-        this.entity.setNode( node );
+        this.entity.setNode( node, {} );
         this.entity.pool.call("onLoadingAsyncEnd");
     },
 
@@ -130,6 +139,8 @@ CLAZZ("cmp.Spriter", {
 
     function SconSprite( scon ){
         var animation, skeleton, time = 0, delta = 1/30, dirty = true, playing = false;
+
+        var offsetX=0, offsetY=0, offsetZ=0;
 
         THREE.Object3D.call( this );
 
@@ -174,6 +185,14 @@ CLAZZ("cmp.Spriter", {
             }
 
         };
+
+        this.setPositionOffset = function( x, y, z ){
+
+            offsetX = x || 0;
+            offsetY = y || 0;
+            offsetZ = z || 0;
+
+        }
 
         this.isDirty = function(){ return dirty || playing; };
 
@@ -282,9 +301,9 @@ CLAZZ("cmp.Spriter", {
 
                 var p = 0;
 
-                buffer[ i++ ] = sprite.x;
-                buffer[ i++ ] = sprite.y;
-                buffer[ i++ ] = 0;
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
 
                 buffer[ i++ ] = meta.width * sprite.pivot_x;
                 buffer[ i++ ] = - meta.height * sprite.pivot_y;
@@ -295,9 +314,9 @@ CLAZZ("cmp.Spriter", {
                 buffer[ i++ ] = 1 - (meta.y);
                 p++;
 
-                buffer[ i++ ] = sprite.x;
-                buffer[ i++ ] = sprite.y;
-                buffer[ i++ ] = 0;
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
 
                 buffer[ i++ ] = - meta.width * ( 1 - sprite.pivot_x );
                 buffer[ i++ ] = meta.height * ( 1 - sprite.pivot_y );
@@ -308,9 +327,9 @@ CLAZZ("cmp.Spriter", {
                 buffer[ i++ ] = 1 - (meta.y + meta.h);
                 p++;
 
-                buffer[ i++ ] = sprite.x;
-                buffer[ i++ ] = sprite.y;
-                buffer[ i++ ] = 0;
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
 
                 buffer[ i++ ] = - meta.width * ( 1 - sprite.pivot_x );
                 buffer[ i++ ] = - meta.height * sprite.pivot_y;
@@ -323,9 +342,9 @@ CLAZZ("cmp.Spriter", {
 
 
 
-                buffer[ i++ ] = sprite.x;
-                buffer[ i++ ] = sprite.y;
-                buffer[ i++ ] = 0;
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
 
                 buffer[ i++ ] = meta.width * sprite.pivot_x;
                 buffer[ i++ ] = meta.height * ( 1 - sprite.pivot_y );
@@ -336,9 +355,9 @@ CLAZZ("cmp.Spriter", {
                 buffer[ i++ ] = 1 - (meta.y + meta.h);
                 p++;
 
-                buffer[ i++ ] = sprite.x;
-                buffer[ i++ ] = sprite.y;
-                buffer[ i++ ] = 0;
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
 
                 buffer[ i++ ] = - meta.width * ( 1 - sprite.pivot_x );
                 buffer[ i++ ] = meta.height * ( 1 - sprite.pivot_y );
@@ -349,9 +368,9 @@ CLAZZ("cmp.Spriter", {
                 buffer[ i++ ] = 1 - (meta.y + meta.h);
                 p++;
 
-                buffer[ i++ ] = sprite.x;
-                buffer[ i++ ] = sprite.y;
-                buffer[ i++ ] = 0;
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
 
                 buffer[ i++ ] = meta.width * sprite.pivot_x;
                 buffer[ i++ ] = - meta.height * sprite.pivot_y;
@@ -528,9 +547,9 @@ void main() {
 
     if( projectionMatrix[3][3] != 1. ){
 
-        float csz = ( modelMatrix * vec4( transformed, 1.0 ) ).z;
+        float csz = ( modelViewMatrix * vec4( transformed, 1.0 ) ).z;
 
-        float epsilon = projectionMatrix[3][2] * ( priority / ( csz * ( csz + priority ) ) ) * 10.;
+        float epsilon = projectionMatrix[3][2] * ( priority / ( csz * ( csz + priority ) ) ) * 100.;
 
         gl_Position.z += epsilon;
 

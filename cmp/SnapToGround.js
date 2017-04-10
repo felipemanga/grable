@@ -1,5 +1,7 @@
 CLAZZ("cmp.SnapToGround", {
-    INJECT:["entity", "game", "ground", "raiseToGround", "dropToGround", "offsetY"],
+    ENUMERABLE:["onTick"],
+
+    INJECT:["entity", "game", "ground", "raiseToGround", "dropToGround", "offsetY", "once"],
 
     "@raiseToGround":{type:"bool"},
     raiseToGround:true,
@@ -13,15 +15,25 @@ CLAZZ("cmp.SnapToGround", {
     "@offsetY":{type:"float"},
     offsetY:0,
 
+    "@once":{type:"bool"},
+    once:true,
+
     STATIC:{
         raycaster:null,
     },
 
-    onReady:function(){
-        var ground = this.game.scene.getObjectByProperty( 'uuid', this.ground );
-        if( !ground ) 
-            return;
+    groundNode:null,
 
+    CONSTRUCTOR:function(){
+        if( !this.once )
+            this.onTick = this.__snap;
+    },
+
+    onTick:null,
+
+    __snap:function(){
+        var ground = this.groundNode;
+        if( !ground ) return;
 
         var position = this.entity.position;
         var y = 0;
@@ -64,5 +76,10 @@ CLAZZ("cmp.SnapToGround", {
 
         if( (position.y > y && this.dropToGround) || (position.y < y && this.raiseToGround) ) 
             position.y = y;
+    },
+
+    onReady:function(){
+        this.groundNode = this.game.scene.getObjectByProperty( 'uuid', this.ground );
+        this.__snap();
     }
 });

@@ -3,10 +3,13 @@
 
 CLAZZ("cmp.Spriter", {
 
-    INJECT:["entity", "game", "sconURL", "imagePath", "enabled", "skeleton", "animation"],
+    INJECT:[ "entity", "game", "sconURL", "imagePath", "enabled", "skeleton", "animation", "layerSeparation" ],
 
     "@enabled":{type:"bool"},
 	enabled:true,
+
+    "@layerSeparation":{type:"float", min:0},
+    layerSeparation:1,
 
     "@sconURL":{type:"string"},
     sconURL:"resources/scons/default.scon",
@@ -112,6 +115,8 @@ CLAZZ("cmp.Spriter", {
         var node = new THREE.SconSprite( scon );
         this.asset = node;
 
+        node.separation = this.layerSeparation;
+
         var placeholder = this.entity.getNode();
         if( !placeholder.geometry.boundingBox )
             placeholder.geometry.computeBoundingBox();
@@ -160,6 +165,11 @@ CLAZZ("cmp.Spriter", {
             this.material = new THREE.SconSpriteMaterial( scon );
 
         }
+
+        Object.defineProperty( this, "separation", {
+            set:function(x){ this.material.uniforms.separation.value = x || 0; },
+            get:function(){ return this.material.uniforms.separation.value; }
+        });
 
         this.setScon = function( _scon ){
 
@@ -474,7 +484,8 @@ CLAZZ("cmp.Spriter", {
 				THREE.UniformsLib.fog,
 				THREE.UniformsLib.lights,
 				{
-					emissive: { value: new THREE.Color( 0x000000 ) }
+					emissive: { value: new THREE.Color( 0x000000 ) },
+                    separation: { value: 1 }
 				}
 			])
 
@@ -518,6 +529,8 @@ attribute vec2 offset;
 attribute float rotation;
 attribute float priority;
 
+uniform float separation;
+
 void main() {
 
 	#include <uv_vertex>
@@ -545,15 +558,11 @@ void main() {
 	#include <skinning_vertex>
 	#include <project_vertex>
 
-    if( projectionMatrix[3][3] != 1. ){
+    float csz = ( modelViewMatrix * vec4( transformed, 1.0 ) ).z;
 
-        float csz = ( modelViewMatrix * vec4( transformed, 1.0 ) ).z;
+    float epsilon = projectionMatrix[3][2] * ( (priority+1.) * separation / csz );
 
-        float epsilon = projectionMatrix[3][2] * ( priority / ( csz * ( csz + priority ) ) ) * 100.;
-
-        gl_Position.z += epsilon;
-
-    }
+    gl_Position.z -= epsilon;
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>

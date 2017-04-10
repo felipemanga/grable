@@ -14,8 +14,12 @@ INJECT:["entity", "height", "enabled", "strength", "waterViscosity"],
     '@waterViscosity':{type:'float', min:0, max:1},
     waterViscosity:0.98,
 
-
     onTick:function(delta){
+        if( !this.enabled ) 
+            return;
+
+        if( delta > 1/15 ) delta = 1/15;
+
         var depth = this.height - this.entity.position.y;
         
         if( this.entity.setMediumViscosity )

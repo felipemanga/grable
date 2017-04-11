@@ -11,6 +11,8 @@ srcObject properties:
 UI.Meta = function( srcObject ){
     
     UI.Row.call( this );
+
+    this.dom.className += " ui_meta";
     
     this.onChangeCallback = null;
 
@@ -91,11 +93,11 @@ UI.Meta.prototype.onChange = function( callback ) {
 UI.Meta.prototype.factories = {
 
     unknown:function( obj ){
-        obj.row.add( new UI.Text( 'Unknown type:' + (obj.meta.type||"undefined")  ) ).setStyle('float', ['right']);
+        obj.row.add( new UI.Text( 'Unknown type:' + (obj.meta.type||"undefined")  ).setClass('value') );
     },
 
     string:function( obj ){
-        var e = new UI.Input().setValue(obj.value).setWidth( '180px' ).setStyle('float', ['right']);
+        var e = new UI.Input().setValue(obj.value).setWidth( '180px' );
         obj.row.add( e );
         e.onChange(function(){
             var v = e.getValue();
@@ -109,8 +111,7 @@ UI.Meta.prototype.factories = {
     json:function( obj ){
         var e = new UI.Input()
             .setValue( JSON.stringify(obj.value) )
-            .setWidth( (obj.meta.width || 260) - 6 + 'px' )
-            .setStyle('float', ['right']);
+            .setWidth( (obj.meta.width || 260) - 6 + 'px' );
 
         obj.row.add( e );
 
@@ -297,7 +298,7 @@ UI.Meta.prototype.factories = {
     },
 
     enum:function( obj ){
-        var e = new UI.Select().setWidth( '180px' ).setFontSize( '12px' ).setStyle('float', ['right']);
+        var e = new UI.Select().setWidth( '180px' ).setFontSize( '12px' ).setClass('Select value');
         obj.row.add( e );
 
         var options;
@@ -401,7 +402,7 @@ UI.Meta.prototype.factories = {
             .setStyle('min-height', ['1px']);
 
         var callContainer = new UI.Row()
-            .setStyle('float', ['right'])
+            .setClass('ui_meta_value')
             .setMarginTop('2px');
 
         callContainer.add( scopeSelect );
@@ -482,8 +483,7 @@ UI.Meta.prototype.factories = {
             value = '';
         var e = new UI.Input()
             .setValue(value)
-            .setWidth( '180px' )
-            .setStyle('float', ['right']);
+            .setWidth( '180px' );
         obj.row.add( e );
 
         e.onChange(function(){
@@ -506,16 +506,36 @@ UI.Meta.prototype.factories = {
         };
         var e = new UI.Button('EDIT')
             .setWidth( '90px' )
-            .setStyle('float', ['right'])
             .onClick(function(){
                 editor.signals.editScript.dispatch( editor.selected, script );
             });
         obj.row.add( e );        
     },
 
+    graph:function( obj ){
+        var value = obj.value;
+        if( value === undefined )
+            value = [];
+
+        var script = {
+            name: obj.key,
+            source: value,
+            config: obj.meta,
+            onChange: function( value ){
+                script.source = obj.value = value;
+            }
+        };
+        var e = new UI.Button('EDIT')
+            .setWidth( '90px' )
+            .onClick(function(){
+                editor.signals.editGraph.dispatch( editor.selected, script );
+            });
+        obj.row.add( e );        
+    },
+
     vec2i:function( obj ){
-        var x = new UI.Integer( obj.value && obj.value.x || 0 ).setWidth( '50px' ).setStyle('float', ['right']);
-        var y = new UI.Integer( obj.value && obj.value.y || 0 ).setWidth( '50px' ).setStyle('float', ['right']);
+        var x = new UI.Integer( obj.value && obj.value.x || 0 ).setWidth( '50px' ).setClass('Number value');
+        var y = new UI.Integer( obj.value && obj.value.y || 0 ).setWidth( '50px' ).setClass('Number value');
         obj.row.add( y );
         obj.row.add( x );
 
@@ -606,7 +626,7 @@ UI.Meta.prototype.factories = {
     },
 
     int:function( obj ){
-        var e = new UI.Integer(obj.value).setStyle('float', ['right']);
+        var e = new UI.Integer(obj.value);
         obj.row.add( e );
         if( "min" in obj.meta ) e.min = obj.meta.min;
         if( "max" in obj.meta ) e.max = obj.meta.max;
@@ -632,7 +652,7 @@ UI.Meta.prototype.factories = {
     },
 
     float:function( obj ){
-        var e = new UI.Number(obj.value).setStyle('float', ['right']);
+        var e = new UI.Number(obj.value);
         obj.row.add( e );
         if( "min" in obj.meta ) e.min = obj.meta.min;
         if( "max" in obj.meta ) e.max = obj.meta.max;
@@ -730,7 +750,7 @@ UI.Meta.prototype.factories = {
     },
 
     node:function( obj ){
-        var e = new UI.Select().setStyle('float', ['right']);
+        var e = new UI.Select().setClass('Select value');
         var opts = {}, meta = obj.meta;
         opts[obj.default] = "";
         

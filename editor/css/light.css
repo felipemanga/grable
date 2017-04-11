@@ -57,7 +57,7 @@ select {
 		pointer-events: none;
 	}
 
-#script {
+#script, #graph {
 	position: absolute;
 	top: 32px;
 	left: 0;
@@ -227,16 +227,134 @@ select {
 	resize: vertical;
 }
 
-	.Outliner .option {
-		padding: 4px;
-		color: #666;
-		white-space: nowrap;
-	}
+.Outliner .option {
+	padding: 4px;
+	color: #666;
+	white-space: nowrap;
+}
 
-	.Outliner .option:hover {
-		background-color: rgba(0,0,0,0.02);
-	}
+.Outliner .option:hover {
+	background-color: rgba(0,0,0,0.02);
+}
 
-	.Outliner .option.active {
-		background-color: rgba(0,0,0,0.04);
-	}
+.Outliner .option.active {
+	background-color: rgba(0,0,0,0.04);
+}
+
+
+.Row.ui_meta > INPUT,
+.Row.ui_meta > BUTTON,
+.Row.ui_meta > .value,
+.ui_meta_value
+{
+	float: right;
+}
+
+.graph_node > .Row{
+  display: block;
+  border-top-left-radius:.75em;
+  border-top-right-radius:.75em;
+  background-color:#6e6e6e;
+  padding:0.1em .3em 0em;
+  margin:-.1em -.3em 0.2em;
+  border: none;
+}
+
+.graph_node .Row.ui_meta:before {
+	content: attr(title) ": "
+}
+
+.graph_node .Row.ui_meta > INPUT,
+.graph_node .Row.ui_meta > BUTTON,
+.graph_node .Row.ui_meta > .value,
+.graph_node .ui_meta_value
+{
+	float: none;
+	margin-bottom: 1px;
+	background: transparent;
+	color: white;
+}
+
+.graph_node > .Row:before {
+	content: attr(title) ": ";
+}
+
+.graph_node{
+  color: #d4d4d4;	
+  background-color: #4e4e4e;
+  border-radius: .75em;
+  display: inline-block;
+  padding:0.1em .3em .25em;
+  position:absolute;
+}
+
+.graph_output_MO,
+.graph_output_MI,
+.graph_connection_MO:after,
+.graph_connection_MI:after
+{
+  position:absolute;
+  border:solid 1px #dedede;
+  background-color:#2e2e2e;
+  width:0.5em;
+  height:0.5em;
+  border-radius:0.5em;
+}
+.graph_node.graph_connected > .graph_output_MI,
+.graph_node.graph_connected > .graph_output_MO,
+.graph_connection_MO.graph_filled:after,
+.graph_connection_MI.graph_filled:after
+{
+  border:solid 1px transparent;
+  background-color:#aeaeae;
+}
+.graph_node > .graph_output_MO:hover,
+.graph_node > .graph_output_MI:hover,
+.graph_connection_MO:hover:after,
+.graph_connection_MI:hover:after
+{
+  border-color:red;
+}
+.graph_output_MI{
+  left: -0.5em;
+  top: 1em;
+  cursor: pointer;
+}
+.graph_output_MO{
+  right: -0.5em;
+  top: 1em;
+  cursor: pointer;
+}
+.graph_connection_MO, .graph_connection_MI{
+  position:relative;
+  cursor:pointer;
+  width:100%;
+}
+.graph_connection_MO:after{
+  content:"";
+  left: -0.8em;
+  top:0.25em;
+}
+.graph_connection_MI:after{
+  content:"";
+  right: -0.8em;
+  top:0.25em;
+}
+
+#graph_nodes {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow: auto;
+}
+
+#graph_nodes SVG{
+  position:absolute;
+  top:0px;
+  left:0px;
+  width:100%;
+  height:100%;
+  z-index: -100;
+}

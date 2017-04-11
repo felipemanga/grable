@@ -111,6 +111,7 @@ UI.Meta.prototype.factories = {
     json:function( obj ){
         var e = new UI.Input()
             .setValue( JSON.stringify(obj.value) )
+            .setMarginLeft('1px')
             .setWidth( (obj.meta.width || 260) - 6 + 'px' );
 
         obj.row.add( e );
@@ -119,7 +120,7 @@ UI.Meta.prototype.factories = {
             var v = e.getValue();
             try{
                 obj.value = ( JSON.parse( v ) );
-                e.setBackgroundColor('inherit');                    
+                e.setBackgroundColor('');                    
             }catch(err){
                 e.setBackgroundColor('red');
             }
@@ -138,15 +139,25 @@ UI.Meta.prototype.factories = {
             obj.row.add( e );
         }
 
+        if( meta.canResize === false && meta.subtypes ){
+            for( var k in meta.subtypes ){
+                if( !(k in arr) ) 
+                    arr[k] = undefined;
+            }
+        }
+
         render();
 
         function render(){
             e.clear();
             for( var i in arr ){
+                var subtype = meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype;
+                if( typeof subtype === "string" ) subtype = {type:subtype};
+                
                 var sub = {
                     context: obj.context,
 
-                    meta:  meta.meta || {type:meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype},
+                    meta:  meta.meta || subtype,
                     key: i,
                     
                     get value(){ return arr[ this.key ]; },
@@ -157,24 +168,38 @@ UI.Meta.prototype.factories = {
                     header: null
                 };
 
-                sub.header = new UI.Input(i).setMarginBottom('3px');
+                if( meta.canResize !== false ){
+                    sub.header = new UI.Input(i).setMarginBottom('3px');
+
+                    sub.header.onChange((function(i, title){
+                        var newKey = title.getValue().trim();
+
+                        if( newKey == i )
+                            return;
+
+                        if( meta.canResize !== false ){
+                            
+                            if( newKey != '' )
+                                arr[newKey] = arr[i];
+
+                            delete arr[i];
+
+                        } else {
+
+                            var old = arr[newKey];
+                            arr[newKey] = arr[i];
+                            arr[i] = old;
+
+                        }
+
+                        render();
+                    }).bind(this, i, sub.header));
+                } else {
+                    sub.header = new UI.Text(i);
+                }
+
                 if( sub.meta.type == 'array' ) sub.header.setWidth('200px');
                 else sub.header.setWidth('90px');
-
-                sub.header.onChange((function(i, title){
-                    var newKey = title.getValue().trim();
-
-                    if( newKey == i )
-                        return;
-
-                    if( newKey != '' )
-                        arr[newKey] = arr[i];
-
-                    delete arr[i];
-
-                    render();
-                }).bind(this, i, sub.header));
-
                 e.add( sub.header );
 
                 var factory = scope.factories[ sub.meta.type ];
@@ -184,20 +209,21 @@ UI.Meta.prototype.factories = {
                 e.add( new UI.Row() );
             }
 
-
-            var newKey = new UI.Input('')
-                .setStyle('margin-right', ['auto'])
-                .setDisplay('block')
-                .setStyle('clear', ['both'])
-                .onChange(function(){
-                    var key = this.getValue().trim();
-                    if( key == '' || key in arr ) return;
-                    arr[key] = meta.default;
-                    this.setValue('');
-                    render();
-                });
-            newKey.dom.setAttribute( 'placeholder', 'new ' + obj.key );
-            e.add( newKey );
+            if( meta.canResize !== false ){
+                var newKey = new UI.Input('')
+                    .setStyle('margin-right', ['auto'])
+                    .setDisplay('block')
+                    .setStyle('clear', ['both'])
+                    .onChange(function(){
+                        var key = this.getValue().trim();
+                        if( key == '' || key in arr ) return;
+                        arr[key] = meta.default;
+                        this.setValue('');
+                        render();
+                    });
+                newKey.dom.setAttribute( 'placeholder', 'new ' + obj.key );
+                e.add( newKey );
+            }
 
             obj.value = arr;
             arr = Object.assign({}, arr);
@@ -221,11 +247,14 @@ UI.Meta.prototype.factories = {
             e.clear();
             for( var i=0; i<arr.length; ++i ){
                 e.add(new UI.Break());
+
+                var subtype = meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype;
+                if( typeof subtype === "string" ) subtype = {type:subtype};
                 
                 var sub = {
                     context: obj.context,
 
-                    meta:  meta.meta || {type:meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype},
+                    meta:  meta.meta || subtype,
                     index: i,
                     
                     get value(){ return arr[ this.index ]; },

@@ -334,12 +334,12 @@ select {
 }
 .graph_output_MI{
   left: -0.5em;
-  top: 1em;
+  top: 0.5em;
   cursor: pointer;
 }
 .graph_output_MO{
   right: -0.5em;
-  top: 1em;
+  top: 0.5em;
   cursor: pointer;
 }
 .graph_connection_MO, .graph_connection_MI{
@@ -350,12 +350,12 @@ select {
 .graph_connection_MO:after{
   content:"";
   left: -0.8em;
-  top:0.25em;
+  top: calc(50% - 0.3em);
 }
 .graph_connection_MI:after{
   content:"";
   right: -0.8em;
-  top:0.25em;
+  top: calc(50% - 0.3em);
 }
 
 #graph_nodes {
@@ -365,6 +365,7 @@ select {
 	right: 0;
 	bottom: 0;
 	overflow: auto;
+	z-index: -1;
 }
 
 #graph_nodes SVG{

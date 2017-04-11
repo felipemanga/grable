@@ -29,6 +29,7 @@
     "cmp.SnapToGround":{"threejs":true, "help":"This component puts the node on the ground when the onReady event is fired."},
     "cmp.Spriter":{"threejs":true},
     "cmp.State":{"phaserjs":true, "threejs":true},
+    "cmp.StateMachine":{"phaserjs":true, "threejs":true},
     "cmp.ThreeDirectionalLight":{"threejs":true, "help":"This component lets you configure the DirectionalLight's camera, that seems to have odd defaults."},
     "cmp.ThreeTerrain":{"phaserjs":false, "threejs":true, "help":"Use this on a plane.\nThis component modifies the scene node into a pseudo-random terrain.\nTerrain generation by Felipe Manga\nSimplex noise by Sean McCullough banksean@gmail.com\nMersenne-Twister by Sean McCullough, Makoto Matsumoto and Takuji Nishimura"},
     "cmp.ThreeTreeGen":{ "threejs":true },

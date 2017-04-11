@@ -3,6 +3,7 @@
 
 
 var Graph = function ( editor ) {
+    var types, nodeList;
 
 	var signals = editor.signals;
 
@@ -21,7 +22,16 @@ var Graph = function ( editor ) {
 
     var nodes = new UI.Panel();
     nodes.setId('graph_nodes');
+    nodes.setZIndex(-1);
     container.add( nodes );
+
+    var classSelect = new UI.Select();
+    var btnInstance = new UI.Button('ADD');
+    btnInstance.onClick(function(){
+        instanceNode( { type:classSelect.getValue(), x:container.dom.clientWidth * 0.5 - 100, y:container.dom.clientHeight*0.5 - 50 } );
+    });
+    header.add( classSelect );
+    header.add( btnInstance );
 
 	var buttonSVG = ( function () {
 		var svg = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
@@ -182,16 +192,18 @@ function Node( desc, values ){
         className:'graph_node'
     });
 
+    var label = desc._label || values.type;
+
     var title = new UI.Meta({
         context:values,
-        meta: desc[ '@'+values.type ],
-        key: values.type,
-        default: desc[ values.type ]
+        meta: desc[ '@'+label ] || {type:'unknown'},
+        key: label,
+        default: desc[ label ]
     });
 
-    title.dom.setAttribute('title', values.type);
+    title.dom.setAttribute('title', label);
 
-    title.setValue( values.type in values ? values[values.type] : desc[values.type] );
+    title.setValue( label in values ? values[label] : desc[label] );
 
     title.onChange(function(){ });
 
@@ -230,12 +242,12 @@ function Node( desc, values ){
 
   if( mode === "MO" ){
     for( var k in desc ){
-        if( k[0] != '@' || k == '@' + values.type ) continue;
+        if( k[0] != '@' || k == '@' + label ) continue;
         this.addInput( k.substr(1) );
     }
   }else{
     for( var k in desc ){
-        if( k[0] != '@' || k == '@' + values.type ) continue;
+        if( k[0] != '@' || k == '@' + label ) continue;
         this.addInput( k.substr(1), desc, values );
     }
   }
@@ -429,10 +441,21 @@ Node.prototype.initUI = function(){
 
 	return container;
 
+    function instanceNode( srcnode, init ){
+        var meta = types[srcnode.type];
+        if( !meta ) return;
+
+        var node = nodeList[ nodeList.length ] = new Node( meta, srcnode );
+        
+        if( init !== false )
+            node.initUI();        
+    }
+
 
 // // ========
     function editGraph( script, _mode ){
         mode = (script.config && script.config.mode) || "MI";
+
         
         nodes.clear();
         nodes.dom.appendChild( svg );
@@ -440,16 +463,17 @@ Node.prototype.initUI = function(){
         while( svg.childNodes.length )
             svg.removeChild( svg.childNodes[0] );
 
-        var type = script.config && script.config.nodes || {};
-        var src = script.source;
-        var nodeList = [];
-        for( var i=0; i<src.length; ++i ){
-            var srcnode = src[i];
-            var meta = type[srcnode.type];
-            if( !meta ) continue;
+        types = script.config && script.config.types || {};
 
-            var node = new Node( meta, srcnode );
-            nodeList[ nodeList.length ] = node;
+        var typeIndex = {};
+        for( var k in types )
+            typeIndex[k] = k;
+        classSelect.setOptions(typeIndex);
+
+        var src = script.source || [];
+        nodeList = [];
+        for( var i=0; i<src.length; ++i ){
+            instanceNode( src[i], false );
         }
 
         for( i=0; i<nodeList.length; ++i )

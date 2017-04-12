@@ -3,7 +3,7 @@
 
 
 var Graph = function ( editor ) {
-    var types, nodeList;
+    var types, nodeList, nodeMap;
 
 	var signals = editor.signals;
 
@@ -28,7 +28,7 @@ var Graph = function ( editor ) {
     var classSelect = new UI.Select();
     var btnInstance = new UI.Button('ADD');
     btnInstance.onClick(function(){
-        instanceNode( { type:classSelect.getValue(), x:container.dom.clientWidth * 0.5 - 100, y:container.dom.clientHeight*0.5 - 50 } );
+        instanceNode( { type:classSelect.getValue(), _x:container.dom.clientWidth * 0.5 - 100, _y:container.dom.clientHeight*0.5 - 50 } );
     });
     header.add( classSelect );
     header.add( btnInstance );
@@ -75,6 +75,31 @@ var Graph = function ( editor ) {
         editGraph( script );        
 
     });
+
+    var hnd = null;
+    function onChange(force){
+
+        if( hnd ) clearTimeout(hnd);
+
+        hnd = null;
+
+        if( !force ){
+
+            hnd = setTimeout(onChange.bind(null, true), 1000);
+            return;
+
+        }
+
+        var ret = [];
+        for( var i=0, node; node=nodeList[i]; ++i ){
+
+            ret[ret.length] = node.toJSON();
+
+        }
+
+        currentScript.onChange( ret );
+        
+    }
 
 
 // the following is a modified version of https://codepen.io/xgundam05/pen/KjqJn.
@@ -146,6 +171,8 @@ nodes.dom.onmousemove = function(e){
 
         dragging.updatePosition();
 
+        onChange();
+
     }
 
 
@@ -188,9 +215,32 @@ function GetFullOffset(element){
 }
 
 function Node( desc, values ){
+    this.uuid = values._uuid || THREE.Math.generateUUID();
+    this.values = values;
+
+    nodeMap[ this.uuid ] = this;
+
     this.domElement = DOC.create('div', {
         className:'graph_node'
-    });
+    }, 
+    [
+        ["div", {
+            id:'btnDelete',
+            text:'x', 
+            onclick:this.delete.bind(this), 
+            style:{
+                float:'right', 
+                backgroundColor:'#A55', 
+                color:'white',
+                padding:'0px 5px',
+                borderRadius: '3px',
+                boxSizing: 'border-box',
+                height: '18px',
+                marginTop: '2px',
+                cursor: 'pointer'
+            }
+        }]
+    ]);
 
     var label = desc._label || values.type;
 
@@ -205,9 +255,14 @@ function Node( desc, values ){
 
     title.setValue( label in values ? values[label] : desc[label] );
 
-    title.onChange(function(){ });
+    title.onChange(function(){
+        values[ label ] = this.getValue();
+        onChange();
+    });
 
     this.domElement.appendChild( title.dom );
+    this.titleDom = title.dom;
+
 
 //   // DOM Element creation
 //   this.domElement = document.createElement('div');
@@ -228,6 +283,7 @@ function Node( desc, values ){
       var tmp = mouse.currentInput;
       mouse.currentInput = null;
       that.connectTo(tmp);
+      onChange();
     }
     e.stopPropagation();
   };
@@ -257,6 +313,8 @@ function Node( desc, values ){
 function NodeInput(name, desc, values ){
   this.name = name;
   this.node = null;
+  this.parentNode = null;
+  this.values = values;
   
   // The dom element, here is where we could add
   // different input types
@@ -276,7 +334,10 @@ function NodeInput(name, desc, values ){
 
     title.setValue( name in values ? values[name] : desc[name] );
 
-    title.onChange(function(){ });
+    title.onChange(function(){
+        values[ name ] = this.getValue();
+        onChange();
+    });
 
     this.domElement.appendChild( title.dom );      
   } else {
@@ -323,8 +384,27 @@ NodeInput.prototype.getAttachPoint = function(){
   };
 };
 
+Node.prototype.toJSON = function(){
+    var obj = Object.assign({}, this.values);
+    var edges = [];
+    var paths = this.attachedPaths;
+    for( var i=0; i<paths.length; ++i ){
+        var path = paths[i];
+        edges[edges.length] = [path.input.parentNode.uuid, path.input.name];
+    }
+    for( var i=0; i<this.inputs.length; ++i ){
+        var input = this.inputs[i];
+        obj[ input.name ] = input.values[ input.name ];
+    }
+    obj._uuid = this.uuid;
+    obj._edges = edges;
+    obj._x = this.domElement.offsetLeft;
+    obj._y = this.domElement.offsetTop;
+    return obj;
+};
+
 Node.prototype.getOutputPoint = function(){
-  var tmp = this.domElement.firstElementChild;
+  var tmp = this.titleDom;
   var offset = GetFullOffset(tmp);
   return {
     x: mode == "MI" ? offset.left : offset.left + tmp.offsetWidth,
@@ -335,9 +415,36 @@ Node.prototype.getOutputPoint = function(){
 Node.prototype.addInput = function(name, desc, context){
   var input = new NodeInput(name, desc, context);
   this.inputs.push(input);
+  input.parentNode = this;
   this.domElement.appendChild(input.domElement);
   
   return input;
+};
+
+Node.prototype.delete = function(){
+    var index = nodeList.indexOf( this );
+    if( index == -1 ) return;
+
+    var aPaths = this.attachedPaths;
+    while( aPaths.length )
+        this.detachInput( aPaths[0].input );
+
+
+    this.inputs.forEach(function(input){
+        if( input.node ) input.node.detachInput( input );
+    });
+
+    delete nodeMap[ this.uuid ];
+
+    nodeList.splice( index, 1 );
+
+    onChange();
+
+    if( !this.domElement || !this.domElement.parentNode )
+        return;
+
+    this.domElement.parentNode.removeChild( this.domElement );
+
 };
 
 Node.prototype.detachInput = function(input){
@@ -356,6 +463,8 @@ Node.prototype.detachInput = function(input){
   if(this.attachedPaths.length <= 0){
     this.domElement.classList.remove('graph_connected');
   }
+
+  onChange();
 };
 
 Node.prototype.ownsInput = function(input){
@@ -411,18 +520,42 @@ Node.prototype.connectTo = function(input){
 };
 
 Node.prototype.moveTo = function(point){
-  this.domElement.style.top = point.y + 'px';
-  this.domElement.style.left = point.x + 'px';
+  this.domElement.style.top = point._y + 'px';
+  this.domElement.style.left = point._x + 'px';
   this.updatePosition();
 };
 
 Node.prototype.initUI = function(){
   var that = this;
+
+  if( this.values && this.values._edges ){
+
+      for( var i=0, edge; (edge=this.values._edges[i]); ++i ){
+
+          var target = nodeMap[ edge[0] ];
+          
+          if( !target ) continue;
+
+          for( var j=0, input; (input=target.inputs[j]); ++j ){
+              
+              if( input.name === edge[1] ){
+
+                  this.connectTo( input );
+                  break;
+
+              }
+
+          }
+
+
+      }
+
+  }
   
   // Make draggable
 
   this.domElement.onmousedown = function(event){
-      if( !event.target.matches('INPUT,BUTTON,.value,.graph_connection_MO,.graph_connection_MI,.graph_output_MO,.graph_output_MI') ){
+      if( !event.target.matches('INPUT,BUTTON,.value,.graph_connection_MO,.graph_connection_MI,.graph_output_MO,.graph_output_MI,#btnDelete') ){
     	  dragging = that;
           dragOffsetX = event.offsetX;
           dragOffsetY = event.offsetY;
@@ -433,6 +566,7 @@ Node.prototype.initUI = function(){
   this.domElement.style.position = 'absolute';
   
   nodes.dom.appendChild(this.domElement);
+  
   // Update Visual
   this.updatePosition();
 };
@@ -472,6 +606,8 @@ Node.prototype.initUI = function(){
 
         var src = script.source || [];
         nodeList = [];
+        nodeMap = {};
+
         for( var i=0; i<src.length; ++i ){
             instanceNode( src[i], false );
         }
@@ -479,38 +615,6 @@ Node.prototype.initUI = function(){
         for( i=0; i<nodeList.length; ++i )
             nodeList[i].initUI();
 
-
-// // Node 1
-// var node = new Node('Another One');
-// node.addInput('Value1');
-// node.addInput('Value2');
-// node.addInput('Value3');
-
-// // Node 2
-// var node2 = new Node('Node 2');
-// node2.addInput('Text In');
-// node2.addInput('Value 5');
-
-// // Node 3
-// var node3 = new Node('Something Else');
-// node3.addInput('Color4');
-// node3.addInput('Position');
-// node3.addInput('Noise Octaves');
-
-// // Move to initial positions
-// node.moveTo({x: 150, y: 20});
-// node2.moveTo({x: 20, y: 70});
-// node3.moveTo({x:300, y:150});
-
-// // Connect Nodes
-// node.connectTo(node2.inputs[0]);
-// node3.connectTo(node2.inputs[1]);
-// node3.connectTo(node.inputs[0]);
-
-// // Add to DOM
-// node.initUI();
-// node2.initUI();
-// node3.initUI();        
     }
 
 };

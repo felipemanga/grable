@@ -329,6 +329,9 @@ select {
   position:relative;
   cursor:pointer;
   width:100%;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #777;
+  margin-bottom: 5px;
 }
 .graph_connection_MO:after{
   content:"";

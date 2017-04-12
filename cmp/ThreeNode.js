@@ -4,7 +4,12 @@ CLAZZ("cmp.ThreeNode", {
 
     CONSTRUCTOR:function(){
         var entity = this.entity, script;
+        
+        if( this.asset.name )
+            this.gameState.blackboard[ this.asset.name ] = this.entity.blackboard;
+
         this.setNode( this.asset );
+
         this.entity._addMethod( this.entity, "getEntity" + this.asset.uuid, function(){ return this; });
 
         function addComponent( name, data ){

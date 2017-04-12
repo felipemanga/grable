@@ -153,6 +153,11 @@ UI.Meta.prototype.factories = {
             for( var i in arr ){
                 var subtype = meta.subtypes && meta.subtypes[i] ? meta.subtypes[i] : meta.subtype;
                 if( typeof subtype === "string" ) subtype = {type:subtype};
+
+                if( !(meta.meta || subtype) ){
+                    if( !meta.canResize ) continue;
+                    else subtype = {type:'undefined'};
+                }
                 
                 var sub = {
                     context: obj.context,

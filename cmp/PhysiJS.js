@@ -139,8 +139,8 @@ CLAZZ("cmp.PhysiJS", {
                     if( !entity.isAlive || !other.entity.isAlive )
                         return;
 
-                    var cb = entity["onHit" + other.entity.blackboard.physiJS.name];
-                    if( scope.node && other.entity.blackboard.physiJS.node && cb )
+                    var cb = entity["onHit" + other.entity.physiJS.name];
+                    if( scope.node && other.entity.physiJS.node && cb )
                         cb.call(entity, other.entity, linear, angular);
                 });
 

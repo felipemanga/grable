@@ -2,7 +2,7 @@ CLAZZ("cmp.SpeechBalloon", {
 
 INJECT:[
     "entity",
-    "gameState",
+    "game",
     "languages",
     "defaultStyle", 
     "defaultTime", 
@@ -277,12 +277,12 @@ CLAZZ("cmp.SpeechBalloon.Service", {
             if( !talker || !talker.entity )
                 return;
 
-            var sceneId = talker.entity.gameState.scene.id;
+            var sceneId = talker.entity.game.scene.id;
 
             var instance = this.instances[ sceneId ];
             
             if( !instance )
-                this.instances[ sceneId ] = instance = new cmp.SpeechBalloon.Service( talker.entity.pool, sceneId, talker.gameState.renderer.domElement );
+                this.instances[ sceneId ] = instance = new cmp.SpeechBalloon.Service( talker.entity.pool, sceneId, talker.game.renderer.domElement );
             
             instance.add( talker );
 
@@ -293,7 +293,7 @@ CLAZZ("cmp.SpeechBalloon.Service", {
             if( !talker || !talker.entity )
                 return;
 
-            var sceneId = talker.entity.gameState.scene.id;
+            var sceneId = talker.entity.game.scene.id;
 
             var instance = this.instances[ sceneId ];
             

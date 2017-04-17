@@ -115,6 +115,48 @@ CLAZZ("cmp.SpeechBalloon.Service", {
         this.canvas = canvas;
         this.talkers = [];
 
+        DOC.create("style", {
+            before:document.head.firstElementChild, 
+            text:[
+
+                '.speech-balloon, .speech-caption, .speech-large {',
+                    'position:absolute;',
+                    'box-sizing: border-box;',
+                    'background-color: rgba(0,0,0,0.7);',
+                    'color: white;',
+                '}',
+
+                '.speech-balloon {',
+                    'padding: 5px;',
+                    'border-radius: 5px;',
+                '}',
+
+                '.speech-caption {',
+                '}',
+
+                '.speech-large {',
+                '}',
+
+                '.speech-caption, .speech-large {',
+                    'padding: 15px;',
+                    'font-size: 1.5em;',
+                    'bottom: 0;',
+                    'left: 0;',
+                    'width: 100%;',
+                    'border-radius: 5px 5px 0px 0px;',
+                '}',
+
+                '.speech-caption:before, .speech-large:before {',
+                    'content: attr(talker);',
+                    'position: absolute;',
+                    'top: -1em;',
+                    'left: 1em;',
+                    'font-weight: bold;',
+                '}'
+
+            ].join("\n")
+        });
+
     },
 
     add:function( talker ){
@@ -178,6 +220,7 @@ CLAZZ("cmp.SpeechBalloon.Service", {
         if( element.style.display == "none" ){
             element.style.display = "";
             element.innerHTML = obj.text;
+            element.setAttribute( "talker", obj.talker );
         }
 
         obj.time -= delta;
@@ -204,12 +247,8 @@ CLAZZ("cmp.SpeechBalloon.Service", {
             el = container[ style + "El" ] = DOC.create(
                     "div", 
                     {
-                        class:"speech-" + style,
-                        style:{
-                            display:"none",
-                            position:"absolute",
-                            color:"white"
-                        }
+                        className:"speech-" + style,
+                        style:{ display:"none" }
                     }, 
                     canvas.parentElement
                 );
@@ -223,7 +262,8 @@ CLAZZ("cmp.SpeechBalloon.Service", {
             time: line.time || talker.defaultTime,
             priority: line.priority || talker.defaultPriority,
             cancelable: line.cancelable || talker.defaultCancelable,
-            text: text
+            text: text,
+            talker: talker.entity.blackboard.name || (talker.entity.asset && talker.entity.asset.name)
         };
 
         queue.push( obj );

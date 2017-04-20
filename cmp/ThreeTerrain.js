@@ -291,34 +291,68 @@ CLAZZ("cmp.ThreeTerrain", {
 
     getHeightAtXZ:function(x, z){
         var asset = this.entity.asset;
-        if( !asset.geometry.boundingBox )
-            asset.geometry.computeBoundingBox();
-
         var param = this.asset.geometry.parameters;
 
         if( arguments.length == 1 ){
             z = x.z;
-            x = x.z;
+            x = x.x;
         }
 
-        var box = asset.geometry.boundingBox;
-        var w = box.max.x - box.min.x,
-            h = box.max.y - box.min.y;
+        var w = param.widthSegments + 1;
+        var map = this.heightmap;
 
-        x -= asset.position.x + box.min.x;
-        z -= asset.position.z + box.min.y;
-        x /= w;
-        z /= h;
-        if( x<0 || x>1 || z<0 || z>1 )
+        var yi = ((z - asset.position.z + param.height / 2) / param.height / asset.scale.z) * (w-1),
+            xi = ((x - asset.position.x + param.width / 2) / param.width / asset.scale.x) * (w-1);
+
+        var fy = Math.floor(yi), cy = fy + 1;
+        var fx = Math.floor(xi), cx = fx + 1;
+
+        if( fy < 0 || fx < 0 || cy >= w || cx >= w )
             return -1;
+            
+        var a, b, c;
+        var y1, y2, y3, x1, x2, x3, z1, z2, z3;
+        if( xi-fx < 1-(yi-fy) ){
+            y1 = fy; x1 = fx;
+            y2 = cy; x2 = fx;
+            y3 = fy; x3 = cx;
+        }else{
+            y1 = cy; x1 = cx;
+            x2 = fx; y2 = cy;
+            x3 = cx; y3 = fy;
+        }
+        z1 = map[y1*w+x1];
+        z2 = map[y2*w+x2];
+        z3 = map[y3*w+x3];
 
-		// z = 1 - z;
-        x *= param.widthSegments + 1;
-        z *= param.heightSegments + 1;
+        var d = (y2-y3)*(x1-x3) + (x3-x2)*(y1-y3);
 
-        var y = this.heightmap[ Math.round( z ) * (param.widthSegments+1) + Math.round( x ) ];
+        var d1 = (y2-y3)*(xi-x3) + (x3-x2)*(yi-y3);
+        d1 /= d;
 
-        return y * asset.scale.z + asset.position.y;
+        var d2 = (y3-y1)*(xi-x3) + (x1-x3)*(yi-y3);
+        d2 /= d;
+
+        var d3 = 1 - d1 - d2;
+
+        c = d1*z1 + d2*z2 + d3*z3;
+
+        fy *= w; cy *= w;
+
+        // if( xi < yi ){
+        //     normal.x = nmap[(fy+fx)*3  ];
+        //     normal.y = nmap[(fy+fx)*3+1];
+        //     normal.z = nmap[(fy+fx)*3+2];
+        // }else{
+        //     normal.x = nmap[(cy+cx)*3  ];
+        //     normal.y = nmap[(cy+cx)*3+1];
+        //     normal.z = nmap[(cy+cx)*3+2];
+        // }
+
+
+        return ( c * asset.scale.z + asset.position.y ) || 0;
+
+
     }
 });
 

@@ -99,6 +99,7 @@
 		<script src="js/libs/app.js"></script>
 		<script src="js/Player.js"></script>
 		<script src="js/Script.js"></script>
+		<script src="js/Graph.js"></script>
 
 		<script src="js/examples/effects/VREffect.js"></script>
 		<script src="js/examples/controls/VRControls.js"></script>
@@ -195,6 +196,9 @@
 
 			var script = new Script( editor );
 			document.body.appendChild( script.dom );
+
+			var graph = new Graph( editor );
+			document.body.appendChild( graph.dom );
 
 			var player = new Player( editor );
 			document.body.appendChild( player.dom );

@@ -4,7 +4,12 @@ CLAZZ("cmp.ThreeNode", {
 
     CONSTRUCTOR:function(){
         var entity = this.entity, script;
+        
+        if( this.asset.name )
+            this.gameState.blackboard[ this.asset.name ] = this.entity.blackboard;
+
         this.setNode( this.asset );
+
         this.entity._addMethod( this.entity, "getEntity" + this.asset.uuid, function(){ return this; });
 
         function addComponent( name, data ){
@@ -44,6 +49,24 @@ CLAZZ("cmp.ThreeNode", {
     destroy:function(){
         if( this.asset && this.asset.parent )
             this.asset.parent.remove( this.asset );
+    },
+
+    getScreenPosition: function(){
+
+        var vector = new THREE.Vector3();
+        var canvas = this.gameState.renderer.domElement;
+
+        vector
+            .copy( this.asset.position )
+            .project( this.gameState.camera );
+
+        // map to 2D screen space
+        vector.x = Math.round( (   vector.x + 1 ) * canvas.width  / 2 );
+        vector.y = Math.round( ( - vector.y + 1 ) * canvas.height / 2 );
+        vector.z = 0;
+
+        return vector;
+
     },
 
     '@setPosition':{ position:{type:'vec3f'} },
@@ -144,6 +167,9 @@ CLAZZ("cmp.ThreeNode", {
             keepPosition:true,
             keepRotation:true,
             keepScale:true,
+            setEntityPosition:true,
+            setEntityRotation:true,
+            setEntityScale:true,
             parent:true,
             remove:true,
             dispose:true
@@ -166,9 +192,9 @@ CLAZZ("cmp.ThreeNode", {
             if( opts.dispose && oldAsset.dispose ) oldAsset.dispose();
         }
 
-        entity.position = asset.position;
-        entity.rotation = asset.rotation;
-        entity.scale    = asset.scale;
+        if( opts.setEntityPosition ) entity.position = asset.position;
+        if( opts.setEntityRotation ) entity.rotation = asset.rotation;
+        if( opts.setEntityScale ) entity.scale    = asset.scale;
         asset.entity = this.entity;
         // asset.userData.entity = this.entity; // breaks editor
     },

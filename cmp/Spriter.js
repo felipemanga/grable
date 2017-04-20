@@ -3,16 +3,19 @@
 
 CLAZZ("cmp.Spriter", {
 
-    INJECT:["entity", "game", "sconURL", "imagePath", "enabled", "skeleton", "animation"],
+    INJECT:[ "entity", "game", "sconURL", "imagePath", "enabled", "skeleton", "animation", "layerSeparation" ],
 
     "@enabled":{type:"bool"},
 	enabled:true,
+
+    "@layerSeparation":{type:"float", min:0},
+    layerSeparation:1,
 
     "@sconURL":{type:"string"},
     sconURL:"resources/scons/default.scon",
 
     "@imagePath":{type:"string"},
-    imagePath:"resources/images/",
+    imagePath:"resources/image/",
 
     "@skeleton":{type:"enum", async:"getSkeletonList"},
 	skeleton:"",
@@ -29,9 +32,18 @@ CLAZZ("cmp.Spriter", {
 	_prevAnim:null,
 
 	create:function(){
+        if( !this.enabled ) return;
+
         this.entity.pool.call("onLoadingAsyncStart");
-        this.entity.call( "loadJSON", this.sconURL, this._onGotSCON.bind(this) );
+        var ldr = new THREE.SconLoader();
+        ldr.setTexturePath( this.imagePath );
+        ldr.load( this.sconURL, this._onGotSCON.bind(this) );
 	},
+
+    onTick:function( delta ){
+        if( this.asset )
+            this.asset.setDelta( delta );
+    },
 
     _editorGetSCON:function( arg, cb ){
         var scon = this.scon;
@@ -100,436 +112,681 @@ CLAZZ("cmp.Spriter", {
     },
 
     _onGotSCON:function( scon ){
-        this.sconJSON = scon;
-		this.scon = new Scon( scon.entity, scon.folder );
-        cmp.Spriter.Server.createNode( this );
-    },
-
-    _onCreateNode:function( node ){
+        var node = new THREE.SconSprite( scon );
         this.asset = node;
-        this.buffer = this.sconJSON.buffer;
-        this.entity.setNode( node );
+
+        node.separation = this.layerSeparation;
+
+        var placeholder = this.entity.getNode();
+        if( !placeholder.geometry.boundingBox )
+            placeholder.geometry.computeBoundingBox();
+
+        node.geometry.boundingBox = placeholder.geometry.boundingBox;
+        node.setPositionOffset( 0, node.geometry.boundingBox.min.y, 0 );
+        
+        this.asset.setSkeleton( this.skeleton );
+        this.asset.setAnimation( this.animation );
+        this.asset.play();
+
+        this.entity.setNode( node, {} );
         this.entity.pool.call("onLoadingAsyncEnd");
     },
 
 	setEnabled:function(e){
 		if( e == this.enabled ) return;
 		this.enabled = e;
-	},
-	
-	onPostTick:function( delta ){
-		if( this.animation != this._prevAnim ) this.time = 0;
-		else this.time += delta * 1000;
-		this._prevAnim = this.animation;
-		
-		if( !this.enabled || !this.scon ) return;
+	}	
 
-        var scale = this.game.height * 0.25; // / this.game.camera.aspect;
-
-        if( this.asset.material.type == 'ShaderMaterial' )
-            this.asset.material.uniforms.scale.value = scale;
-		
-		var scon = this.scon;
-		var folder = scon.folder;
-		var entityId = scon.getEntityId( this.skeleton );
-		var animId   = scon.getAnimationId(entityId, this.animation);
-        var geometry = this.buffer.array, z = 0, p = 0, count = 0;
-        
-        var textureSize = this.asset.material.map.image.width;
-
-		scon.setCurrentTime( this.time, {}, entityId, animId || 0, function( obj ) {
-            count++;
-			var meta = folder[ obj.folder ].file[ obj.file ];
-            var angle = 0;
-			if( "angle" in obj ) angle = obj.angle;
-
-            if( "x" in obj ) geometry[p++] = obj.x;
-            else geometry[p++] = 0;
-
-            if( "y" in obj ) geometry[p++] = obj.y;
-            else geometry[p++] = 0;
-            
-            geometry[p++] = z-=15;
-
-            if( "scale_x" in obj  ) geometry[p++] = obj.scale_x;
-            else geometry[p++] = 1;
-			
-            if( "scale_y" in obj  ) geometry[p++] = obj.scale_y;
-            else geometry[p++] = 1;
-            
-            if( !isNaN(obj.pivot_x) ) geometry[p++] = obj.pivot_x;
-            else geometry[p++] = meta.pivot_x;
-
-            if( !isNaN(obj.pivot_y ) ) geometry[p++] = obj.pivot_y;
-            else geometry[p++] = meta.pivot_y;
-
-            
-            geometry[p++] = - angle / 180 * Math.PI - Math.PI*0.5;
-
-            geometry[p++] = meta.x;
-            geometry[p++] = meta.y;
-            geometry[p++] = meta.w;
-            geometry[p++] = meta.h;
-		});
-
-        this.asset.geometry.drawRange.count = count;
-        this.buffer.needsUpdate = true;
-	}
 });
 
 
-CLAZZ("cmp.Spriter.Server", {
-    INJECT:["pool", "scene"],
+(function (){
 
-    vertexSize:
-        3 // position
-        + 2 // scale
-        + 2 // pivot
-        + 1 // rotation
-        + 4 // uv
-        ,
+    function SconSprite( scon ){
+        var animation, skeleton, time = 0, delta = 1/30, dirty = true, playing = false;
 
-    CONSTRUCTOR:function(){
-        this.pool.add(this);
-        cmp.Spriter.Server.instances[ this.scene.id ] = this;
-    },
+        var offsetX=0, offsetY=0, offsetZ=0;
 
-    destroy:function(){
-        this.pool.remove(this);
-        delete cmp.Spriter.Server.instances[ this.scene.id ];
-    },
+        THREE.Object3D.call( this );
 
-    _createNode:function( cmp ){
-    	var scope = this;
-        this._loadImages( cmp.imagePath, cmp.sconJSON, function( texture ){
-            var geo = scope._createGeometry( cmp.sconJSON, texture.image.width );
-            var mat = scope._createMaterial( texture );
-            cmp._onCreateNode( new THREE.Points( geo, mat ) );
-        } );
-    },
+        this.isMesh = true;
+        this.frustumCulled = false;
+		this.drawMode = THREE.TrianglesDrawMode;
 
-    _loadImages:function( imagePath, scon, cb ){
-        if( scon.atlas && imagePath in scon.atlas )
-            return cb( scon.atlas[ imagePath ] );
+        this.type = 'SconSprite';
 
-        var files = [], queueSize = 1, scope = this;
+        this.scon = scon;
 
-        for( var i=0, l=scon.folder.length; i<l; ++i ){
+        this.buffer = null;
 
-            var file = scon.folder[i].file;
-            for( j=0, fl=file.length; j<fl; ++j ){
+        if( scon ){
 
-                files[files.length] = file[j];
-                if( file[j].image ) continue;
-
-                queueSize++;
-                this.pool.call( "loadImage", imagePath + file[j].name, onLoadImage.bind(this, file[j]) );
-
-            }
+            this.createGeometry( scon );
+            this.material = new THREE.SconSpriteMaterial( scon );
 
         }
 
-        popQueue();
-
-        return;
-
-        function popQueue(){
-            queueSize--;
-            if( !queueSize ){
-                var atlas = scope._onGotImages( files );
-                if( !scon.atlas ) scon.atlas = {};
-                scon.atlas[ imagePath ] = atlas;
-                cb( scon.atlas[ imagePath ] );
-            }
-        }
-
-        function onLoadImage( file, texture ){
-            file.image = texture.image;
-            file.w = texture.image.width;
-            file.h = texture.image.height;
-            popQueue();
-        }
-    },
-
-    _onGotImages:function( files ){
-        files.sort(function(a, b){
-            var A = a.w*a.h,
-                B = b.w*b.h;
-            if( A > B ) return -1;
-            if( A < B ) return 1;
-            return 0;
+        Object.defineProperty( this, "separation", {
+            set:function(x){ this.material.uniforms.separation.value = x || 0; },
+            get:function(){ return this.material.uniforms.separation.value; }
         });
 
-        var packer = new GrowingPacker();
-        packer.fit( files );
+        this.setScon = function( _scon ){
 
-        var size = powerOfTwo( Math.max( packer.root.w, packer.root.h ) );
-        var canvas = DOC.create("canvas", {width:size, height:size});
-        var ctx = canvas.getContext( '2d' );
+            this.scon = scon = _scon;
 
-        for(var i = 0 ; i < files.length ; i++) {
+        };
 
-            var file = files[i];
-            if (file.fit) {
-                file.x = file.fit.x / size;
-                file.y = file.fit.y / size;
-                file.w = file.w / size;
-                file.h = file.h / size;
-                ctx.drawImage( file.image, file.fit.x, file.fit.y );
-            } else {
-                console.warn("NO FIT: ", file)
+        this.setSkeleton = function( name ){
+
+            skeleton = scon.getEntityId( name );
+
+        };
+
+        this.setAnimation = function( name ){
+
+            var id = scon.getAnimationId( skeleton, name );
+
+            if( id != animation ){
+
+                animation = id;
+                time = 0;
+
             }
-        
+
+        };
+
+        this.setPositionOffset = function( x, y, z ){
+
+            offsetX = x || 0;
+            offsetY = y || 0;
+            offsetZ = z || 0;
+
         }
 
-        var texture = new THREE.Texture( canvas );
-        texture.needsUpdate = true;
-        return texture;
-    },    
+        this.isDirty = function(){ return dirty || playing; };
 
-    _createGeometry:function( scon, textureSize ){
-        scon.useCount = (scon.useCount||0) + 1;
+        this.play = function(){ playing = true; };
 
-        if( scon.geometry )
-            return scon.geometry;
+        this.stop = function(){ playing = false; };
 
-        var points = 0;
-        var folder = scon.folder;
-        for( var i=0, l=folder.length; i<l; ++i ){
-            var files = folder[i].file;
-            points += files.length * this.vertexSize;
-        }
+        this.setTime = function( t ){
 
-        var arr = new Float32Array( points );
-        arr.fill(0xFF);
+            time = t || 0;
+            dirty = true;
 
-        var ibuff = new THREE.InterleavedBuffer( arr, this.vertexSize );
-        ibuff.setDynamic( true );
+        };
 
-        var geometry = new THREE.BufferGeometry();
+        this.setDelta = function( _delta ){
 
-        p = 0;
-        var position = new THREE.InterleavedBufferAttribute( ibuff, 3, p );
-        geometry.addAttribute("position", position); p += 3;
+            delta = _delta;
 
-        var scale = new THREE.InterleavedBufferAttribute( ibuff, 2, p );
-        geometry.addAttribute("boneScale", scale); p += 2;
+        };
 
-        var pivot = new THREE.InterleavedBufferAttribute( ibuff, 2, p );
-        geometry.addAttribute("pivot", pivot); p += 2;
+        this.getSkeletonList = function(){
 
-        var rotation = new THREE.InterleavedBufferAttribute( ibuff, 1, p );
-        geometry.addAttribute("rotation", rotation); p += 1;
+            var ret = [], entities = scon.entity;
 
-        var tex = new THREE.InterleavedBufferAttribute( ibuff, 4, p );
-        geometry.addAttribute("tex", tex); p += 4;
+            for( var i=0, l=entities.length; i<l; ++i )
+                ret.push(entities[i].name);
+                
+            return ret;
+            
+        };
 
-        geometry.drawRange.count = 0;
+        this.getAnimationList = function( skeleton ){
 
-        scon.geometry = geometry;
-        scon.buffer = ibuff;
+            var names = [];
+            if( !scon ) return names;
+            var entities = scon.entity;
+            
+            for( var i=0, l=entities.length; i<l; ++i ){
 
-        return geometry;
-    },
+                if( entities[i].name == skeleton ){
 
-    _createMaterial:function( texture ){
-        // var mat = new THREE.PointsMaterial({size:30});
-        // mat.map = texture;
-        // return mat;
+                    var animations = entities[i].animation;
+                    for( var j=0, al=animations.length; j<al; ++j ){
 
-        var mat = new THREE.ShaderMaterial({
-            fragmentShader: this.fragmentShader,
-            vertexShader: this.vertexShader,
-            uniforms: THREE.UniformsUtils.merge([
-				THREE.UniformsLib.points,
-				THREE.UniformsLib.fog,
-                {
-                    textureSize:{value:texture.image.width}
+                        names[names.length] = animations[j].name;
+
+                    }
+
+                    return names;
+
                 }
-            ])
-        });
 
-        mat.map = mat.uniforms.map.value = texture;
-        mat.alphaTest = 0.5;
-        
-        return mat;
-    },
+            }
+
+            return names;
+
+        };
+
+        var sprites = {};
+
+        this._update = function(){
+            
+            dirty = false;
+            if( playing ){
+
+                time += delta;
+
+            }
+
+            var buffer = this.buffer.array;
+            var geometry = this.geometry;
+
+            geometry.drawRange.count = 0;
+            var i=0, z=0, folder = this.scon.folder;
+
+            var size = this.material.map.image.width;
+
+		    this.scon.setCurrentTime( time * 1000, {}, skeleton || 0, animation || 0, function( obj ) {
+
+    			var meta = folder[ obj.folder ].file[ obj.file ];
+                var fit = meta.fit;
+                
+                var sprite = sprites[ meta.name ];
+
+                if( !sprite ){
+
+                    sprite = sprites[ meta.name ] = {
+                        pivot_x: 0.5,
+                        pivot_y: 0.5,
+                        scale_x: 1,
+                        scale_y: 1,
+                        x:0,
+                        y:0,
+                        angle:0
+                    };
+
+                }
+
+                if( "pivot_x" in meta ) sprite.pivot_x = meta.pivot_x;
+                if( "pivot_y" in meta ) sprite.pivot_y = 1-meta.pivot_y;
+                if( "scale_x" in obj  ) sprite.scale_x = obj.scale_x;
+                if( "scale_y" in obj  ) sprite.scale_y = obj.scale_y;
+                if( "x" in obj ) sprite.x = obj.x;
+                if( "y" in obj ) sprite.y = obj.y;
+                if( "angle" in obj ) sprite.rotation = - obj.angle / 180 * Math.PI - Math.PI*0.5;
+
+                var p = 0;
+
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
+
+                buffer[ i++ ] = meta.width * sprite.pivot_x;
+                buffer[ i++ ] = - meta.height * sprite.pivot_y;
+
+                buffer[ i++ ] = sprite.rotation;
+                buffer[ i++ ] = z;
+                buffer[ i++ ] = meta.x;
+                buffer[ i++ ] = 1 - (meta.y);
+                p++;
+
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
+
+                buffer[ i++ ] = - meta.width * ( 1 - sprite.pivot_x );
+                buffer[ i++ ] = meta.height * ( 1 - sprite.pivot_y );
+
+                buffer[ i++ ] = sprite.rotation;
+                buffer[ i++ ] = z;
+                buffer[ i++ ] = meta.x + meta.w;
+                buffer[ i++ ] = 1 - (meta.y + meta.h);
+                p++;
+
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
+
+                buffer[ i++ ] = - meta.width * ( 1 - sprite.pivot_x );
+                buffer[ i++ ] = - meta.height * sprite.pivot_y;
+
+                buffer[ i++ ] = sprite.rotation;
+                buffer[ i++ ] = z;
+                buffer[ i++ ] = meta.x + meta.w;
+                buffer[ i++ ] = 1 - (meta.y);
+                p++;
 
 
-STATIC:{
-    instances:{},
 
-    createNode:function( com ){
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
 
-        var scene = com.game.scene;
-        var pool = com.entity.pool;
-        var instance = this.instances[ scene.id ] || CLAZZ.get(cmp.Spriter.Server, {pool, scene});
+                buffer[ i++ ] = meta.width * sprite.pivot_x;
+                buffer[ i++ ] = meta.height * ( 1 - sprite.pivot_y );
 
-        return instance._createNode( com );
+                buffer[ i++ ] = sprite.rotation;
+                buffer[ i++ ] = z;
+                buffer[ i++ ] = meta.x;
+                buffer[ i++ ] = 1 - (meta.y + meta.h);
+                p++;
+
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
+
+                buffer[ i++ ] = - meta.width * ( 1 - sprite.pivot_x );
+                buffer[ i++ ] = meta.height * ( 1 - sprite.pivot_y );
+
+                buffer[ i++ ] = sprite.rotation;
+                buffer[ i++ ] = z;
+                buffer[ i++ ] = meta.x + meta.w;
+                buffer[ i++ ] = 1 - (meta.y + meta.h);
+                p++;
+
+                buffer[ i++ ] = sprite.x + offsetX;
+                buffer[ i++ ] = sprite.y + offsetY;
+                buffer[ i++ ] = offsetZ;
+
+                buffer[ i++ ] = meta.width * sprite.pivot_x;
+                buffer[ i++ ] = - meta.height * sprite.pivot_y;
+
+                buffer[ i++ ] = sprite.rotation;
+                buffer[ i++ ] = z;
+                buffer[ i++ ] = meta.x;
+                buffer[ i++ ] = 1 - (meta.y);
+                p++;
+
+                geometry.drawRange.count += p;
+                z++;
+
+            });
+
+            this.buffer.needsUpdate = true;            
+
+        };
+
+        this.onBeforeRender = SconSprite.prototype.onBeforeRender;
 
     }
-},
+
+    SconSprite.prototype = Object.assign( Object.create( THREE.Object3D.prototype ), {
+
+        constructor: SconSprite,
+
+        onBeforeRender:function(){
+
+            if( this.isDirty() )
+                this._update();
+
+        },
+
+        createGeometry: function(){
+
+            var vertexSize =
+                  3 // position
+                + 2 // offset
+                + 2 // rotation, priority
+                + 2 // uv
+                ;
 
 
-    vertexShader:`
-uniform float scale;
-uniform float textureSize;
+            // allocate enough vertices for the worst-case scenario: every sprite is visible
+            var points = 0;
+            var folder = this.scon.folder;
+            for( var i=0, l=folder.length; i<l; ++i ){
+                var files = folder[i].file;
+                points += files.length * vertexSize * 6;
+            }
+            
+            var arr = new Float32Array( points );
+            arr.fill(0xFF);
+
+            var ibuff = new THREE.InterleavedBuffer( arr, vertexSize );
+            this.buffer = ibuff;
+            ibuff.setDynamic( true );
+
+            var geometry = new THREE.BufferGeometry();
+            this.geometry = geometry;
+            geometry.drawRange.count = 0;
+
+            var p = 0;
+            var position = new THREE.InterleavedBufferAttribute( ibuff, 3, p );
+            geometry.addAttribute("position", position); p += 3;
+
+            var offset = new THREE.InterleavedBufferAttribute( ibuff, 2, p );
+            geometry.addAttribute("offset", offset); p += 2;
+
+            var rotation = new THREE.InterleavedBufferAttribute( ibuff, 1, p );
+            geometry.addAttribute("rotation", rotation); p += 1;
+
+            var priority = new THREE.InterleavedBufferAttribute( ibuff, 1, p );
+            geometry.addAttribute("priority", priority); p += 1;
+
+            var uv = new THREE.InterleavedBufferAttribute( ibuff, 2, p );
+            geometry.addAttribute("uv", uv); p += 2;
+
+        }
+        
+    });
+
+    THREE.SconSprite = SconSprite;
+
+
+    function SconSpriteMaterial( scon ){
+
+        THREE.ShaderMaterial.call( this, {
+            fragmentShader: this.fragmentShader,
+            vertexShader: this.vertexShader,
+
+            lights: true,
+            side: THREE.DoubleSide,
+            
+			uniforms: THREE.UniformsUtils.merge( [
+				THREE.UniformsLib.common,
+				THREE.UniformsLib.aomap,
+				THREE.UniformsLib.lightmap,
+				THREE.UniformsLib.emissivemap,
+				THREE.UniformsLib.fog,
+				THREE.UniformsLib.lights,
+				{
+					emissive: { value: new THREE.Color( 0x000000 ) },
+                    separation: { value: 1 }
+				}
+			])
+
+        });
+        // this.uniforms.diffuse.value.set(0xFFFFFFFF);
+        this.map = this.uniforms.map.value = scon.map;
+        this.alphaTest = 0.5;
+        
+    }
+
+    SconSpriteMaterial.prototype = Object.assign( Object.create( THREE.ShaderMaterial.prototype ), {
+
+        constructor: SconSpriteMaterial,
+        
+        vertexShader:`
+#define LAMBERT
+
+varying vec3 vLightFront;
+
+#ifdef DOUBLE_SIDED
+
+	varying vec3 vLightBack;
+
+#endif
 
 #include <common>
+#include <uv_pars_vertex>
+#include <uv2_pars_vertex>
+#include <envmap_pars_vertex>
+#include <bsdfs>
+#include <lights_pars>
+#include <color_pars_vertex>
 #include <fog_pars_vertex>
+#include <morphtarget_pars_vertex>
+#include <skinning_pars_vertex>
 #include <shadowmap_pars_vertex>
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
 
-attribute vec2 boneScale;
-attribute vec2 pivot;
-attribute vec4 tex;
+attribute vec2 offset;
 attribute float rotation;
+attribute float priority;
 
-varying vec4 vColor;
-varying vec4 vTex;
-varying float aspect;
-varying vec2 RSC;
-varying vec2 vBoneScale;
+uniform float separation;
 
 void main() {
+
+	#include <uv_vertex>
+	#include <uv2_vertex>
+	#include <color_vertex>
+
+	// # include <beginnormal_vertex>
+	// # include <morphnormal_vertex>
+	#include <skinbase_vertex>
+	// # include <skinnormal_vertex>
+	// # include <defaultnormal_vertex>
+
+    vec3 transformedNormal = normalMatrix * vec3(0., 1., 0.);
+
+
 	#include <begin_vertex>
 
-    vec2 absSize = vec2( abs(tex.z * boneScale.x), abs(tex.w * boneScale.y) );
-    float pointSize = max( absSize.x, absSize.y );
-    aspect = tex.z / tex.w;
+    vec2 RSC = vec2( sin(rotation), cos(rotation) );
 
-    float adjrotation = rotation;
+    vec2 rotOffset = vec2(
+        offset.x * RSC.x - offset.y * RSC.y,
+        offset.x * RSC.y + offset.y * RSC.x
+        );
 
-    if( boneScale.x * boneScale.y < 0. )
-        adjrotation = adjrotation;
+    transformed.xy += rotOffset.xy;
 
-    RSC = vec2( sin(adjrotation), cos(adjrotation) );
-    vColor = vec4(1.);
-    vBoneScale = boneScale;
-
-    vec4 origin = modelViewMatrix * vec4( 0, 0, 0, 1. );
-    float size = textureSize * ( scale / - origin.z );
-
-    vec2 offset = (pivot - vec2(0.5)) * size * absSize;
-    vec2 rotOffset;
-    
-    rotOffset.x = offset.x*RSC.x - offset.y*RSC.y;
-    rotOffset.y = offset.x*RSC.y + offset.y*RSC.x;
-
-    transformed.xy = (transformed.xy + rotOffset) / 3.0;
-
-    float z = transformed.z;
-    transformed.z = 0.;
-
+	#include <morphtarget_vertex>
+	#include <skinning_vertex>
 	#include <project_vertex>
 
-    gl_Position.z = (projectionMatrix * (modelViewMatrix * vec4(0., 0., z, 1.))).z;
+    float csz = ( modelViewMatrix * vec4( transformed, 1.0 ) ).z;
 
-    vTex = tex;
-    gl_PointSize = pointSize * size;
+    float epsilon = projectionMatrix[3][2] * ( (priority+1.) * separation / csz );
+
+    gl_Position.z -= epsilon;
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
+
 	#include <worldpos_vertex>
+	#include <envmap_vertex>
+	#include <lights_lambert_vertex>
+
+    vLightBack = vLightFront;
+
 	#include <shadowmap_vertex>
 	#include <fog_vertex>
 
-}   
-    `,
+}        
+        `,
 
-    fragmentShader:`
-#include <common>
-#include <packing>
-#include <map_particle_pars_fragment>
+        fragmentShader: THREE.ShaderChunk.meshlambert_frag
+        
 
-#include <fog_pars_fragment>
-#include <shadowmap_pars_fragment>
-#include <logdepthbuf_pars_fragment>
-#include <clipping_planes_pars_fragment>
+    });
 
-varying vec4 vTex;
-varying vec4 vColor;
-varying vec2 RSC;
-varying vec2 vBoneScale;
-varying float aspect;
-
-void main() {
-
-	#include <clipping_planes_fragment>
-
-	vec3 outgoingLight = vec3( 1.0 );
-	vec4 diffuseColor = vColor;
-
-	#include <logdepthbuf_fragment>
-
-    vec4 bounds = vec4( vTex.x, vTex.x+vTex.z, vTex.y, vTex.y+vTex.w );
-
-    vec2 ftc = vec2( gl_PointCoord.x, 1. - gl_PointCoord.y );
-
-    if( aspect > 1. ){ // wider than tall
-        ftc.y = ftc.y * aspect + (1.-aspect) * 0.5;
-    } else {
-        float iaspect = 1. / aspect;
-        ftc.x = ftc.x * iaspect + (1.-iaspect) * 0.5;
-    }
-    
-
-    if( vBoneScale.x < 0. ) ftc.x = 1. - ftc.x;
-    if( vBoneScale.y < 0. ) ftc.y = 1. - ftc.y;
-    
-    ftc = ftc.xy * vTex.zw + vTex.xy;
-
-    vec2 ttc = ftc - (vTex.xy + vTex.zw * 0.5);
-
-    ftc.x = ttc.x*RSC.x - ttc.y*RSC.y;
-    ftc.y = ttc.x*RSC.y + ttc.y*RSC.x;
-
-    ftc += (vTex.xy + vTex.zw * 0.5);
+    THREE.SconSpriteMaterial = SconSpriteMaterial;
 
 
-    if( ftc.x <= bounds.x || ftc.x >= bounds.y || ftc.y <= bounds.z || ftc.y >= bounds.w ){
-        // diffuseColor = vec4(1.,0.,0.,0.5);
-        discard;
-    }else{
+	function SconLoader( manager ) {
 
-        vec4 mapTexel = texture2D( map, vec2( ftc.x, 1.0 - ftc.y ) );
-        diffuseColor *= mapTexelToLinear( mapTexel );
-    }
+		if ( typeof manager === 'boolean' ) {
 
-	#include <alphatest_fragment>
+			console.warn( 'THREE.JSONLoader: showStatus parameter has been removed from constructor.' );
+			manager = undefined;
 
-	outgoingLight = diffuseColor.rgb;
+		}
 
-	gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
-	#include <premultiplied_alpha_fragment>
-	#include <tonemapping_fragment>
-	#include <encodings_fragment>
-	#include <fog_fragment>
+		this.withCredentials = false;
 
-}    
-    `,
+	}
 
-});
+	Object.assign( SconLoader.prototype, {
+
+		load: function( url, onLoad, onProgress, onError ) {
+
+			var scope = this;
+
+			var loader = new THREE.FileLoader( this.manager );
+			loader.setWithCredentials( this.withCredentials );
+			loader.load( url, function ( text ) {
+
+                if( !this.texturePath || typeof this.texturePath !== "string" )
+			        this.texturePath = THREE.Loader.prototype.extractUrlBase( url );
+
+				var json = JSON.parse( text );
+                scope.parse( json, onLoad );
+
+            });
+
+		},
+
+		setTexturePath: function ( value ) {
+
+			this.texturePath = value;
+
+		},
+
+		parse: function ( json, onLoad ) {
+
+            var scon = new Scon( json.entity, json.folder );
+
+            this.parseImages( scon, function( texture ){
+
+                scon.map = texture;
+
+                onLoad( scon );
+                
+            });
+
+        },
+
+        parseImages: function( scon, onLoad ){
+
+            var files = [], queueSize = 1, scope = this;
+
+            var manager = new THREE.LoadingManager( onImagesLoaded );
+            var loader = new THREE.ImageLoader( manager );
+            loader.setCrossOrigin( this.crossOrigin );            
 
 
+            for( var i=0, l=scon.folder.length; i<l; ++i ){
 
-// Implementation of http://www.brashmonkey.com/ScmlDocs/ScmlReference.html
-//
-// Works with JSON loaded from SCON file
+                var file = scon.folder[i].file;
 
-    var Epslion = 0.000001;
+                for( j=0, fl=file.length; j<fl; ++j ){
+
+                    files[files.length] = file[j];
+                    loadImage( file[j] );
+
+                }
+
+            }
+
+            return;
+
+            function onImagesLoaded(){
+
+                files.sort(function(a, b){
+                    var A = a.w*a.h,
+                        B = b.w*b.h;
+                    if( A > B ) return -1;
+                    if( A < B ) return 1;
+                    return 0;
+                });
+
+                var packer = new GrowingPacker();
+                packer.fit( files );
+
+                var size = powerOfTwo( Math.max( packer.root.w, packer.root.h ) );
+
+                var canvas = document.createElementNS( 'http://www.w3.org/1999/xhtml', 'canvas' );
+                canvas.width = size;
+                canvas.height = size;
+
+                var ctx = canvas.getContext( '2d' );
+
+                for(var i = 0 ; i < files.length ; i++) {
+
+                    var file = files[i];
+                    if (file.fit) {
+
+                        file.x = file.fit.x / size;
+                        file.y = file.fit.y / size;
+                        file.w = file.w / size;
+                        file.h = file.h / size;
+                        ctx.drawImage( file.image, file.fit.x, file.fit.y );
+
+                    } else {
+
+                        console.warn("NO FIT: ", file);
+
+                    }
+                
+                }
+
+                var texture = new THREE.Texture( canvas );
+                texture.needsUpdate = true;
+
+                onLoad( texture );
+            }
+
+
+			function loadImage( file ) {
+
+                var url = /^(\/\/)|([a-z]+:(\/\/)?)/i.test( file.name ) ? file.name : scope.texturePath + file.name;
+
+				scope.manager.itemStart( url );
+
+				loader.load( url, function ( image ) {
+
+                    file.image = image;
+                    file.w = image.width;
+                    file.h = image.height;
+
+					scope.manager.itemEnd( url );
+
+				}, undefined, function () {
+
+					scope.manager.itemError( url );
+
+				} );
+
+			}            
+
+        }
+
+    });
+
+
+    THREE.SconLoader = SconLoader;
 
 
     function powerOfTwo(n){
+
         var o = n;
         for( var j=0; j<6; ++j ) 
             n |= (n>>(1<<j));
         n++;
         if( o<<1 === n ) return o;
         return n;
+
     }
+
+// Implementation of http://www.brashmonkey.com/ScmlDocs/ScmlReference.html
+//
+// Works with JSON loaded from SCON file
+
+/*
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Dean Giberson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+*/
+
+    var Epslion = 0.000001;
 
     function toRad(n) {
         return n * Math.PI / 180;
@@ -744,36 +1001,33 @@ void main() {
     Scon.prototype.setCurrentTime = setCurrentTime;
     Scon.prototype.constructor = Scon;
 
-    // var loadFromScon = function(json,prefix) {
-	// var data = new Scon( json.entity, json.folder );
-
-    //     var manifest = [];
-    //     asArray(data.folder).forEach( function(folder) {
-    //         asArray(folder.file).forEach( function(file) {
-    //             // Tell the loader about this
-    //             manifest.push( {src:file.name, 
-    //                             type:createjs.LoadQueue.IMAGE, 
-    //                             data:file} );
-    //         });
-    //     });
-
-    //     var queue = new createjs.LoadQueue(true, prefix);
-    //     var fileload = function( result) {  
-    //         var img  = result.item;
-    //         var file = img.data;
-    //         file.easelBitmap = new createjs.Bitmap( result.result);
-    //     };
-    //     queue.on('fileload', fileload, this);
-    //     queue.loadManifest( manifest);
-
-    //     return data;
-    // };
 
 
 
 // https://github.com/jakesgordon/bin-packing/blob/master/js/packer.growing.js
 
 /******************************************************************************
+
+Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016 Jake Gordon and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 This is a binary tree based bin packing algorithm that is more complex than
 the simple Packer (packer.js). Instead of starting off with a fixed width and
 height, it starts with the width and height of the first block passed and then
@@ -904,6 +1158,9 @@ GrowingPacker.prototype = {
   }
 
 }
+
+
+})();
 
 
 })();

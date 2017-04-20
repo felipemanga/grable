@@ -15,6 +15,7 @@ var APP = {
 
 		this.dom = document.createElement( 'div' );
         this.sceneLoaded = false;
+        this.blackboard = {};
 		this.width = 500;
 		this.height = 500;
 		this.scene = null;

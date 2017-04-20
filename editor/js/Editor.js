@@ -17,6 +17,10 @@ var Editor = function () {
 
 		editScript: new Signal(),
 
+		// graph
+
+		editGraph: new Signal(),
+
 		// player
 
 		startPlayer: new Signal(),

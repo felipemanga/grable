@@ -490,7 +490,7 @@ CLAZZ("cmp.Spriter", {
 			])
 
         });
-
+        // this.uniforms.diffuse.value.set(0xFFFFFFFF);
         this.map = this.uniforms.map.value = scon.map;
         this.alphaTest = 0.5;
         
@@ -537,11 +537,14 @@ void main() {
 	#include <uv2_vertex>
 	#include <color_vertex>
 
-	#include <beginnormal_vertex>
-	#include <morphnormal_vertex>
+	// # include <beginnormal_vertex>
+	// # include <morphnormal_vertex>
 	#include <skinbase_vertex>
-	#include <skinnormal_vertex>
-	#include <defaultnormal_vertex>
+	// # include <skinnormal_vertex>
+	// # include <defaultnormal_vertex>
+
+    vec3 transformedNormal = normalMatrix * vec3(0., 1., 0.);
+
 
 	#include <begin_vertex>
 
@@ -570,6 +573,9 @@ void main() {
 	#include <worldpos_vertex>
 	#include <envmap_vertex>
 	#include <lights_lambert_vertex>
+
+    vLightBack = vLightFront;
+
 	#include <shadowmap_vertex>
 	#include <fog_vertex>
 

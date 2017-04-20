@@ -5,15 +5,28 @@ CLAZZ("states.State", {
     sceneLoaded:false,
     loadingAsync:0,
 
+    blackboard:null,
+
     STATIC:{
+        gameBlackBoard:null,
         activeState:null,
         cache:{}
     },
 
     initState:function(){
+        if( !states.State.gameBlackBoard )
+            states.State.gameBlackBoard = {};
+
+        if( !this.blackboard )
+            this.blackboard = Object.create( states.State.gameBlackBoard );
+
         if( states.State.activeState ){
-            if( states.State.activeState == this ) throw "State Reinitialization";
+
+            if( states.State.activeState == this ) 
+                throw "State Reinitialization";
+                
             states.State.activeState.shutdown();
+
         }
         states.State.activeState = this;
 
